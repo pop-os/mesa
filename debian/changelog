@@ -1,3 +1,9 @@
+mesa (21.0.0-1pop0) groovy; urgency=medium
+
+  * Backport to Pop!_OS
+
+ -- Jeremy Soller <jeremy@system76.com>  Fri, 19 Mar 2021 15:32:48 -0600
+
 mesa (21.0.0-1) experimental; urgency=medium
 
   * New upstream release. (LP: #1917763)
