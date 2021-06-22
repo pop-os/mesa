@@ -1,3 +1,9 @@
+mesa (21.0.1-2pop0) focal; urgency=medium
+
+  * Pop!_OS backport
+
+ -- Jeremy Soller <jeremy@system76.com>  Tue, 22 Jun 2021 14:07:03 -0600
+
 mesa (21.0.1-2) experimental; urgency=medium
 
   * Move zink down the list below the sw drivers. (LP: #1920665)
