@@ -1,3 +1,16 @@
+mesa (21.2.1-2ubuntu1pop0) impish; urgency=medium
+
+  * Pop!_OS backport
+
+ -- Jeremy Soller <jeremy@system76.com>  Thu, 09 Sep 2021 09:10:09 -0600
+
+mesa (21.2.1-2ubuntu1) impish; urgency=medium
+
+  * Attempt to fix mutter test on ppc64el by reverting a commit touching
+    swrast driver preference.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Thu, 02 Sep 2021 18:31:34 +0300
+
 mesa (21.2.1-2) unstable; urgency=medium
 
   [ Adrian Bunk ]

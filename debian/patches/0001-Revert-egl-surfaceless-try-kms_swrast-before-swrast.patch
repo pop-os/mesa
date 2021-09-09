@@ -1,0 +1,55 @@
+From 3c4f2cfe82628b4344d2ed93855150c519bd91f3 Mon Sep 17 00:00:00 2001
+From: Timo Aaltonen <tjaalton@debian.org>
+Date: Thu, 2 Sep 2021 18:29:51 +0300
+Subject: [PATCH] Revert "egl/surfaceless: try kms_swrast before swrast"
+
+This reverts commit 08781845fedd50fcf5133454bbabf91a6b2cb2d0.
+---
+ .pick_status.json                           |  2 +-
+ src/egl/drivers/dri2/platform_surfaceless.c | 14 +++++---------
+ 2 files changed, 6 insertions(+), 10 deletions(-)
+
+diff --git a/.pick_status.json b/.pick_status.json
+index e69164910ac..6046cba858e 100644
+--- a/.pick_status.json
++++ b/.pick_status.json
+@@ -8473,7 +8473,7 @@
+         "description": "egl/surfaceless: try kms_swrast before swrast",
+         "nominated": true,
+         "nomination_type": 1,
+-        "resolution": 1,
++        "resolution": 0,
+         "main_sha": null,
+         "because_sha": "f7e0cdcf1a5b639b4df610be600fa5d8db100289"
+     },
+diff --git a/src/egl/drivers/dri2/platform_surfaceless.c b/src/egl/drivers/dri2/platform_surfaceless.c
+index a420eb09ff6..2cd909c75a2 100644
+--- a/src/egl/drivers/dri2/platform_surfaceless.c
++++ b/src/egl/drivers/dri2/platform_surfaceless.c
+@@ -327,18 +327,14 @@ dri2_initialize_surfaceless(_EGLDisplay *disp)
+    dri2_dpy->fd = -1;
+    disp->DriverData = (void *) dri2_dpy;
+ 
+-   /* When ForceSoftware is false, we try the HW driver.  When ForceSoftware
+-    * is true, we try kms_swrast and swrast in order.
+-    */
+    driver_loaded = surfaceless_probe_device(disp, disp->Options.ForceSoftware);
+-   if (!driver_loaded && disp->Options.ForceSoftware) {
+-      _eglLog(_EGL_DEBUG, "Falling back to surfaceless swrast without DRM.");
+-      driver_loaded = surfaceless_probe_device_sw(disp);
+-   }
+ 
+    if (!driver_loaded) {
+-      err = "DRI2: failed to load driver";
+-      goto cleanup;
++      _eglLog(_EGL_DEBUG, "Falling back to surfaceless swrast without DRM.");
++      if (!surfaceless_probe_device_sw(disp)) {
++         err = "DRI2: failed to load driver";
++         goto cleanup;
++      }
+    }
+ 
+    if (!dri2_create_screen(disp)) {
+-- 
+2.32.0
+
