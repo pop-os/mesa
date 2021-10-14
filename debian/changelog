@@ -1,3 +1,10 @@
+mesa (21.2.2-1ubuntu1) impish; urgency=medium
+
+  * Merge from Debian.
+    - use -O2 for ppc64el
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Tue, 28 Sep 2021 10:35:10 +0300
+
 mesa (21.2.2-1) unstable; urgency=medium
 
   * New upstream release.
@@ -8,6 +15,19 @@ mesa (21.2.2-1) unstable; urgency=medium
   * control: Bump libdrm-dev build-dep.
 
  -- Timo Aaltonen <tjaalton@debian.org>  Wed, 22 Sep 2021 14:33:55 +0300
+
+mesa (21.2.1-2ubuntu2) impish; urgency=medium
+
+  * Revert previous change and use -O2 for ppc64el.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Wed, 15 Sep 2021 18:29:13 +0300
+
+mesa (21.2.1-2ubuntu1) impish; urgency=medium
+
+  * Attempt to fix mutter test on ppc64el by reverting a commit touching
+    swrast driver preference.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Thu, 02 Sep 2021 18:31:34 +0300
 
 mesa (21.2.1-2) unstable; urgency=medium
 
