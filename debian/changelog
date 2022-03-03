@@ -1,3 +1,9 @@
+mesa (21.3.5-1ubuntu1) jammy; urgency=medium
+
+  * Revert back to llvm-12, again.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Wed, 09 Feb 2022 10:19:02 +0200
+
 mesa (21.3.5-1) unstable; urgency=medium
 
   * New upstream release.
