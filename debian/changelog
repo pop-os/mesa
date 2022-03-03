@@ -1,3 +1,9 @@
+mesa (21.3.5-1ubuntu1pop0) focal; urgency=medium
+
+  * Pop!_OS backport
+
+ -- Jeremy Soller <jeremy@system76.com>  Thu, 03 Mar 2022 08:56:23 -0700
+
 mesa (21.3.5-1ubuntu1) jammy; urgency=medium
 
   * Revert back to llvm-12, again.
