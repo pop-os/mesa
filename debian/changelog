@@ -1,3 +1,9 @@
+mesa (22.2.0-1pop0) jammy; urgency=medium
+
+  * Pop!_OS backport
+
+ -- Jeremy Soller <jeremy@system76.com>  Tue, 27 Sep 2022 10:03:48 -0600
+
 mesa (22.2.0-1) unstable; urgency=medium
 
   * New upstream release.
