@@ -1,7 +1,6 @@
-mesa (22.3~git20221019-1) UNRELEASED; urgency=medium
+mesa (22.3~git20221020-1) UNRELEASED; urgency=medium
 
   * New upstream snapshot.
-  * control: Bump build-depends on wayland-protocols. (Closes: #1021666)
 
  -- Timo Aaltonen <tjaalton@debian.org>  Thu, 13 Oct 2022 09:14:03 +0300
 
