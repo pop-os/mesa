@@ -2845,10 +2845,12 @@ static LLVMValueRef visit_image_atomic(struct ac_nir_context *ctx, const nir_int
       atomic_name = "dec";
       atomic_subop = ac_atomic_dec_wrap;
       break;
+   case nir_intrinsic_bindless_image_atomic_fmin:
    case nir_intrinsic_image_deref_atomic_fmin:
       atomic_name = "fmin";
       atomic_subop = ac_atomic_fmin;
       break;
+   case nir_intrinsic_bindless_image_atomic_fmax:
    case nir_intrinsic_image_deref_atomic_fmax:
       atomic_name = "fmax";
       atomic_subop = ac_atomic_fmax;
@@ -3614,6 +3616,7 @@ static bool visit_intrinsic(struct ac_nir_context *ctx, nir_intrinsic_instr *ins
    case nir_intrinsic_load_cull_front_face_enabled_amd:
    case nir_intrinsic_load_cull_small_prim_precision_amd:
    case nir_intrinsic_load_cull_small_primitives_enabled_amd:
+   case nir_intrinsic_load_provoking_vtx_in_prim_amd:
       result = ctx->abi->intrinsic_load(ctx->abi, instr->intrinsic);
       break;
    case nir_intrinsic_load_user_clip_plane:
@@ -3857,6 +3860,8 @@ static bool visit_intrinsic(struct ac_nir_context *ctx, nir_intrinsic_instr *ins
    case nir_intrinsic_bindless_image_atomic_comp_swap:
    case nir_intrinsic_bindless_image_atomic_inc_wrap:
    case nir_intrinsic_bindless_image_atomic_dec_wrap:
+   case nir_intrinsic_bindless_image_atomic_fmin:
+   case nir_intrinsic_bindless_image_atomic_fmax:
       result = visit_image_atomic(ctx, instr, true);
       break;
    case nir_intrinsic_image_deref_atomic_add:
@@ -4179,20 +4184,26 @@ static bool visit_intrinsic(struct ac_nir_context *ctx, nir_intrinsic_instr *ins
       /* Currently ignored. */
       break;
    case nir_intrinsic_load_buffer_amd: {
+      bool idxen = !nir_src_is_const(instr->src[3]) || nir_src_as_uint(instr->src[3]);
+
       LLVMValueRef descriptor = get_src(ctx, instr->src[0]);
       LLVMValueRef addr_voffset = get_src(ctx, instr->src[1]);
       LLVMValueRef addr_soffset = get_src(ctx, instr->src[2]);
+      LLVMValueRef vidx = idxen ? get_src(ctx, instr->src[3]) : NULL;
       unsigned num_components = instr->dest.ssa.num_components;
       unsigned const_offset = nir_intrinsic_base(instr);
       bool swizzled = nir_intrinsic_is_swizzled(instr);
       bool reorder = nir_intrinsic_can_reorder(instr);
+      bool coherent = nir_intrinsic_access(instr) & ACCESS_COHERENT;
       bool slc = nir_intrinsic_slc_amd(instr);
 
-      enum ac_image_cache_policy cache_policy = ac_glc;
+      enum ac_image_cache_policy cache_policy = 0;
       if (swizzled)
          cache_policy |= ac_swizzled;
       if (slc)
          cache_policy |= ac_slc;
+      if (coherent)
+         cache_policy |= ac_glc;
 
       LLVMTypeRef channel_type;
       if (instr->dest.ssa.bit_size == 8)
@@ -4210,23 +4221,30 @@ static bool visit_intrinsic(struct ac_nir_context *ctx, nir_intrinsic_instr *ins
 
       LLVMValueRef voffset = LLVMBuildAdd(ctx->ac.builder, addr_voffset,
                                           LLVMConstInt(ctx->ac.i32, const_offset, 0), "");
-      result = ac_build_buffer_load(&ctx->ac, descriptor, num_components, NULL, voffset,
+      result = ac_build_buffer_load(&ctx->ac, descriptor, num_components, vidx, voffset,
                                     addr_soffset, channel_type, cache_policy, reorder, false);
+
       result = ac_to_integer(&ctx->ac, ac_trim_vector(&ctx->ac, result, num_components));
       break;
    }
    case nir_intrinsic_store_buffer_amd: {
+      bool idxen = !nir_src_is_const(instr->src[4]) || nir_src_as_uint(instr->src[4]);
+
       LLVMValueRef store_data = get_src(ctx, instr->src[0]);
       LLVMValueRef descriptor = get_src(ctx, instr->src[1]);
       LLVMValueRef addr_voffset = get_src(ctx, instr->src[2]);
       LLVMValueRef addr_soffset = get_src(ctx, instr->src[3]);
+      LLVMValueRef vidx = idxen ? get_src(ctx, instr->src[4]) : NULL;
       unsigned const_offset = nir_intrinsic_base(instr);
       bool swizzled = nir_intrinsic_is_swizzled(instr);
+      bool coherent = nir_intrinsic_access(instr) & ACCESS_COHERENT;
       bool slc = nir_intrinsic_slc_amd(instr);
 
-      enum ac_image_cache_policy cache_policy = ac_glc;
+      enum ac_image_cache_policy cache_policy = 0;
       if (swizzled)
          cache_policy |= ac_swizzled;
+      if (coherent && ctx->ac.gfx_level < GFX11)
+         cache_policy |= ac_glc;
       if (slc)
          cache_policy |= ac_slc;
 
@@ -4240,7 +4258,7 @@ static bool visit_intrinsic(struct ac_nir_context *ctx, nir_intrinsic_instr *ins
             LLVMConstInt(ctx->ac.i32, const_offset + start * 4, 0), "");
 
          LLVMValueRef data = extract_vector_range(&ctx->ac, store_data, start, count);
-         ac_build_buffer_store_dword(&ctx->ac, descriptor, data, NULL, voffset, addr_soffset,
+         ac_build_buffer_store_dword(&ctx->ac, descriptor, data, vidx, voffset, addr_soffset,
                                      cache_policy);
       }
       break;
