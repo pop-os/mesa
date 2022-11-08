@@ -168,7 +168,6 @@ confflags += \
 	-Dvulkan-layers="[$(VULKAN_LAYERS_LIST)]" \
 	-Dglvnd=true \
 	-Dshared-glapi=enabled \
-	-Dgallium-xvmc=disabled \
 	-Dgallium-omx=disabled \
 	-Db_ndebug=true \
 	-Dbuild-tests=true \

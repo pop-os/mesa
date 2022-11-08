@@ -2,6 +2,7 @@ mesa (22.3.0~rc1-1) UNRELEASED; urgency=medium
 
   [ Timo Aaltonen ]
   * New upstream release candidate.
+  * rules: Drop removed gallium-xvmc flag.
 
   [ Christopher Obbard ]
   * Package rusticl, include in mesa-opencl-icd.
