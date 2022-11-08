@@ -1,7 +1,7 @@
-mesa (22.3~git20221020-1) UNRELEASED; urgency=medium
+mesa (22.3.0~rc1-1) UNRELEASED; urgency=medium
 
   [ Timo Aaltonen ]
-  * New upstream snapshot.
+  * New upstream release candidate.
 
   [ Christopher Obbard ]
   * Package rusticl, include in mesa-opencl-icd.
