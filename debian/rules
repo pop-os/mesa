@@ -47,7 +47,7 @@ confflags_DRI3 = -Ddri3=disabled
 confflags_OSMESA =  -Dosmesa=true
 confflags_SSE2 = -Dsse2=true
 
-NO_RUSTC_ARCHS = alpha arc hppa hurd-i386 ia64 kfreebsd-amd64 kfreebsd-i386 m68k powerpc ppc64 riscv64 sh4 sparc64 x32
+RUSTICL_ARCHS = amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x
 
 # hurd doesn't do direct rendering
 ifeq ($(DEB_HOST_ARCH_OS), hurd)
@@ -120,7 +120,7 @@ else
 	confflags_GALLIUM += -Dgallium-opencl=icd
 
 	# Build rusticl for archs where rustc is available
-	ifneq ($(DEB_HOST_ARCH), $(NO_RUSTC_ARCHS))
+	ifneq (,$(filter $(DEB_HOST_ARCH), $(RUSTICL_ARCHS)))
 		confflags_GALLIUM += -Dgallium-rusticl=true
 	endif
 
@@ -245,7 +245,7 @@ override_dh_install:
     endif
   endif
 
-  ifneq ($(DEB_HOST_ARCH), $(NO_RUSTC_ARCHS))
+  ifneq (,$(filter $(DEB_HOST_ARCH), $(RUSTICL_ARCHS)))
 	install -m755 -d debian/mesa-opencl-icd/etc/OpenCL/vendors
 	mv debian/tmp/etc/OpenCL/vendors/rusticl.icd \
 	   debian/mesa-opencl-icd/etc/OpenCL/vendors
