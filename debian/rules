@@ -117,7 +117,7 @@ else
 	confflags_GALLIUM += -Dgallium-opencl=icd
 
 	# Build rusticl for archs where rustc is available
-	ifneq ($(DEB_HOST_ARCH), powerpc)
+	ifneq ($(DEB_HOST_ARCH), powerpc ppc64 riscv64 sparc64)
 		confflags_GALLIUM += -Dgallium-rusticl=true
 	endif
 

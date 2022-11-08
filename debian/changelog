@@ -1,6 +1,10 @@
 mesa (22.3~git20221020-1) UNRELEASED; urgency=medium
 
+  [ Timo Aaltonen ]
   * New upstream snapshot.
+
+  [ Christopher Obbard ]
+  * Package rusticl, include in mesa-opencl-icd.
 
  -- Timo Aaltonen <tjaalton@debian.org>  Thu, 13 Oct 2022 09:14:03 +0300
 
