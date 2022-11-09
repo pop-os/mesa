@@ -1,4 +1,4 @@
-mesa (22.3.0~rc1-3) UNRELEASED; urgency=medium
+mesa (22.3.0~rc1-3) experimental; urgency=medium
 
   * control, rules: Enable intel vulkan raytracing support, add
     python3-ply and libclc-15 to build-depends.
@@ -11,7 +11,7 @@ mesa (22.3.0~rc1-3) UNRELEASED; urgency=medium
     maintaining the llvm version and some arch lists easier.
   * rules: Remove unused libgrl.a from the intel raytracing build.
 
- -- Timo Aaltonen <tjaalton@debian.org>  Tue, 08 Nov 2022 16:07:22 +0200
+ -- Timo Aaltonen <tjaalton@debian.org>  Wed, 09 Nov 2022 13:37:20 +0200
 
 mesa (22.3.0~rc1-2) experimental; urgency=medium
 
