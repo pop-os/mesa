@@ -65,12 +65,6 @@ else
 	confflags_GALLIUM += -Dgallium-vdpau=enabled
 	confflags_GALLIUM += -Dlmsensors=enabled
 
-  # radv/lavapipe needs LLVM and the Vulkan loader, so only build on the subset of
-  # arches where we have LLVM enabled and where the Vulkan loader is built.
-  ifneq (,$(filter $(DEB_HOST_ARCH), $(LLVM_ARCHS)))
-	VULKAN_DRIVERS += amd swrast
-  endif
-
   ifeq ($(DEB_HOST_ARCH_OS), linux)
 	confflags_DRI3 = -Ddri3=enabled
 	# Gallium drivers which require kernel support, not yet ported to non-Linux
@@ -119,6 +113,7 @@ else
   # It's also required for building OpenCL support.
   ifneq (,$(filter $(DEB_HOST_ARCH), $(LLVM_ARCHS)))
 	GALLIUM_DRIVERS += radeonsi zink
+	VULKAN_DRIVERS += amd swrast
 	VULKAN_LAYERS += device-select intel-nullhw overlay
 	confflags_GALLIUM += -Dllvm=enabled
 	confflags_GALLIUM += -Dgallium-opencl=icd

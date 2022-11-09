@@ -6,6 +6,7 @@ mesa (22.3.0~rc1-3) UNRELEASED; urgency=medium
   * rules: Add some variables for architecture lists.
   * rules: Drop the check for where vulkan loader exists, it's the same
     list of archs now as for llvm.
+  * rules: Drop a duplicate check for llvm archs.
 
  -- Timo Aaltonen <tjaalton@debian.org>  Tue, 08 Nov 2022 16:07:22 +0200
 
