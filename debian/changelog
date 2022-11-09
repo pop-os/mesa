@@ -3,6 +3,7 @@ mesa (22.3.0~rc1-3) UNRELEASED; urgency=medium
   * control, rules: Enable intel vulkan raytracing support, add
     python3-ply and libclc-15 to build-depends.
   * rules: Fix rusticl logic.
+  * rules: Add some variables for architecture lists.
 
  -- Timo Aaltonen <tjaalton@debian.org>  Tue, 08 Nov 2022 16:07:22 +0200
 
