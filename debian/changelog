@@ -4,6 +4,8 @@ mesa (22.3.0~rc1-3) UNRELEASED; urgency=medium
     python3-ply and libclc-15 to build-depends.
   * rules: Fix rusticl logic.
   * rules: Add some variables for architecture lists.
+  * rules: Drop the check for where vulkan loader exists, it's the same
+    list of archs now as for llvm.
 
  -- Timo Aaltonen <tjaalton@debian.org>  Tue, 08 Nov 2022 16:07:22 +0200
 
