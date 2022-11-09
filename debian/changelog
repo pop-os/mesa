@@ -9,6 +9,7 @@ mesa (22.3.0~rc1-3) UNRELEASED; urgency=medium
   * rules: Drop a duplicate check for llvm archs.
   * rules, control.in: Add a template file for d/control, which makes
     maintaining the llvm version and some arch lists easier.
+  * rules: Remove unused libgrl.a from the intel raytracing build.
 
  -- Timo Aaltonen <tjaalton@debian.org>  Tue, 08 Nov 2022 16:07:22 +0200
 
