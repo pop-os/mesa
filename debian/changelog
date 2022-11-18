@@ -1,3 +1,9 @@
+mesa (22.3.0~rc3-1) UNRELEASED; urgency=medium
+
+  * New upstream release candidate.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Fri, 18 Nov 2022 12:05:30 +0200
+
 mesa (22.3.0~rc1-3) experimental; urgency=medium
 
   * control, rules: Enable intel vulkan raytracing support, add
