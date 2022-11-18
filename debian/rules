@@ -103,6 +103,8 @@ else
 		# svga needs xa state tracker
 		confflags_GALLIUM += -Dgallium-xa=enabled
 		VULKAN_DRIVERS += intel
+	endif
+	ifneq (,$(filter $(DEB_HOST_ARCH), amd64))
 		confflags_GALLIUM += -Dintel-clc=enabled
 	endif
 

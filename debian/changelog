@@ -2,6 +2,7 @@ mesa (22.3.0~rc3-1) UNRELEASED; urgency=medium
 
   * New upstream release candidate.
   * fix-symbols.diff: Dropped, upstream.
+  * rules: Limit anv ray-tracing support to amd64.
 
  -- Timo Aaltonen <tjaalton@debian.org>  Fri, 18 Nov 2022 12:05:30 +0200
 
