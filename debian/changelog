@@ -1,11 +1,11 @@
-mesa (22.2.4-1) UNRELEASED; urgency=medium
+mesa (22.2.4-1) unstable; urgency=medium
 
   * New upstream release.
   * rules: Enable building lima drivers on riscv64. (LP: #1995137)
   * rules: Disable building llvmpipe on riscv64. (Closes: #1004039)
   * patches: Refreshed.
 
- -- Timo Aaltonen <tjaalton@debian.org>  Wed, 09 Nov 2022 19:55:50 +0200
+ -- Timo Aaltonen <tjaalton@debian.org>  Fri, 18 Nov 2022 12:03:09 +0200
 
 mesa (22.2.3-1) unstable; urgency=medium
 
