@@ -125,7 +125,7 @@ else
 
   # Build intel drivers on archs where libdrm-intel is installed
   ifneq (,$(filter $(DEB_HOST_ARCH),amd64 i386 kfreebsd-amd64 kfreebsd-i386 x32))
-	GALLIUM_DRIVERS += iris crocus
+	GALLIUM_DRIVERS += iris crocus i915
   endif
 
   # LLVM is required for building r300g, radeonsi and llvmpipe drivers.

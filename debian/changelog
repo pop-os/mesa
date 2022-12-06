@@ -1,3 +1,9 @@
+mesa (22.3.0-3) UNRELEASED; urgency=medium
+
+  * control: Enable i915 gallium driver. (Closes: #1013311)
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Tue, 06 Dec 2022 20:26:34 +0200
+
 mesa (22.3.0-2) unstable; urgency=medium
 
   * patches: Import two upstream commits to fix crashes when libd3d12.so
