@@ -1,3 +1,9 @@
+mesa (22.3.0-3pop0) kinetic; urgency=medium
+
+  * Pop!_OS backport
+
+ -- Brock Szuszczewicz <brock@szu.email>  Thu, 15 Dec 2022 19:38:26 -0700
+
 mesa (22.3.0-3) unstable; urgency=medium
 
   * control: Enable i915 gallium driver. (Closes: #1013311)
