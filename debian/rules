@@ -286,6 +286,9 @@ override_dh_missing:
 override_dh_makeshlibs:
 	dh_makeshlibs -a -- -c4
 
+override_dh_build:
+	docker build .
+
 %:
 	dh $@ \
 		--builddirectory=build/ \
