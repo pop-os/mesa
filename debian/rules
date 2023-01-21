@@ -287,10 +287,19 @@ override_dh_makeshlibs:
 	dh_makeshlibs -a -- -c4
 
 %:
-	[ "$@" = "build" ] && docker build . || \
+	if [ "$@" = "build" ]; then \
+		docker build . --build-arg SEQUENCE=build -t build \
+		id=$(docker create build:latest)
+		docker cp $id:/usr/mesa .
+	elif [ "$@" = "binary" ];then \
+		docker build . --build-arg SEQUENCE=binary -t binary \
+		id=$(docker create binary:latest)
+		docker cp $id:/usr/mesa .
+	else \
 		dh $@ \
 			--builddirectory=build/ \
 			--buildsystem=meson \
+	fi
 
 # For maintainer use only, generate a tarball:
 gentarball:

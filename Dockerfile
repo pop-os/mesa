@@ -2,6 +2,7 @@
 
 From ubuntu:lunar
 WORKDIR /usr
+ARG SEQUENCE
 
 # Setup Container
 RUN sed -i 's/# deb-src/deb-src/g' /etc/apt/sources.list
@@ -24,9 +25,5 @@ WORKDIR /usr/mesa
 
 # TODO move back into setup contaienr
 # Build repository
-RUN dh build --builddirectory=build/ --buildsystem=meson
-Run ls
-Run ls ..
-
-# Copy build data out of container to finish build
+RUN dh $SEQUENCE --builddirectory=build/ --buildsystem=meson
 
