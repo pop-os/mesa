@@ -290,9 +290,10 @@ override_dh_build:
 	docker build .
 
 %:
-	dh $@ \
-		--builddirectory=build/ \
-		--buildsystem=meson
+	[ "$@" = "build" ] && docker build . || \
+		dh $@ \
+			--builddirectory=build/ \
+			--buildsystem=meson \
 
 # For maintainer use only, generate a tarball:
 gentarball:
