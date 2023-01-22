@@ -292,6 +292,7 @@ override_dh_makeshlibs:
 			--build-arg SEQUENCE=build \
 			-t build; \
 		id=$$(podman create build:latest); \
+		sleep 15; \
 		podman cp $$id:/usr/container/ .; \
 		mv -f ./container/* ../;\
 		rm container -rf; \
@@ -300,6 +301,7 @@ override_dh_makeshlibs:
 			--build-arg SEQUENCE=binary \
 			-t binary; \
 		id=$$(podman create binary:latest); \
+		sleep 15; \
 		podman cp $$id:/usr/build/container/ .; \
 		mv -f ./container/* ../;\
 		rm container -rf;\
