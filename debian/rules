@@ -293,14 +293,15 @@ override_dh_makeshlibs:
 			-t build; \
 		id=$$(podman create build:latest); \
 		podman cp $$id:/usr/container/ .; \
-		mv ./container/mesa/* .;\
+		mv -f ./container/* ../;\
 		rm container -rf; \
 	elif [ "$@" = "binary" ];then \
 		podman build . \
 			--build-arg SEQUENCE=binary \
 			-t binary; \
 		id=$$(podman create binary:latest); \
-		podman cp $$id:/usr/build/container/* ../; \
+		podman cp $$id:/usr/build/container/ .; \
+		mv -f ./container/* ../;\
 		rm container -rf;\
 	else \
 		dh $@ \
