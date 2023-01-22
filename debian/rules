@@ -288,19 +288,19 @@ override_dh_makeshlibs:
 
 %:
 	if [ "$@" = "build" ]; then \
-		docker build . \
+		podman build . \
 			--build-arg SEQUENCE=build \
 			--build-arg DIR=$$(pwd) \
 			-t build; \
-		id=$$(docker create build:latest); \
-		docker cp $$id:/usr/build$$(pwd) $$(dirname $$(pwd)); \
+		id=$$(podman create build:latest); \
+		podman cp $$id:/usr/build$$(pwd) $$(dirname $$(pwd)); \
 	elif [ "$@" = "binary" ];then \
-		docker build . \
+		podman build . \
 			--build-arg SEQUENCE=binary \
 			--build-arg DIR=$$(pwd) \
 			-t binary; \
-		id=$$(docker create binary:latest); \
-		docker cp $$id:/usr/build$$(dirname $$(pwd)) $$(dirname $$(dirname $$(pwd))); \
+		id=$$(podman create binary:latest); \
+		podman cp $$id:/usr/build$$(dirname $$(pwd)) $$(dirname $$(dirname $$(pwd))); \
 	else \
 		dh $@ \
 			--builddirectory=build/ \
