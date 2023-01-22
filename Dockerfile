@@ -19,9 +19,10 @@ RUN apt-get install -y \
 Run apt-get build-dep mesa -y
 
 # Copy git Repository into Docker Continer to build
-RUN mkdir /usr/mesa
-COPy ./ /usr/mesa/
-WORKDIR /usr/mesa
+RUN mkdir /usr/build
+RUN mkdir /usr/build/mesa
+COPy ./ /usr/build/mesa
+WORKDIR /usr/build/mesa
 
 # TODO move back into setup contaienr
 # Build repository
