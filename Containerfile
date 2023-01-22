@@ -3,7 +3,6 @@
 From ubuntu:lunar
 WORKDIR /usr
 ARG SEQUENCE
-ARG DIR
 
 # Setup Container
 RUN sed -i 's/# deb-src/deb-src/g' /etc/apt/sources.list
@@ -20,9 +19,9 @@ RUN apt-get install -y \
 Run apt-get build-dep mesa -y
 
 # Copy git Repository into Docker Continer to build
-RUN mkdir -p /usr/build$DIR
-COPy ./ /usr/build$DIR
-WORKDIR /usr/build$DIR
+RUN mkdir -p /usr/build/mesa
+COPy ./ /usr/container/mesa
+WORKDIR /usr/container/mesa
 
 # TODO move back into setup contaienr
 # Build repository
