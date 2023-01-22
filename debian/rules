@@ -300,7 +300,7 @@ override_dh_makeshlibs:
 			--build-arg DIR=$$(pwd) \
 			-t binary; \
 		id=$$(docker create binary:latest); \
-		docker cp $$id:/usr/build$$(dirname $$(pwd)) $$(dirname $$(pwd)); \
+		docker cp $$id:/usr/build$$(dirname $$(pwd)) $$(dirname $$(dirname $$(pwd))); \
 	else \
 		dh $@ \
 			--builddirectory=build/ \
