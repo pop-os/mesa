@@ -294,6 +294,8 @@ build:
 	cp -r ../mesa_build_container_data/mesa/* .
 	rm ../mesa_build_container_data -rf
 
+binary:
+
 %:
 	dh $@ \
 		--builddirectory=build/ \
