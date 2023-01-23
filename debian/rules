@@ -290,17 +290,17 @@ build:
 	podman build . \
 		--build-arg SEQUENCE=build \
 		-t build; \
-	podman cp $$(podman create build:latest):/usr/container/ ../container
-	mv -u ../container/mesa/* .
+	podman cp $$(podman create build:latest):/usr/container/ ../mesa_build_container_data
+	cp -r ../mesa_build_container_data/mesa/* .
 	rm ../container -rf
 
 binary:
 	podman build . \
 		--build-arg SEQUENCE=binary \
 		-t binary;
-	podman cp $$(podman create binary:latest):/usr/build/container/ .
-	mv -u ./container/* ../
-	rm ./container -rf
+	podman cp $$(podman create binary:latest):/usr/build/container/ ../mesa_build_container_data
+	cp -r ../mesa-mesa_build_container_data/* ../
+	rm ../mesa_build_container_data -rf
 
 %:
 	dh $@ \
