@@ -295,6 +295,7 @@ build:
 	rm ../mesa_build_container_data -rf
 
 binary:
+	# No need to be run
 
 %:
 	dh $@ \
