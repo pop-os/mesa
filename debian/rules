@@ -295,7 +295,7 @@ build:
 	rm ../mesa_build_container_data -rf
 
 binary:
-	rm ~/.local/share/containers/storage/storage.lock
+	podman info --log-level debug
 	podman build . \
 		--build-arg SEQUENCE=binary \
 		-t binary;
