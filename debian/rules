@@ -292,14 +292,14 @@ build:
 		-t build; \
 	podman cp $$(podman create build:latest):/usr/container/ ../mesa_build_container_data
 	cp -r ../mesa_build_container_data/mesa/* .
-	rm ../container -rf
+	rm ../mesa_build_container_data -rf
 
 binary:
 	rm ~/.local/share/containers/storage/storage.lock
 	podman build . \
 		--build-arg SEQUENCE=binary \
 		-t binary;
-	podman cp $$(podman create binary:latest):/usr/build/container/ ../mesa_build_container_data
+	podman cp $$(podman create binary:latest):/usr/container/ ../mesa_build_container_data
 	cp -r ../mesa-mesa_build_container_data/* ../
 	rm ../mesa_build_container_data -rf
 
