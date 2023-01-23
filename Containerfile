@@ -1,11 +1,7 @@
 # Used for building deps that require deps not available in Pop!_OS 22.04 (Jammy)
 
 From ubuntu:lunar
-RUN mkdir -p /home/podman/.local/share/containers/storage
-RUN chown podman:podman -R /home/podman/.local
-USER podman
 WORKDIR /usr
-ARG SEQUENCE
 
 # Setup Container
 RUN sed -i 's/# deb-src/deb-src/g' /etc/apt/sources.list
@@ -28,5 +24,7 @@ WORKDIR /usr/container/mesa
 
 # TODO move back into setup contaienr
 # Build repository
-RUN dh $SEQUENCE --builddirectory=build/ --buildsystem=meson
+ARG SEQUENCE
+# RUN dh $SEQUENCE --builddirectory=build/ --buildsystem=meson
+RUN echo fuck
 
