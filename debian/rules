@@ -286,28 +286,26 @@ override_dh_missing:
 override_dh_makeshlibs:
 	dh_makeshlibs -a -- -c4
 
+override_dh_build:
+	podman build . \
+		--build-arg SEQUENCE=build \
+		-t build; \
+	podman cp $$(podman create build:latest):/usr/container/ .
+	mv -u ./container/* ../
+	rm ./container -rf
+
+override_dh_binary:
+	podman build . \
+		--build-arg SEQUENCE=binary \
+		-t binary;
+	podman cp $$(podman create binary:latest):/usr/build/container/ .
+	mv -u ./container/* ../
+	rm ./container -rf
+
 %:
-	if [ "$@" = "build" ]; then \
-		podman build . \
-			--build-arg SEQUENCE=build \
-			-t build; \
-		id=$$(podman create build:latest); \
-		podman cp $$id:/usr/container/ .; \
-		mv -u ./container/* ../;\
-		rm ./container -rf; \
-	elif [ "$@" = "binary" ];then \
-		podman build . \
-			--build-arg SEQUENCE=binary \
-			-t binary; \
-		id=$$(podman create binary:latest); \
-		podman cp $$id:/usr/build/container/ .; \
-		mv -u ./container/* ../;\
-		rm ./container -rf;\
-	else \
-		dh $@ \
-			--builddirectory=build/ \
-			--buildsystem=meson; \
-	fi
+	dh $@ \
+		--builddirectory=build/ \
+		--buildsystem=meson
 
 # For maintainer use only, generate a tarball:
 gentarball:
