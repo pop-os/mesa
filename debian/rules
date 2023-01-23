@@ -286,15 +286,15 @@ override_dh_missing:
 override_dh_makeshlibs:
 	dh_makeshlibs -a -- -c4
 
-override_dh_build:
+build:
 	podman build . \
 		--build-arg SEQUENCE=build \
 		-t build; \
-	podman cp $$(podman create build:latest):/usr/container/ .
-	mv -u ./container/* ../
+	podman cp $$(podman create build:latest):/usr/container/ ../container
+	mv ./container/mesa/* .
 	rm ./container -rf
 
-override_dh_binary:
+binary:
 	podman build . \
 		--build-arg SEQUENCE=binary \
 		-t binary;
