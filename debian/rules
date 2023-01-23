@@ -288,7 +288,7 @@ override_dh_makeshlibs:
 
 build-arch:
 	podman build . \
-		--build-arg SEQUENCE=build \
+		--build-arg SEQUENCE=build-arch \
 		-t build
 	podman cp $$(podman create build:latest):/usr/container/ ../mesa_build_container_data
 	cp -r ../mesa_build_container_data/mesa/* .
