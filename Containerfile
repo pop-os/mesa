@@ -1,6 +1,5 @@
 # Used for building deps that require deps not available in Pop!_OS 22.04 (Jammy)
 
-ARG SEQUENCE
 From ubuntu:lunar
 WORKDIR /usr
 
@@ -23,8 +22,6 @@ RUN mkdir -p /usr/container/mesa
 COPy ./ /usr/container/mesa
 WORKDIR /usr/container/mesa
 
-# TODO move back into setup contaienr
 # Build repository
-# RUN dh $SEQUENCE --builddirectory=build/ --buildsystem=meson
-RUN echo fuck
-
+ARG SEQUENCE
+RUN dh $SEQUENCE --builddirectory=build/ --buildsystem=meson
