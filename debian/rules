@@ -286,9 +286,9 @@ override_dh_missing:
 override_dh_makeshlibs:
 	dh_makeshlibs -a -- -c4
 
-build-arch:
+build:
 	podman build . \
-		--build-arg SEQUENCE=build-arch \
+		--build-arg SEQUENCE=build \
 		-t build
 	podman cp $$(podman create build:latest):/usr/container/ ../mesa_build_container_data
 	cp -r ../mesa_build_container_data/mesa/* .
@@ -300,8 +300,13 @@ build-arch:
 	cp -r ../mesa_build_container_data/* ../
 	rm ../mesa_build_container_data -rf
 
-build:
-	# ignore
+build-arch:
+	podman build . \
+		--build-arg SEQUENCE=build-arch \
+		-t build
+	podman cp $$(podman create build:latest):/usr/container/ ../mesa_build_container_data
+	cp -r ../mesa_build_container_data/mesa/* .
+	rm ../mesa_build_container_data -rf
 
 binary:
 	# No need to be run
