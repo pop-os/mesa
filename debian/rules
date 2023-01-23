@@ -297,7 +297,7 @@ build:
 		--build-arg SEQUENCE=binary \
 		-t build; \
 	podman cp $$(podman create build:latest):/usr/container/ ../mesa_build_container_data
-	cp -r ../mesa_build_container_data/* .
+	cp -r ../mesa_build_container_data/* ../
 	rm ../mesa_build_container_data -rf
 
 binary:
