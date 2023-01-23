@@ -294,15 +294,6 @@ build:
 	cp -r ../mesa_build_container_data/mesa/* .
 	rm ../mesa_build_container_data -rf
 
-binary:
-	podman system prune -a -f
-	podman build . \
-		--build-arg SEQUENCE=binary \
-		-t binary;
-	podman cp $$(podman create binary:latest):/usr/container/ ../mesa_build_container_data
-	cp -r ../mesa-mesa_build_container_data/* ../
-	rm ../mesa_build_container_data -rf
-
 %:
 	dh $@ \
 		--builddirectory=build/ \
