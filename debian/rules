@@ -295,6 +295,7 @@ build:
 	rm ../container -rf
 
 binary:
+	rm ~/.local/share/containers/storage/storage.lock
 	podman build . \
 		--build-arg SEQUENCE=binary \
 		-t binary;
