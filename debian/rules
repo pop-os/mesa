@@ -291,7 +291,7 @@ build:
 		--build-arg SEQUENCE=build \
 		-t build; \
 	podman cp $$(podman create build:latest):/usr/container/ ../container
-	mv ../container/mesa/* .
+	mv -u ../container/mesa/* .
 	rm ../container -rf
 
 binary:
