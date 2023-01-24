@@ -287,7 +287,9 @@ override_dh_makeshlibs:
 	dh_makeshlibs -a -- -c4
 
 build:
-	podman build . --build-arg SEQUENCE=build -t build
+	pwd
+	ls
+	podman build . --build-arg SEQUENCE=build -t build --isolation=chroot
 	podman cp $$(podman create build:latest):/usr/container/ ../mesa_build_container_data
 	cp -r ../mesa_build_container_data/mesa/* .
 	rm ../mesa_build_container_data -rf
