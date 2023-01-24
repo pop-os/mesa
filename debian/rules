@@ -287,7 +287,7 @@ override_dh_makeshlibs:
 	dh_makeshlibs -a -- -c4
 
 build:
-	buildah build -f Containerfile \
+	buildah build \
 		--isolation chroot \
 		--build-arg SEQUENCE=build \
 		-t build
