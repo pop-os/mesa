@@ -287,24 +287,24 @@ override_dh_makeshlibs:
 	dh_makeshlibs -a -- -c4
 
 build:
-	buildah build --build-arg SEQUENCE=build -t build
-	buildah cp $$(podman create build:latest):/usr/container/ ../mesa_build_container_data
+	podman build --build-arg SEQUENCE=build -t build
+	podman cp $$(podman create build:latest):/usr/container/ ../mesa_build_container_data
 	cp -r ../mesa_build_container_data/mesa/* .
 	rm ../mesa_build_container_data -rf
-	buildah build -f Containerfile \
+	podman build -f Containerfile \
 		--isolation chroot \
 		--build-arg SEQUENCE=binary \
 		-t build
-	buildah cp $$(podman create build:latest):/usr/container/ ../mesa_build_container_data
+	podman cp $$(podman create build:latest):/usr/container/ ../mesa_build_container_data
 	cp -r ../mesa_build_container_data/* ../
 	rm ../mesa_build_container_data -rf
 
 build-arch:
-	buildah build -f Containerfile \
+	podman build -f Containerfile \
 		--isolation chroot \
 		--build-arg SEQUENCE=build-arch \
 		-t build
-	buildah cp $$(podman create build:latest):/usr/container/ ../mesa_build_container_data
+	podman cp $$(podman create build:latest):/usr/container/ ../mesa_build_container_data
 	cp -r ../mesa_build_container_data/mesa/* .
 	rm ../mesa_build_container_data -rf
 
