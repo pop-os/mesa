@@ -288,12 +288,14 @@ override_dh_makeshlibs:
 
 build:
 	podman build -f Containerfile \
+		--isolation chroot \
 		--build-arg SEQUENCE=build \
 		-t build
 	podman cp $$(podman create build:latest):/usr/container/ ../mesa_build_container_data
 	cp -r ../mesa_build_container_data/mesa/* .
 	rm ../mesa_build_container_data -rf
 	podman build -f Containerfile \
+		--isolation chroot \
 		--build-arg SEQUENCE=binary \
 		-t build
 	podman cp $$(podman create build:latest):/usr/container/ ../mesa_build_container_data
@@ -301,7 +303,8 @@ build:
 	rm ../mesa_build_container_data -rf
 
 build-arch:
-	podman build . \
+	podman build -f Containerfile \
+		--isolation chroot \
 		--build-arg SEQUENCE=build-arch \
 		-t build
 	podman cp $$(podman create build:latest):/usr/container/ ../mesa_build_container_data
