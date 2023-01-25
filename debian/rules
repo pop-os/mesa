@@ -295,7 +295,8 @@ build:
 		--isolation chroot \
 		--build-arg SEQUENCE=binary \
 		-t build
-	podman cp $$(podman create build:latest):/usr/container/ ../mesa_build_container_data
+	# TODO should I use podman mount rather than cp? See `man podman-cp`
+	podman cp $$(podman create binary:latest):/usr/container/ ../mesa_build_container_data
 	cp -r ../mesa_build_container_data/* ../
 	rm ../mesa_build_container_data -rf
 
@@ -309,7 +310,7 @@ build-arch:
 		--isolation chroot \
 		--build-arg SEQUENCE=binary \
 		-t build
-	podman cp $$(podman create build:latest):/usr/container/ ../mesa_build_container_data
+	podman cp $$(podman create binary:latest):/usr/container/ ../mesa_build_container_data
 	cp -r ../mesa_build_container_data/* ../
 	rm ../mesa_build_container_data -rf
 
