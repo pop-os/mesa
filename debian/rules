@@ -300,7 +300,7 @@ build:
 	rm ../mesa_build_container_data -rf
 
 build-arch:
-	podman build . --build-arg SEQUENCE=build -t build --isolation=chroot
+	podman build . --build-arg SEQUENCE=build-arch -t build-arch --isolation=chroot
 	podman cp $$(podman create build:latest):/usr/container/ ../mesa_build_container_data
 	cp -r ../mesa_build_container_data/mesa/* .
 	rm ../mesa_build_container_data -rf
