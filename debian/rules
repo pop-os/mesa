@@ -287,30 +287,31 @@ override_dh_makeshlibs:
 	dh_makeshlibs -a -- -c4
 
 build:
-	podman build . --build-arg SEQUENCE=build -t build --isolation=chroot
-	podman cp $$(podman create build:latest):/usr/container/ ../mesa_build_container_data
+	podman build . --build-arg SEQUENCE=build -t build --isolation=chroot --security-opt label=disable
+	podman cp $$(podman create build:latest):/usr/container/ ../mesa_build_container_data --security-opt label=disable
 	cp -r ../mesa_build_container_data/mesa/* .
 	rm ../mesa_build_container_data -rf
 	podman build . \
 		--isolation chroot \
 		--build-arg SEQUENCE=binary \
-		-t binary
+		-t binary \
+		--security-opt label=disable
 	# TODO should I use podman mount rather than cp? See `man podman-cp`
-	podman cp $$(podman create binary:latest):/usr/container/ ../mesa_build_container_data
+	podman cp $$(podman create binary:latest):/usr/container/ ../mesa_build_container_data --security-opt label=disable
 	cp -r ../mesa_build_container_data/* ../
 	rm ../mesa_build_container_data -rf
 
 build-arch:
-	podman build . --build-arg SEQUENCE=build-arch -t build-arch --isolation=chroot
-	podman cp $$(podman create build-arch:latest):/usr/container/ ../mesa_build_container_data
+	podman build . --build-arg SEQUENCE=build-arch -t build-arch --isolation=chroot --security-opt label=disable
+	podman cp $$(podman create build-arch:latest):/usr/container/ ../mesa_build_container_data --security-opt label=disable
 	ls ../mesa_build_container_data
 	cp -r ../mesa_build_container_data/mesa/* .
 	rm ../mesa_build_container_data -rf
 	podman build . \
 		--isolation chroot \
 		--build-arg SEQUENCE=binary \
-		-t binary
-	podman cp $$(podman create binary:latest):/usr/container/ ../mesa_build_container_data
+		-t binary --security-opt label=disable
+	podman cp $$(podman create binary:latest):/usr/container/ ../mesa_build_container_data --security-opt label=disable
 	cp -r ../mesa_build_container_data/* ../
 	rm ../mesa_build_container_data -rf
 
