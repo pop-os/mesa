@@ -295,7 +295,6 @@ build:
 	# Save the image as image-build.tar
 	podman save -o image-build.tar build:latest
 	tar --to-command='tar -xf - usr/container --one-top-level=image-build' -xvf image-build.tar || true
-	ls image-build/usr -R
 	cp -r image-build/usr/container/* ../
 	rm image-build.tar -rf
 	rm image-build -rf
