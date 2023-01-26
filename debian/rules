@@ -293,31 +293,21 @@ build:
 		--build-arg SEQUENCE=build \
 		-t build
 	# Save the image as image-build.tar
-	# Then get the image id that contains our build data. Extract that so results are same as if we build locally.
 	podman save -o image-build.tar build:latest
-	top_layer_id=$$(podman image inspect build:latest | grep sha256 | tail --lines=1 | sed 's/                "sha256://' | sed 's/"//'); \
-	tar -xf image-build.tar "$${top_layer_id}.tar"; \
-	tar -xf "$${top_layer_id}.tar" --one-top-level=top_layer; \
-	# Then clean up container data extraction
-	rm "$${top_layer_id}.tar" -rf
-	cp -r top_layer/usr/container/* ../
-	rm top_layer -rf
+	tar Oxf image-build.tar > image-build
+	cp -r image-build/usr/container/* ../
+	rm image-build.tar -rf
 	rm image-build -rf
 	# Now the debian binary step, but here, because podman doesn't like the binary build environment.
 	podman build . \
 		--isolation chroot \
 		--build-arg SEQUENCE=binary \
 		-t binary
-	# Save the image as image-build.tar
-	# Then get the image id that contains our build data. Extract that so results are same as if we build locally.
+	# Save the image as image-binary.tar
 	podman save -o image-binary.tar binary:latest
-	top_layer_id=$$(podman image inspect binary:latest | grep sha256 | tail --lines=1 | sed 's/                "sha256://' | sed 's/"//'); \
-	tar -xf image-build.tar "$${top_layer_id}.tar"; \
-	tar -xf "$${top_layer_id}.tar" --one-top-level=top_layer; \
-	# Then clean up container data extraction
-	rm "$${top_layer_id}.tar" -rf
-	cp -r top_layer/usr/container/* ../
-	rm top_layer -rf
+	tar Oxf image-binary.tar > image-binary
+	cp -r image-binary/usr/container/* ../
+	rm image_binary.tar -rf
 	rm image-binary -rf
 
 build-arch:
@@ -325,33 +315,23 @@ build-arch:
 	podman build . \
 		--isolation chroot \
 		--build-arg SEQUENCE=build-arch \
-		-t build
+		-t build-arch
 	# Save the image as image-build.tar
-	# Then get the image id that contains our build data. Extract that so results are same as if we build locally.
 	podman save -o image-build-arch.tar build-arch:latest
-	top_layer_id=$$(podman image inspect build-arch:latest | grep sha256 | tail --lines=1 | sed 's/                "sha256://' | sed 's/"//'); \
-	tar -xf image-build-arch.tar "$${top_layer_id}.tar"; \
-	tar -xf "$${top_layer_id}.tar" --one-top-level=top_layer; \
-	# Then clean up container data extraction
-	rm "$${top_layer_id}.tar" -rf
-	cp -r top_layer/usr/container/* ../
-	rm top_layer -rf
+	tar Oxf image-build-arch.tar > image-build-arch
+	cp -r image-build-arch/usr/container/* ../
+	rm image-build-arch.tar -rf
 	rm image-build-arch -rf
 	# Now the debian binary step, but here, because podman doesn't like the binary build environment.
 	podman build . \
 		--isolation chroot \
 		--build-arg SEQUENCE=binary \
 		-t binary
-	# Save the image as image-build.tar
-	# Then get the image id that contains our build data. Extract that so results are same as if we build locally.
+	# Save the image as image-binary.tar
 	podman save -o image-binary.tar binary:latest
-	top_layer_id=$$(podman image inspect binary:latest | grep sha256 | tail --lines=1 | sed 's/                "sha256://' | sed 's/"//'); \
-	tar -xf image-build.tar "$${top_layer_id}.tar"; \
-	tar -xf "$${top_layer_id}.tar" --one-top-level=top_layer; \
-	# Then clean up container data extraction
-	rm "$${top_layer_id}.tar" -rf
-	cp -r top_layer/usr/container/* ../
-	rm top_layer -rf
+	tar Oxf image-binary.tar > image-binary
+	cp -r image-binary/usr/container/* ../
+	rm image_binary.tar -rf
 	rm image-binary -rf
 
 binary:
