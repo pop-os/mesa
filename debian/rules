@@ -298,17 +298,6 @@ build:
 	cp -r image-build/usr/container/* ../
 	rm image-build.tar -rf
 	rm image-build -rf
-	# Now the debian binary step, but here, because podman doesn't like the binary build environment.
-	podman build . \
-		--isolation chroot \
-		--build-arg SEQUENCE=binary \
-		-t binary
-	# Save the image as image-binary.tar
-	podman save -o image-binary.tar binary:latest
-	tar --to-command='tar -xf - usr/container --one-top-level=image-binary' -xvf image-binary.tar || true
-	cp -r image-binary/usr/container/* ../
-	rm image-binary.tar -rf
-	rm image-binary -rf
 
 build-arch:
 	# Build Package in container
@@ -322,20 +311,6 @@ build-arch:
 	cp -r image-build-arch/usr/container/* ../
 	rm image-build-arch.tar -rf
 	rm image-build-arch -rf
-	# Now the debian binary step, but here, because podman doesn't like the binary build environment.
-	podman build . \
-		--isolation chroot \
-		--build-arg SEQUENCE=binary \
-		-t binary
-	# Save the image as image-binary.tar
-	podman save -o image-binary.tar binary:latest
-	tar --to-command='tar -xf - usr/container --one-top-level=image-binary' -xvf image-binary.tar || true
-	cp -r image-binary/usr/container/* ../
-	rm image-binary.tar -rf
-	rm image-binary -rf
-
-binary:
-	# No need to be run
 
 %:
 	dh $@ \
