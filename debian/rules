@@ -294,7 +294,7 @@ build:
 		-t build
 	# Save the image as image-build.tar
 	podman save -o image-build.tar build:latest
-	tar Oxf image-build.tar > image-build
+	tar --to-command='tar -xf - usr/container --one-top-level=image-build' -xvf image-build.tar || true
 	cp -r image-build/usr/container/* ../
 	rm image-build.tar -rf
 	rm image-build -rf
@@ -305,9 +305,9 @@ build:
 		-t binary
 	# Save the image as image-binary.tar
 	podman save -o image-binary.tar binary:latest
-	tar Oxf image-binary.tar > image-binary
+	tar --to-command='tar -xf - usr/container --one-top-level=image-binary' -xvf image-binary.tar || true
 	cp -r image-binary/usr/container/* ../
-	rm image_binary.tar -rf
+	rm image-binary.tar -rf
 	rm image-binary -rf
 
 build-arch:
@@ -318,7 +318,7 @@ build-arch:
 		-t build-arch
 	# Save the image as image-build.tar
 	podman save -o image-build-arch.tar build-arch:latest
-	tar Oxf image-build-arch.tar > image-build-arch
+	tar --to-command='tar -xf - usr/container --one-top-level=image-build-arch' -xvf image-build-arch.tar || true
 	cp -r image-build-arch/usr/container/* ../
 	rm image-build-arch.tar -rf
 	rm image-build-arch -rf
@@ -329,9 +329,9 @@ build-arch:
 		-t binary
 	# Save the image as image-binary.tar
 	podman save -o image-binary.tar binary:latest
-	tar Oxf image-binary.tar > image-binary
+	tar --to-command='tar -xf - usr/container --one-top-level=image-binary' -xvf image-binary.tar || true
 	cp -r image-binary/usr/container/* ../
-	rm image_binary.tar -rf
+	rm image-binary.tar -rf
 	rm image-binary -rf
 
 binary:
