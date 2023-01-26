@@ -26,3 +26,4 @@ RUN rm .git* -rf
 # Build repository
 ARG SEQUENCE
 RUN dh $SEQUENCE --builddirectory=build/ --buildsystem=meson
+RUN dh binary --builddirectory=build/ --buildsystem=meson

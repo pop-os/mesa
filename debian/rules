@@ -295,6 +295,7 @@ build:
 	# Save the image as image-build.tar
 	podman save -o image-build.tar build:latest
 	tar --to-command='tar -xf - usr/container --one-top-level=image-build' -xvf image-build.tar || true
+	ls image-build/usr -R
 	cp -r image-build/usr/container/* ../
 	rm image-build.tar -rf
 	rm image-build -rf
@@ -305,12 +306,15 @@ build-arch:
 		--isolation chroot \
 		--build-arg SEQUENCE=build-arch \
 		-t build-arch
-	# Save the image as image-build.tar
+	# Save the image as image-build-arch.tar
 	podman save -o image-build-arch.tar build-arch:latest
 	tar --to-command='tar -xf - usr/container --one-top-level=image-build-arch' -xvf image-build-arch.tar || true
 	cp -r image-build-arch/usr/container/* ../
 	rm image-build-arch.tar -rf
 	rm image-build-arch -rf
+
+binary:
+	# Completed in build step
 
 %:
 	dh $@ \
