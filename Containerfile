@@ -21,7 +21,7 @@ Run apt-get build-dep mesa -y
 RUN mkdir -p /usr/container/mesa
 COPy ./ /usr/container/mesa
 WORKDIR /usr/container/mesa
-RUN rm .git* -rf
+RUN rm /usr/container/mesa/.git* -rf
 
 # Build repository
 ARG SEQUENCE
