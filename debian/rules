@@ -295,13 +295,14 @@ build:
 		-t build
 	# Save the image as image-build.tar
 	podman save -o image-build.tar build:latest
-	tar --to-command='tar -xf - usr/container --one-top-level=image-build' -xvf image-build.tar || true
+	tar --to-command='tar -xf - usr/container --one-top-level=image-build' -xf image-build.tar || true
 	rm -rf image-build/usr/container/mesa/.git*
 	ls .
 	ls ..
 	cp -r image-build/usr/container/* ../
 	ls .
 	ls ..
+	ls ./build -R
 	rm image-build.tar -rf
 	rm image-build -rf
 
