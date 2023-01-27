@@ -295,6 +295,7 @@ build:
 	# Save the image as image-build.tar
 	podman save -o image-build.tar build:latest
 	tar --to-command='tar -xf - usr/container --one-top-level=image-build' -xvf image-build.tar || true
+	rm -rf image-build/usr/container/mesa/.git*
 	cp -r image-build/usr/container/* ../
 	rm image-build.tar -rf
 	rm image-build -rf
@@ -308,6 +309,7 @@ build-arch:
 	# Save the image as image-build-arch.tar
 	podman save -o image-build-arch.tar build-arch:latest
 	tar --to-command='tar -xf - usr/container --one-top-level=image-build-arch' -xvf image-build-arch.tar || true
+	rm -rf image-build/usr/container/mesa/.git*
 	cp -r image-build-arch/usr/container/* ../
 	rm image-build-arch.tar -rf
 	rm image-build-arch -rf
