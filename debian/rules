@@ -288,6 +288,7 @@ override_dh_makeshlibs:
 
 build:
 	# Build Package in container
+	mkdir build
 	podman build . \
 		--isolation chroot \
 		--build-arg SEQUENCE=build \
@@ -296,12 +297,17 @@ build:
 	podman save -o image-build.tar build:latest
 	tar --to-command='tar -xf - usr/container --one-top-level=image-build' -xvf image-build.tar || true
 	rm -rf image-build/usr/container/mesa/.git*
+	ls .
+	ls ..
 	cp -r image-build/usr/container/* ../
+	ls .
+	ls ..
 	rm image-build.tar -rf
 	rm image-build -rf
 
 build-arch:
 	# Build Package in container
+	mkdir build
 	podman build . \
 		--isolation chroot \
 		--build-arg SEQUENCE=build-arch \
