@@ -288,38 +288,35 @@ override_dh_makeshlibs:
 
 build:
 	# Build Package in container
-	mkdir build
 	podman build . \
 		--isolation chroot \
 		--build-arg SEQUENCE=build \
 		-t build
 	# Save the image as image-build.tar
-	podman save -o image-build.tar build:latest
-	tar --to-command='tar -xf - usr/container --one-top-level=image-build' -xf image-build.tar || true
-	rm -rf image-build/usr/container/mesa/.git*
-	ls .
-	ls ..
-	cp -r image-build/usr/container/* ../
-	ls .
-	ls ..
-	ls ./build -R
-	rm image-build.tar -rf
-	rm image-build -rf
+	podman save -o image --format=docker-dir build:latest
+	## Assume last command in container file is the binary build step
+	id=$$(podman image inspect build:latest | grep "  \"sha256" | tail -n 2 | head -n 1 | sed 's/\                "sha256://' | sed 's/\",//') \
+	tar -xf "image/$${id}" image/usr/container
+	rm -rf image/usr/container/mesa/.git*
+	cp -r image/usr/container/* ../
+	rm image -rf
+	rm usr -rf
 
 build-arch:
 	# Build Package in container
-	mkdir build
 	podman build . \
 		--isolation chroot \
 		--build-arg SEQUENCE=build-arch \
 		-t build-arch
-	# Save the image as image-build-arch.tar
-	podman save -o image-build-arch.tar build-arch:latest
-	tar --to-command='tar -xf - usr/container --one-top-level=image-build-arch' -xvf image-build-arch.tar || true
-	rm -rf image-build/usr/container/mesa/.git*
-	cp -r image-build-arch/usr/container/* ../
-	rm image-build-arch.tar -rf
-	rm image-build-arch -rf
+	# Save the image as image-build.tar
+	podman save -o image --format=docker-dir build-arch:latest
+	## Assume last command in container file is the binary build step
+	id=$$(podman image inspect build-arch:latest | grep "  \"sha256" | tail -n 2 | head -n 1 | sed 's/\                "sha256://' | sed 's/\",//') \
+	tar -xf "image/$${id}" image/usr/container
+	rm -rf image/usr/container/mesa/.git*
+	cp -r image/usr/container/* ../
+	rm image -rf
+	rm usr -rf
 
 binary:
 	# Completed in build step
