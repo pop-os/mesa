@@ -311,8 +311,12 @@ build-arch:
 	# Save the image as image-build.tar
 	podman save -o image --format=docker-dir build-arch:latest
 	## Assume last command in container file is the binary build step
-	id=$$(podman image inspect build-arch:latest | grep "  \"sha256" | tail -n 2 | head -n 1 | sed 's/\                "sha256://' | sed 's/\",//') \
+	id=$$(podman image inspect build-arch:latest | grep "  \"sha256" | tail -n 2 | head -n 1 | sed 's/\                "sha256://' | sed 's/\",//'); \
+	echo $$id; \
+	ls image; \
+	ls .; \
 	tar -xf "image/$${id}" usr/container
+	ls usr/container
 	rm -rf image/usr/container/mesa/.git*
 	cp -r image/usr/container/* ../
 	rm image -rf
