@@ -300,7 +300,7 @@ build:
 	echo $$id; \
 	ls -lh image; \
 	ls -lh .; \
-	tar -xf "image/$${last_minus_1_id}" usr/container
+	tar -xf "image/$${last_minus_1_id}" usr/container; \
 	tar -xf "image/$${last_id}" usr/container
 	ls -lh usr/container/build; \
 	rm -rf usr/container/mesa/.git*
