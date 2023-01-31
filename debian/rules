@@ -296,17 +296,18 @@ build:
 	podman save -o image --format=docker-dir build:latest
 	## Assume last command in container file is the binary build step
 	last_minus_1_id=$$(podman image inspect build:latest | grep "  \"sha256" | tail -n 2 | head -n 1 | sed 's/\                "sha256://' | sed 's/\",//'); \
-	last_id=$$(podman image inspect build:latest | grep "  \"sha256" | tail -n 1 | sed 's/\                "sha256://' | sed 's/\",//'); \
+	last_id=$$(podman image inspect build:latest | grep "  \"sha256" | tail -n 1 | sed 's/\                "sha256://' | sed 's/\"//'); \
 	echo $$id; \
 	ls -lh image; \
 	ls -lh .; \
-	tar -xf "image/$${last_minus_1_id}" usr/container; \
-	tar -xf "image/$${last_id}" usr/container
-	ls -lh usr/container/build; \
-	rm -rf usr/container/mesa/.git*
-	cp -r usr/container/* ../
+	pushd image; \
+	tar -xf $$last_minus_1_id usr/container; \
+	tar -xf $$last_id usr/container; \
+	popd; \
+	ls -lh image/usr/container/build; \
+	rm -rf image/usr/container/mesa/.git*
+	cp -r image/usr/container/* ../
 	rm image -rf
-	rm usr -rf
 
 build-arch:
 	# Build Package in container
