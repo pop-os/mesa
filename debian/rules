@@ -309,6 +309,9 @@ build:
 	ls -lh image/usr/container/mesa/build
 	rm -rf image/usr/container/mesa/.git*
 	cp -r image/usr/container/* ../
+	ls -lh ..
+	ls -lh .
+	ls -lh ./build
 	rm image -rf
 
 build-arch:
