@@ -297,25 +297,14 @@ build:
 	## Assume last command in container file is the binary build step
 	last_minus_1_id=$$(podman image inspect build:latest | grep "  \"sha256" | tail -n 2 | head -n 1 | sed 's/\                "sha256://' | sed 's/\",//'); \
 	last_id=$$(podman image inspect build:latest | grep "  \"sha256" | tail -n 1 | sed 's/\                "sha256://' | sed 's/\"//'); \
-	echo $$id; \
-	ls -lh image; \
-	ls -lh .; \
 	cd image; \
 	tar -xf $$last_minus_1_id usr/container; \
 	tar -xf $$last_id usr/container
 	cd ..
-	ls -lh image/usr/container
-	ls -lh image/usr/container/mesa
-	ls -lh image/usr/container/mesa/build
-	ls -lh image/usr/container/mesa/debian
-	ls -lh debian
 	rm -rf image/usr/container/mesa/.git*
 	cp -r image/usr/container/mesa/debian/* debian/
 	cp -r image/usr/container/* ../
 	mv image/usr/container/mesa/build ./build
-	ls -lh ..
-	ls -lh .
-	ls -lh ./build
 	rm image -rf
 
 build-arch:
@@ -327,16 +316,17 @@ build-arch:
 	# Save the image as image-build.tar
 	podman save -o image --format=docker-dir build-arch:latest
 	## Assume last command in container file is the binary build step
-	id=$$(podman image inspect build-arch:latest | grep "  \"sha256" | tail -n 2 | head -n 1 | sed 's/\                "sha256://' | sed 's/\",//'); \
-	echo $$id; \
-	ls -lh image; \
-	ls -lh .; \
-	tar -xf "image/$${id}" usr/container
-	ls usr/container
+	last_minus_1_id=$$(podman image inspect build-arch:latest | grep "  \"sha256" | tail -n 2 | head -n 1 | sed 's/\                "sha256://' | sed 's/\",//'); \
+	last_id=$$(podman image inspect build-arch:latest | grep "  \"sha256" | tail -n 1 | sed 's/\                "sha256://' | sed 's/\"//'); \
+	cd image; \
+	tar -xf $$last_minus_1_id usr/container; \
+	tar -xf $$last_id usr/container
+	cd ..
 	rm -rf image/usr/container/mesa/.git*
-	cp -r usr/container/* ../
+	cp -r image/usr/container/mesa/debian/* debian/
+	cp -r image/usr/container/* ../
+	mv image/usr/container/mesa/build ./build
 	rm image -rf
-	rm usr -rf
 
 binary:
 	# Completed in build step
