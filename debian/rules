@@ -311,7 +311,7 @@ build:
 	ls -lh debian
 	rm -rf image/usr/container/mesa/.git*
 	rm -rf debian
-	mv image/usr/container/mesa/debain ./debain
+	mv image/usr/container/mesa/debian ./debian
 	cp -r image/usr/container/* ../
 	mv image/usr/container/mesa/build ./build
 	ls -lh ..
