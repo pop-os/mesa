@@ -300,10 +300,10 @@ build:
 	echo $$id; \
 	ls -lh image; \
 	ls -lh .; \
-	pushd image; \
+	cd image; \
 	tar -xf $$last_minus_1_id usr/container; \
 	tar -xf $$last_id usr/container; \
-	popd; \
+	cd ..; \
 	ls -lh image/usr/container/build; \
 	rm -rf image/usr/container/mesa/.git*
 	cp -r image/usr/container/* ../
