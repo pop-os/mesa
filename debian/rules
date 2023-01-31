@@ -302,9 +302,9 @@ build:
 	ls -lh .; \
 	cd image; \
 	tar -xf $$last_minus_1_id usr/container; \
-	tar -xf $$last_id usr/container; \
-	cd ..; \
-	ls -lh image/usr/container/build; \
+	tar -xf $$last_id usr/container
+	cd ..
+	ls -lh image/usr/container/mesa
 	rm -rf image/usr/container/mesa/.git*
 	cp -r image/usr/container/* ../
 	rm image -rf
