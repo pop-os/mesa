@@ -307,10 +307,13 @@ build:
 	ls -lh image/usr/container
 	ls -lh image/usr/container/mesa
 	ls -lh image/usr/container/mesa/build
+	ls -lh image/usr/container/mesa/debian
+	ls -lh debian
 	rm -rf image/usr/container/mesa/.git*
+	rm -rf debian
+	mv image/usr/container/mesa/debain ./debain
 	cp -r image/usr/container/* ../
-	mkdir build
-	cp -r image/usr/container/mesa/build/* ./build/
+	mv image/usr/container/mesa/build ./build
 	ls -lh ..
 	ls -lh .
 	ls -lh ./build
