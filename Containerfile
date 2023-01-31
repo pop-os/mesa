@@ -1,6 +1,6 @@
 # Used for building deps that require deps not available in Pop!_OS 22.04 (Jammy)
 
-From ubuntu:lunar
+From ubuntu:lunar-20221216
 WORKDIR /usr
 
 # Setup Container
