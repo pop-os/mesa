@@ -142,7 +142,7 @@ else
 
 	# Build rusticl for archs where rustc is available
 	ifneq (,$(filter $(DEB_HOST_ARCH), $(RUSTICL_ARCHS)))
-		confflags_GALLIUM += -Dgallium-rusticl=true
+		#TODO confflags_GALLIUM += -Dgallium-rusticl=true
 	endif
 
 	# nine makes sense only on archs that build wine
