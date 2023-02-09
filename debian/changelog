@@ -1,7 +1,7 @@
-mesa (23.0.0~rc2-1) UNRELEASED; urgency=medium
+mesa (23.0.0~rc4-1) UNRELEASED; urgency=medium
 
   [ Timo Aaltonen ]
-  * New upstream release.
+  * New upstream release candidate.
   * copyright: Updated.
 
   [ Joshua Watt ]
