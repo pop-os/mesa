@@ -3,6 +3,7 @@ mesa (23.0.0~rc4-1) UNRELEASED; urgency=medium
   [ Timo Aaltonen ]
   * New upstream release candidate.
   * copyright: Updated.
+  * rusticl-ftbfs.diff: Dropped, upstream.
 
   [ Joshua Watt ]
   * Add mesa-drm-shim package.
