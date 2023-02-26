@@ -1,3 +1,9 @@
+mesa (22.3.6-1) UNRELEASED; urgency=medium
+
+  * New upstream release. (Closes: #1029731)
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Sun, 26 Feb 2023 11:11:37 +0200
+
 mesa (22.3.5-1) unstable; urgency=medium
 
   * New upstream release.
