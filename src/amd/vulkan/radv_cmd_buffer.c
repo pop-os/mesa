@@ -5291,7 +5291,7 @@ radv_src_access_flush(struct radv_cmd_buffer *cmd_buffer, VkAccessFlags2 src_fla
 
    u_foreach_bit64(b, src_flags)
    {
-      switch ((VkAccessFlags2)(1 << b)) {
+      switch ((VkAccessFlags2)BITFIELD64_BIT(b)) {
       case VK_ACCESS_2_SHADER_WRITE_BIT:
       case VK_ACCESS_2_SHADER_STORAGE_WRITE_BIT:
          /* since the STORAGE bit isn't set we know that this is a meta operation.
@@ -5379,7 +5379,7 @@ radv_dst_access_flush(struct radv_cmd_buffer *cmd_buffer, VkAccessFlags2 dst_fla
 
    u_foreach_bit64(b, dst_flags)
    {
-      switch ((VkAccessFlags2)(1 << b)) {
+      switch ((VkAccessFlags2)BITFIELD64_BIT(b)) {
       case VK_ACCESS_2_INDIRECT_COMMAND_READ_BIT:
          /* SMEM loads are used to read compute dispatch size in shaders */
          if (!cmd_buffer->device->load_grid_size_from_user_sgpr)
@@ -5411,15 +5411,19 @@ radv_dst_access_flush(struct radv_cmd_buffer *cmd_buffer, VkAccessFlags2 dst_fla
          if (!image_is_coherent)
             flush_bits |= RADV_CMD_FLAG_INV_L2;
          break;
+      case VK_ACCESS_2_DESCRIPTOR_BUFFER_READ_BIT_EXT:
+         flush_bits |= RADV_CMD_FLAG_INV_SCACHE;
+         break;
       case VK_ACCESS_2_SHADER_BINDING_TABLE_READ_BIT_KHR:
       case VK_ACCESS_2_SHADER_READ_BIT:
       case VK_ACCESS_2_SHADER_STORAGE_READ_BIT:
-         flush_bits |= RADV_CMD_FLAG_INV_VCACHE;
          /* Unlike LLVM, ACO uses SMEM for SSBOs and we have to
           * invalidate the scalar cache. */
          if (!cmd_buffer->device->physical_device->use_llvm && !image)
             flush_bits |= RADV_CMD_FLAG_INV_SCACHE;
-
+         FALLTHROUGH;
+      case VK_ACCESS_2_SHADER_SAMPLED_READ_BIT:
+         flush_bits |= RADV_CMD_FLAG_INV_VCACHE;
          if (has_CB_meta || has_DB_meta)
             flush_bits |= RADV_CMD_FLAG_INV_L2_METADATA;
          if (!image_is_coherent)
@@ -8558,7 +8562,8 @@ radv_emit_all_graphics_states(struct radv_cmd_buffer *cmd_buffer, const struct r
          if (cmd_buffer->state.graphics_pipeline->need_null_export_workaround &&
              !cmd_buffer->state.col_format_non_compacted)
             cmd_buffer->state.col_format_non_compacted = V_028714_SPI_SHADER_32_R;
-         cmd_buffer->state.dirty |= RADV_CMD_DIRTY_RBPLUS;
+         if (device->physical_device->rad_info.rbplus_allowed)
+            cmd_buffer->state.dirty |= RADV_CMD_DIRTY_RBPLUS;
       }
 
       if (ps_epilog)
