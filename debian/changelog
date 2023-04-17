@@ -1,6 +1,7 @@
 mesa (23.1.0~rc1-1) UNRELEASED; urgency=medium
 
   * New upstream release candidate.
+  * patches: Refreshed.
 
  -- Timo Aaltonen <tjaalton@debian.org>  Mon, 17 Apr 2023 14:30:01 +0300
 
