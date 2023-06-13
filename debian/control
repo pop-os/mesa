@@ -186,18 +186,6 @@ Description: free implementation of the EGL API -- development files
  This package provides the development environment for compiling programs
  against the EGL library.
 
-Package: libwayland-egl1-mesa
-Section: oldlibs
-Architecture: linux-any
-Depends:
- ${misc:Depends},
- libegl1,
- libwayland-egl1,
-Pre-Depends: ${misc:Pre-Depends}
-Multi-Arch: same
-Description: transitional dummy package
- This is a transitional dummy package, it can be safely removed.
-
 Package: libgles2-mesa-dev
 Section: oldlibs
 Architecture: any
