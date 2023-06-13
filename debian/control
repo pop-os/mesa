@@ -169,16 +169,6 @@ Description: free implementation of the EGL API -- Mesa vendor library
  .
  This package contains the Mesa vendor library for EGL.
 
-Package: libegl1-mesa
-Section: oldlibs
-Architecture: any
-Depends:
- libegl1,
- ${misc:Depends},
-Multi-Arch: same
-Description: transitional dummy package
- This is a transitional dummy package, it can be safely removed.
-
 Package: libegl1-mesa-dev
 Section: libdevel
 Architecture: any
