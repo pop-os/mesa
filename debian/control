@@ -198,16 +198,6 @@ Multi-Arch: same
 Description: transitional dummy package
  This is a transitional dummy package, it can be safely removed.
 
-Package: libgles2-mesa
-Section: oldlibs
-Architecture: any
-Depends:
- libgles2,
- ${misc:Depends},
-Multi-Arch: same
-Description: transitional dummy package
- This is a transitional dummy package, it can be safely removed.
-
 Package: libgles2-mesa-dev
 Section: oldlibs
 Architecture: any

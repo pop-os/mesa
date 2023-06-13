@@ -1,6 +1,7 @@
 mesa (23.1.3-2) UNRELEASED; urgency=medium
 
   * Drop transitional libegl1-mesa package (Closes: #1032712)
+  * Drop transitional libgles2-mesa package (Closes: #1032718)
 
  -- Diederik de Haas <didi.debian@cknow.org>  Tue, 11 Jul 2023 12:49:12 +0200
 
