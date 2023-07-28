@@ -9,6 +9,8 @@ mesa (23.1.4-1) UNRELEASED; urgency=medium
 
   [ Timo Aaltonen ]
   * New upstream release.
+  * fix-gtk4-autpkgtest.diff: Fix loading swrast driver on wayland.
+    (Closes: #1039922)
 
  -- Diederik de Haas <didi.debian@cknow.org>  Tue, 11 Jul 2023 12:49:12 +0200
 
