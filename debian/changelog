@@ -1,6 +1,7 @@
 mesa (23.1.6-1) UNRELEASED; urgency=medium
 
   * New upstream release.
+  * fix-gtk4-autpkgtest.diff: Dropped, upstream.
 
  -- Timo Aaltonen <tjaalton@debian.org>  Thu, 17 Aug 2023 13:11:43 +0300
 
