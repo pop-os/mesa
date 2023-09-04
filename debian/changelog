@@ -2,6 +2,7 @@ mesa (23.2.0~rc3-1) UNRELEASED; urgency=medium
 
   * New upstream release candidate.
   * rules: Add virtio vulkan driver.
+  * rules: Enable panfrost vulkan driver on armhf/arm64.
 
  -- Timo Aaltonen <tjaalton@debian.org>  Thu, 07 Sep 2023 13:43:04 +0300
 
