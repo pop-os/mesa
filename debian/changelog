@@ -1,3 +1,9 @@
+mesa (23.2.0~rc3-3) UNRELEASED; urgency=medium
+
+  * control, rules: Drop mipsel.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Tue, 19 Sep 2023 19:40:17 +0300
+
 mesa (23.2.0~rc3-2) unstable; urgency=medium
 
   * Upload to unstable.
