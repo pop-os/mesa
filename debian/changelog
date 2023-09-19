@@ -2,6 +2,7 @@ mesa (23.2.0~rc3-2) UNRELEASED; urgency=medium
 
   * rules: Disable panfrost vulkan driver again as upstream doesn't want
     it shipped yet.
+  * rules: Drop virtio from armel, FTBFS.
 
  -- Timo Aaltonen <tjaalton@debian.org>  Fri, 08 Sep 2023 08:37:26 +0300
 
