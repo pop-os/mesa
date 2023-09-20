@@ -3,6 +3,8 @@ mesa (23.2.0~rc3-3) UNRELEASED; urgency=medium
   * control, rules: Drop mipsel.
   * rules: Update archs which have rustc (add powerpc, ppc64, riscv64,
     x32)
+  * egl-wayland-Always-initialise-fd_display_gpu.patch: Re-add the fix
+    for gtk4 autopkgtests.
 
  -- Timo Aaltonen <tjaalton@debian.org>  Tue, 19 Sep 2023 19:40:17 +0300
 
