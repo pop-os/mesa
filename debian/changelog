@@ -4,6 +4,7 @@ mesa (23.2.0~rc4-1) UNRELEASED; urgency=medium
   * egl-wayland-Always-initialise-fd_display_gpu.patch: Dropped,
     upstream.
   * fix-clover-build-without-spirv.diff: Fix clover build.
+  * control, rules: Bump llvm to 16. (Closes: #1051680)
 
  -- Timo Aaltonen <tjaalton@debian.org>  Mon, 25 Sep 2023 09:22:32 +0300
 
