@@ -1,3 +1,9 @@
+mesa (23.2.0~rc4-1) UNRELEASED; urgency=medium
+
+  * New upstream release candidate.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Mon, 25 Sep 2023 09:22:32 +0300
+
 mesa (23.2.0~rc3-3) unstable; urgency=medium
 
   * control, rules: Drop mipsel.
