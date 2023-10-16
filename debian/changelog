@@ -1,6 +1,7 @@
 mesa (23.3.0~git20231025-1) UNRELEASED; urgency=medium
 
   * New upstream snapshot.
+  * fix-clover-build-without-spirv.diff: Dropped, upstream.
 
  -- Timo Aaltonen <tjaalton@debian.org>  Wed, 25 Oct 2023 11:10:30 +0300
 
