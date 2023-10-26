@@ -1,6 +1,6 @@
-mesa (23.3.0~git20231025-1) UNRELEASED; urgency=medium
+mesa (23.3.0~rc1-1) UNRELEASED; urgency=medium
 
-  * New upstream snapshot.
+  * New upstream release candidate.
   * fix-clover-build-without-spirv.diff: Dropped, upstream.
   * mesa-common-dev.docs: Updated.
   * libglx-mesa0.symbols: Updated.
