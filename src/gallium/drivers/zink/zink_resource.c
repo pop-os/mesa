@@ -885,17 +885,6 @@ resource_object_create(struct zink_screen *screen, const struct pipe_resource *t
    } else {
       max_level = templ->last_level + 1;
       bool winsys_modifier = (export_types & VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT) && whandle && whandle->modifier != DRM_FORMAT_MOD_INVALID;
-      uint64_t mods[10];
-      bool try_modifiers = false;
-      if ((export_types & VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT) &&
-          whandle && whandle->modifier == DRM_FORMAT_MOD_INVALID && whandle->stride) {
-         modifiers = mods;
-         modifiers_count = screen->modifier_props[templ->format].drmFormatModifierCount;
-         for (unsigned j = 0; j < modifiers_count; j++)
-            mods[j] = screen->modifier_props[templ->format].pDrmFormatModifierProperties[j].drmFormatModifier;
-         if (modifiers_count > 1)
-            try_modifiers = true;
-      }
       uint64_t *ici_modifiers = winsys_modifier ? &whandle->modifier : modifiers;
       unsigned ici_modifier_count = winsys_modifier ? 1 : modifiers_count;
       bool success = false;
@@ -1078,18 +1067,6 @@ resource_object_create(struct zink_screen *screen, const struct pipe_resource *t
       }
 
       VkResult result = VKSCR(CreateImage)(screen->dev, &ici, NULL, &obj->image);
-      if (result != VK_SUCCESS) {
-         if (try_modifiers) {
-            for (unsigned i = 0; i < modifiers_count; i++) {
-               if (modifiers[i] == mod)
-                  continue;
-               idfmeci.drmFormatModifier = modifiers[i];
-               result = VKSCR(CreateImage)(screen->dev, &ici, NULL, &obj->image);
-               if (result == VK_SUCCESS)
-                  break;
-            }
-         }
-      }
       if (result != VK_SUCCESS) {
          mesa_loge("ZINK: vkCreateImage failed (%s)", vk_Result_to_str(result));
          goto fail1;
@@ -1851,8 +1828,13 @@ zink_resource_from_handle(struct pipe_screen *pscreen,
    int modifier_count = 1;
    if (whandle->modifier != DRM_FORMAT_MOD_INVALID)
       modifier = whandle->modifier;
-   else
+   else {
+      if (!zink_screen(pscreen)->driver_workarounds.can_do_invalid_linear_modifier) {
+         mesa_loge("zink: display server doesn't support DRI3 modifiers and driver can't handle INVALID<->LINEAR!");
+         return NULL;
+      }
       whandle->modifier = modifier;
+   }
    templ2.bind |= ZINK_BIND_DMABUF;
    struct pipe_resource *pres = resource_create(pscreen, &templ2, whandle, usage, &modifier, modifier_count, NULL, NULL);
    if (pres) {
