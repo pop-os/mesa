@@ -1,6 +1,7 @@
 mesa (23.3.0~rc2-1) UNRELEASED; urgency=medium
 
   * New upstream release candidate.
+  * control, rules: Drop kfreebsd.
 
  -- Timo Aaltonen <tjaalton@debian.org>  Thu, 02 Nov 2023 15:39:19 +0200
 
