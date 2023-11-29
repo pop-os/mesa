@@ -1,9 +1,13 @@
 mesa (23.3.0~rc4-2) UNRELEASED; urgency=medium
 
+  [ Timo Aaltonen ]
   * rules: Fix mangling of the upstream version in clean target to work
     with upstream rc's.
 
- -- Timo Aaltonen <tjaalton@debian.org>  Tue, 21 Nov 2023 12:12:54 +0200
+  [ Fabio Pedretti ]
+  * control, rules: Bump llvm to 17.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Wed, 29 Nov 2023 16:18:33 +0200
 
 mesa (23.3.0~rc4-1) experimental; urgency=medium
 
