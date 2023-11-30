@@ -1,3 +1,9 @@
+mesa (23.3.0-1pop0) jammy; urgency=medium
+
+  * Backport Mesa 23.3.0
+
+ -- Michael Murphy <michael@mmurphy.dev>  Thu, 30 Nov 2023 19:47:13 +0100
+
 mesa (23.3.0~rc5-1) experimental; urgency=medium
 
   [ Timo Aaltonen ]
