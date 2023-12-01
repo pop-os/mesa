@@ -61,17 +61,6 @@ else
 	confflags_GALLIUM += -Dgallium-vdpau=enabled
 	confflags_GALLIUM += -Dlmsensors=enabled
 
-  # radv/lavapipe needs LLVM and the Vulkan loader, so only build on the subset of
-  # arches where we have LLVM enabled and where the Vulkan loader is built.
-  ifneq (,$(filter $(DEB_HOST_ARCH), amd64 arm64 armel armhf i386 mips64el powerpc ppc64 ppc64el s390x sparc64))
-  # drop virtio from armel, it doesn't build
-	ifneq (,$(filter $(DEB_HOST_ARCH), armel))
-		VULKAN_DRIVERS += amd swrast
-	else
-		VULKAN_DRIVERS += amd swrast virtio
-	endif
-  endif
-
   # Only enable amd on riscv64, swrast needs CPU JIT support which doesn't work properly yet
   ifneq (,$(filter $(DEB_HOST_ARCH), riscv64))
 	VULKAN_DRIVERS += amd
@@ -136,7 +125,7 @@ else
 		VULKAN_DRIVERS += amd
 		confflags_GALLIUM += -Ddraw-use-llvm=false
 	else
-		VULKAN_DRIVERS += amd swrast
+		VULKAN_DRIVERS += amd swrast virtio
 	endif
 
 	VULKAN_LAYERS += device-select intel-nullhw overlay

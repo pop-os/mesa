@@ -3,6 +3,8 @@ mesa (23.3.0-1) UNRELEASED; urgency=medium
   * New upstream release.
   * rules: Drop checking for linux, now that kfreebsd support got
     dropped.
+  * rules: Drop a duplicate special case for VULKAN_DRIVERS, and move
+    virtio enabling to the correct place.
 
  -- Timo Aaltonen <tjaalton@debian.org>  Fri, 01 Dec 2023 08:45:59 +0200
 
