@@ -50,20 +50,21 @@ WSL_ARCHS      = amd64 arm64
 
 # hurd doesn't do direct rendering
 ifeq ($(DEB_HOST_ARCH_OS), hurd)
-	confflags_DIRECT_RENDERING = -Dglx-direct=false
-	confflags_GBM = -Dgbm=disabled
+  confflags_DIRECT_RENDERING = -Dglx-direct=false
+  confflags_GBM = -Dgbm=disabled
 else
-	GALLIUM_DRIVERS += r300 r600
+  # Non-Linux ports lack epoll, so wayland isn't ready yet:
+  # https://gitlab.freedesktop.org/wayland/wayland/-/issues/72
+  # hurd also lacks *_CLOEXEC
+  EGL_PLATFORMS += ,wayland
 
-	confflags_DIRECT_RENDERING = -Dglx-direct=true
-	confflags_GBM = -Dgbm=enabled
-	confflags_GALLIUM += -Dgallium-extra-hud=true
-	confflags_GALLIUM += -Dgallium-vdpau=enabled
-	confflags_GALLIUM += -Dlmsensors=enabled
-
+  GALLIUM_DRIVERS += nouveau r300 r600 virgl
+  confflags_DIRECT_RENDERING = -Dglx-direct=true
   confflags_DRI3 = -Ddri3=enabled
-  # Gallium drivers which require kernel support, not yet ported to non-Linux
-  GALLIUM_DRIVERS += nouveau virgl
+  confflags_GBM = -Dgbm=enabled
+  confflags_GALLIUM += -Dgallium-extra-hud=true
+  confflags_GALLIUM += -Dgallium-vdpau=enabled
+  confflags_GALLIUM += -Dlmsensors=enabled
 
   # Freedreno requires arm in addition
   ifneq (,$(filter arm arm64,$(DEB_HOST_ARCH_CPU)))
@@ -89,11 +90,6 @@ else
   ifneq (,$(filter $(DEB_HOST_ARCH), amd64))
 	confflags_GALLIUM += -Dintel-clc=enabled
   endif
-
-  # Non-Linux ports lack epoll, so wayland isn't ready yet:
-  # https://gitlab.freedesktop.org/wayland/wayland/-/issues/72
-  # hurd also lacks *_CLOEXEC
-  EGL_PLATFORMS += ,wayland
 
   ifneq (,$(filter $(DEB_HOST_ARCH), $(VALGRIND_ARCHS)))
 	confflags_VALGRIND += -Dvalgrind=enabled
