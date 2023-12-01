@@ -55,7 +55,7 @@ else
   # Non-Linux ports lack epoll, so wayland isn't ready yet:
   # https://gitlab.freedesktop.org/wayland/wayland/-/issues/72
   # hurd also lacks *_CLOEXEC
-  EGL_PLATFORMS += ,wayland
+  EGL_PLATFORMS += wayland
 
   GALLIUM_DRIVERS += nouveau r300 r600 virgl
   confflags_DIRECT_RENDERING = -Dglx-direct=true
@@ -136,6 +136,8 @@ endif
 empty:=
 space := $(empty) $(empty)
 comma := ,
+EGL_PLATFORMS := $(patsubst %,'%',$(EGL_PLATFORMS))
+EGL_PLATFORMS_LIST := $(subst $(space),$(comma),$(EGL_PLATFORMS))
 GALLIUM_DRIVERS := $(patsubst %,'%',$(GALLIUM_DRIVERS))
 GALLIUM_DRIVERS_LIST := $(subst $(space),$(comma),$(GALLIUM_DRIVERS))
 VULKAN_DRIVERS := $(patsubst %,'%',$(VULKAN_DRIVERS))
@@ -143,13 +145,13 @@ VULKAN_DRIVERS_LIST := $(subst $(space),$(comma),$(VULKAN_DRIVERS))
 VULKAN_LAYERS := $(patsubst %,'%',$(VULKAN_LAYERS))
 VULKAN_LAYERS_LIST := $(subst $(space),$(comma),$(VULKAN_LAYERS))
 
-confflags_EGL = -Dplatforms="$(EGL_PLATFORMS)"
 confflags_GLES = -Dgles1=disabled -Dgles2=enabled
 confflags_GALLIUM += -Dgallium-drivers="[$(GALLIUM_DRIVERS_LIST)]"
 
 confflags += \
 	-Ddri-drivers-path=/usr/lib/$(DEB_HOST_MULTIARCH)/dri \
 	-Ddri-search-path='/usr/lib/$(DEB_HOST_MULTIARCH)/dri:\$$$${ORIGIN}/dri:/usr/lib/dri' \
+	-Dplatforms="[$(EGL_PLATFORMS_LIST)]" \
 	-Dvulkan-drivers="[$(VULKAN_DRIVERS_LIST)]" \
 	-Dvulkan-layers="[$(VULKAN_LAYERS_LIST)]" \
 	-Dglvnd=true \
@@ -161,7 +163,6 @@ confflags += \
 	$(confflags_DIRECT_RENDERING) \
 	$(confflags_GBM) \
 	$(confflags_DRI3) \
-	$(confflags_EGL) \
 	$(confflags_GALLIUM) \
 	$(confflags_GLES) \
 	$(confflags_OSMESA) \
