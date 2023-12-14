@@ -1,6 +1,7 @@
 mesa (23.3.1-1) UNRELEASED; urgency=medium
 
   * New upstream release.
+  * patches: Drop upstreamed zink patch.
 
  -- Timo Aaltonen <tjaalton@debian.org>  Thu, 14 Dec 2023 12:23:55 +0200
 
