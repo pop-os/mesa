@@ -1,0 +1,66 @@
+From 389c4484d52a1d7ba9fafaa310ae79388425bf90 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Jos=C3=A9=20Exp=C3=B3sito?= <jexposit@redhat.com>
+Date: Tue, 14 Nov 2023 09:23:23 +0100
+Subject: [PATCH] egl/glx: fallback to software when Zink is forced and fails
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+When `MESA_LOADER_DRIVER_OVERRIDE` is set to `zink` and the display
+initialization fails, fallback to software rendering.
+
+The error was reported in #10123 and it can be reproduced with:
+
+    $ MESA_LOADER_DRIVER_OVERRIDE=zink eglinfo
+
+`eglinfo` would crash in `dri2_display_release()` because of
+`assert(dri2_dpy->ref_count > 0)`.
+
+After bisecting the error to commit 8cd44b884387 ("egl/glx: add
+autoloading for zink"), I found out that, before this change, the
+display was set to initialized even when `_eglDriver.Initialize(disp)`
+failed:
+
+    disp->Options.Zink = env && !strcmp(env, "zink");
+    // disp->Options.Zink is true
+
+    if (!_eglDriver.Initialize(disp)) {
+       [...]
+       // Zink initialization has failed at this point
+       // However, success is set to true:
+       bool success = disp->Options.Zink;
+       if (!disp->Options.Zink && !getenv("GALLIUM_DRIVER")) {
+          [...]
+       }
+       // Software initialization is ignored because success is true
+       if (!success) {
+          [...]
+       }
+    }
+
+    // The display is set as initialized even though it shouldn't
+    disp->Initialized = EGL_TRUE;
+
+Resolves: https://gitlab.freedesktop.org/mesa/mesa/-/issues/10123
+Fixes: 8cd44b884387 ("egl/glx: add autoloading for zink")
+Signed-off-by: José Expósito <jexposit@redhat.com>
+---
+ src/egl/main/eglapi.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/egl/main/eglapi.c b/src/egl/main/eglapi.c
+index 65b76c811e111..e1b2de5af7f0e 100644
+--- a/src/egl/main/eglapi.c
++++ b/src/egl/main/eglapi.c
+@@ -695,7 +695,7 @@ eglInitialize(EGLDisplay dpy, EGLint *major, EGLint *minor)
+          if (disp->Options.ForceSoftware)
+             RETURN_EGL_ERROR(disp, EGL_NOT_INITIALIZED, EGL_FALSE);
+          else {
+-            bool success = disp->Options.Zink;
++            bool success = false;
+             if (!disp->Options.Zink && !getenv("GALLIUM_DRIVER")) {
+                disp->Options.Zink = EGL_TRUE;
+                success = _eglDriver.Initialize(disp);
+-- 
+GitLab
+
