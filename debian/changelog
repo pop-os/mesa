@@ -1,3 +1,9 @@
+mesa (23.3.2-1pop0) jammy; urgency=medium
+
+  * Backport Mesa 23.3.2
+
+ -- Michael Murphy <michael@mmurphy.dev>  Tue, 02 Jan 2024 16:13:37 +0100
+
 mesa (23.3.1-1+exp1) experimental; urgency=medium
 
   * Drop reverts, add a new patch to test if it fixes software fallback.
