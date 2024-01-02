@@ -96,10 +96,10 @@ else
 	confflags_VALGRIND += -Dvalgrind=enabled
   endif
 
-  # WSL supports only amd64 and arm64
-  ifneq (,$(filter $(DEB_HOST_ARCH), amd64 arm64))
-	GALLIUM_DRIVERS += d3d12
-  endif
+#   # WSL supports only amd64 and arm64
+#   ifneq (,$(filter $(DEB_HOST_ARCH), amd64 arm64))
+# 	GALLIUM_DRIVERS += d3d12
+#   endif
 
   # LLVM is required for building r300g, radeonsi and llvmpipe drivers.
   # It's also required for building OpenCL support.
