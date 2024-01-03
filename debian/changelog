@@ -1,4 +1,4 @@
-mesa (23.3.2-1) UNRELEASED; urgency=medium
+mesa (23.3.2-1) unstable; urgency=medium
 
   [ Timo Aaltonen ]
   * New upstream release.
@@ -7,7 +7,7 @@ mesa (23.3.2-1) UNRELEASED; urgency=medium
   [ Tao Chen ]
   * Add Loongarch support
 
- -- Timo Aaltonen <tjaalton@debian.org>  Wed, 03 Jan 2024 15:07:02 +0200
+ -- Timo Aaltonen <tjaalton@debian.org>  Wed, 03 Jan 2024 15:19:43 +0200
 
 mesa (23.3.1-4) unstable; urgency=medium
 
