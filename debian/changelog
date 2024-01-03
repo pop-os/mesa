@@ -2,6 +2,7 @@ mesa (23.3.2-1) UNRELEASED; urgency=medium
 
   [ Timo Aaltonen ]
   * New upstream release.
+  * patches: Refreshed, and dropped an upstreamed patch.
 
   [ Tao Chen ]
   * Add Loongarch support
