@@ -1,6 +1,8 @@
 mesa (23.3.3-1) UNRELEASED; urgency=medium
 
   * New upstream release.
+  * patches, rules: Revert riscv64 back to plain softpipe swrast, drop
+    orcjit patch. (Closes: #1060376)
 
  -- Timo Aaltonen <tjaalton@debian.org>  Thu, 11 Jan 2024 09:11:44 +0200
 
