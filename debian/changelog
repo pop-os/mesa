@@ -1,3 +1,9 @@
+mesa (24.0.0~rc1-1) UNRELEASED; urgency=medium
+
+  * New upstream release candidate.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Fri, 12 Jan 2024 15:01:00 +0200
+
 mesa (23.3.3-1) unstable; urgency=medium
 
   * New upstream release.
