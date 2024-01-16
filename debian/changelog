@@ -4,6 +4,8 @@ mesa (24.0.0~rc1-1) UNRELEASED; urgency=medium
   * patches: Drop the zink reverts.
   * rules: Modify video-codecs option to build all codecs. Thanks,
     Safir Secerovic!
+  * control, rules: Bump debhelper-compat to 13, drop dh_missing
+    override as it's the default now.
 
  -- Timo Aaltonen <tjaalton@debian.org>  Fri, 12 Jan 2024 15:01:00 +0200
 
