@@ -111,7 +111,12 @@ else
 		VULKAN_DRIVERS += amd
 		confflags_GALLIUM += -Ddraw-use-llvm=false
 	else
+	  # drop virtio from armel, it doesn't build
+	  ifneq (,$(filter $(DEB_HOST_ARCH), armel))
+		VULKAN_DRIVERS += amd swrast
+	  else
 		VULKAN_DRIVERS += amd swrast virtio
+	  endif
 	endif
 
 	VULKAN_LAYERS += device-select intel-nullhw overlay
