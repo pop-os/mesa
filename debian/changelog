@@ -2,6 +2,8 @@ mesa (24.0.0~rc1-1) UNRELEASED; urgency=medium
 
   * New upstream release candidate.
   * patches: Drop the zink reverts.
+  * rules: Modify video-codecs option to build all codecs. Thanks,
+    Safir Secerovic!
 
  -- Timo Aaltonen <tjaalton@debian.org>  Fri, 12 Jan 2024 15:01:00 +0200
 
