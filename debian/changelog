@@ -15,6 +15,13 @@ mesa (24.0.0~rc1-1) experimental; urgency=medium
 
  -- Timo Aaltonen <tjaalton@debian.org>  Tue, 16 Jan 2024 19:15:45 +0200
 
+mesa (23.3.3-3) unstable; urgency=medium
+
+  * rules: Drop mips64el from RUSTICL_ARCHS too, which would pull llvm-
+    spirv-17. (Closes: #1060779)
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Thu, 18 Jan 2024 09:55:40 +0200
+
 mesa (23.3.3-2) unstable; urgency=medium
 
   * rules: Drop virtio from armel again, regression due to cleanup.
