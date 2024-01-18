@@ -1,8 +1,8 @@
-mesa (24.0.0~rc2-1) UNRELEASED; urgency=medium
+mesa (24.0.0~rc2-1) experimental; urgency=medium
 
   * New upstream release candidate.
 
- -- Timo Aaltonen <tjaalton@debian.org>  Thu, 18 Jan 2024 09:58:16 +0200
+ -- Timo Aaltonen <tjaalton@debian.org>  Thu, 18 Jan 2024 10:42:01 +0200
 
 mesa (24.0.0~rc1-1) experimental; urgency=medium
 
