@@ -1,10 +1,10 @@
-mesa (24.0.0~rc3-1) UNRELEASED; urgency=medium
+mesa (24.0.0~rc3-1) experimental; urgency=medium
 
   * New upstream release candidate.
   * patches: Attempt to fix failing autopkgtests by changing zink init
     failure logging to a warning instead of an error.
 
- -- Timo Aaltonen <tjaalton@debian.org>  Thu, 25 Jan 2024 15:46:05 +0200
+ -- Timo Aaltonen <tjaalton@debian.org>  Thu, 25 Jan 2024 15:53:42 +0200
 
 mesa (24.0.0~rc2-1) experimental; urgency=medium
 
