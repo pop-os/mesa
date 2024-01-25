@@ -21,6 +21,12 @@ mesa (24.0.0~rc1-1) experimental; urgency=medium
 
  -- Timo Aaltonen <tjaalton@debian.org>  Tue, 16 Jan 2024 19:15:45 +0200
 
+mesa (23.3.4-1) unstable; urgency=medium
+
+  * New upstream release.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Thu, 25 Jan 2024 15:41:39 +0200
+
 mesa (23.3.3-3) unstable; urgency=medium
 
   * rules: Drop mips64el from RUSTICL_ARCHS too, which would pull llvm-
