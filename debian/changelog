@@ -1,6 +1,6 @@
-mesa (24.0.0~rc3-2) UNRELEASED; urgency=medium
+mesa (24.0.0-1) UNRELEASED; urgency=medium
 
-  * patches: Drop the zink patch, gtk4 autopkgtest allows stderr now.
+  * New upstream release. (Closes: #1059782)
 
  -- Timo Aaltonen <tjaalton@debian.org>  Sat, 27 Jan 2024 10:44:08 +0200
 
