@@ -1,6 +1,7 @@
 mesa (24.0.2-1) UNRELEASED; urgency=medium
 
   * New upstream release.
+  * clc-build-fix.diff: Dropped, upstream.
 
  -- Timo Aaltonen <tjaalton@debian.org>  Thu, 29 Feb 2024 08:40:53 +0200
 
