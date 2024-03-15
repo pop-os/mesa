@@ -4,6 +4,7 @@ mesa (24.0.3-1) UNRELEASED; urgency=medium
   * radeon-fix-gnome-shell-crash.diff: Fix a regression crashing
     gnome-shell. (Closes: #1064123)
   * fix-zink-logging.diff: Updated.
+  * control: Bump libdrm build-dep. (Closes: #1065304)
 
  -- Timo Aaltonen <tjaalton@debian.org>  Thu, 14 Mar 2024 09:02:03 +0200
 
