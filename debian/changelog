@@ -1,6 +1,8 @@
 mesa (24.2.2-1~bpo12+1) UNRELEASED; urgency=medium
 
   * Rebuild for bookworm-backports.
+  * Use llvm-15 instead of llvm-18,
+      llvm-16 is available in Bookworm but not libllvmspirvlib-16-dev.
 
  -- Dylan Aïssi <daissi@debian.org>  Fri, 20 Sep 2024 11:40:09 +0200
 
