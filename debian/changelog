@@ -1,3 +1,16 @@
+mesa (24.2.7-1) unstable; urgency=medium
+
+  * New upstream release.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Thu, 14 Nov 2024 14:08:39 +0200
+
+mesa (24.2.6-1) unstable; urgency=medium
+
+  * New upstream release.
+  * fix-armhf-build.diff: Dropped, upstream.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Tue, 05 Nov 2024 09:59:12 +0200
+
 mesa (24.2.4-1~bpo12+1) bookworm-backports; urgency=medium
 
   * Rebuild for bookworm-backports.
