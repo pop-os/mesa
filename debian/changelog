@@ -1,3 +1,15 @@
+mesa (24.2.7-1~bpo12+1) UNRELEASED; urgency=medium
+
+  * Rebuild for bookworm-backports.
+  * Use llvm-15 instead of llvm-19,
+      llvm-16 is available in Bookworm but not libllvmspirvlib-16-dev.
+  * Disable rusticl, requires rust components (rustc >= 1.73 and bindgen)
+      not in Bookworm.
+  * Disable NVK, requires rust components (librust-syn-dev >= 2.0.68)
+      not in Bookworm.
+
+ -- Dylan Aïssi <daissi@debian.org>  Sat, 23 Nov 2024 10:13:16 +0100
+
 mesa (24.2.7-1) unstable; urgency=medium
 
   * New upstream release.
