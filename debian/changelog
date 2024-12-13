@@ -1,10 +1,4 @@
-mesa (24.2.8-1) unstable; urgency=medium
-
-  * New upstream release.
-
- -- Timo Aaltonen <tjaalton@debian.org>  Thu, 28 Nov 2024 13:59:57 +0200
-
-mesa (24.2.7-1~bpo12+1) UNRELEASED; urgency=medium
+mesa (24.2.8-1~bpo12+1) UNRELEASED; urgency=medium
 
   * Rebuild for bookworm-backports.
   * Use llvm-15 instead of llvm-19,
@@ -14,7 +8,13 @@ mesa (24.2.7-1~bpo12+1) UNRELEASED; urgency=medium
   * Disable NVK, requires rust components (librust-syn-dev >= 2.0.68)
       not in Bookworm.
 
- -- Dylan Aïssi <daissi@debian.org>  Sat, 23 Nov 2024 10:13:16 +0100
+ -- Dylan Aïssi <daissi@debian.org>  Fri, 13 Dec 2024 15:59:32 +0100
+
+mesa (24.2.8-1) unstable; urgency=medium
+
+  * New upstream release.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Thu, 28 Nov 2024 13:59:57 +0200
 
 mesa (24.2.7-1) unstable; urgency=medium
 
