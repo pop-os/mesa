@@ -1,4 +1,4 @@
-mesa (24.2.8-1~bpo12+1) UNRELEASED; urgency=medium
+mesa (24.2.8-1~bpo12+1) bookworm-backports; urgency=medium
 
   * Rebuild for bookworm-backports.
   * Use llvm-15 instead of llvm-19,
@@ -8,7 +8,7 @@ mesa (24.2.8-1~bpo12+1) UNRELEASED; urgency=medium
   * Disable NVK, requires rust components (librust-syn-dev >= 2.0.68)
       not in Bookworm.
 
- -- Dylan Aïssi <daissi@debian.org>  Fri, 13 Dec 2024 15:59:32 +0100
+ -- Dylan Aïssi <daissi@debian.org>  Fri, 03 Jan 2025 15:36:18 +0100
 
 mesa (24.2.8-1) unstable; urgency=medium
 
