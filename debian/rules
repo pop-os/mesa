@@ -231,6 +231,10 @@ override_dh_auto_configure: rewrite_wrap_files
 	$(buildflags) dh_auto_configure -- \
 		$(confflags)
 
+# Fix i386 builds that are out of memory.
+override_dh_builddeb:
+	dh_builddeb -- -Zzstd -z3
+
 override_dh_auto_install:
 	dh_auto_install
 	for file in debian/*.links.in; \
