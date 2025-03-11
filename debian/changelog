@@ -1,3 +1,9 @@
+mesa (25.0.1-2pop1) noble; urgency=medium
+
+  * Backport to Pop!_OS
+
+ -- Michael Aaron Murphy <michael@mmurphy.dev>  Tue, 11 Mar 2025 21:18:35 +0100
+
 mesa (25.0.1-2) unstable; urgency=medium
 
   * rules: Build gfxstream only on 64bit. (Closes: #1099704)
