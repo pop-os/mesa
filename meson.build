@@ -301,12 +301,9 @@ else
   with_intel_clc = false
 endif
 
-with_intel_vk_rt = get_option('intel-rt') \
-  .disable_auto_if(not with_intel_vk) \
-  .allowed()
-
-if with_intel_vk_rt and host_machine.cpu_family() != 'x86_64'
-  error('Intel Ray Tracing is only supported on x86_64')
+with_intel_vk_rt = false
+if host_machine.cpu_family() == 'x86_64'
+  with_intel_vk_rt = get_option('intel-rt').disable_auto_if(not with_intel_vk).allowed()
 endif
 
 with_any_intel = [
