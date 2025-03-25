@@ -6,7 +6,7 @@ Uploaders: Andreas Boll <aboll@debian.org>
 Standards-Version: 4.1.4
 Build-Depends:
  debhelper-compat (= 13),
- flatbuffers-compiler [linux-arm64],
+ flatbuffers-compiler [arm64],
  glslang-tools [@LLVM_ARCHS@],
  meson (>= 0.61),
  quilt (>= 0.63-8.2~),
@@ -16,7 +16,7 @@ Build-Depends:
  libx11-dev,
  libxxf86vm-dev,
  libexpat1-dev,
- libflatbuffers-dev [linux-arm64],
+ libflatbuffers-dev [arm64],
  libsensors-dev [!hurd-any],
  libxfixes-dev,
  libxext-dev,
@@ -36,7 +36,7 @@ Build-Depends:
  libxcb-sync-dev,
  libxrandr-dev,
  libxshmfence-dev (>= 1.1),
- libxtensor-dev [linux-arm64],
+ libxtensor-dev [arm64],
  libzstd-dev,
  python3,
  python3-mako,

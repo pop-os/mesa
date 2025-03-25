@@ -2240,7 +2240,8 @@ endif
 with_teflon = get_option('teflon')
 if with_teflon and with_tests
   dep_xtensor = dependency('xtensor')
-  dep_flatbuffers = dependency('flatbuffers')
+  # dep_flatbuffers = dependency('flatbuffers')
+  dep_flatbuffers = meson.get_compiler('c').find_library('flatbuffers')
   prog_flatc = find_program('flatc')
 endif
 
