@@ -1,3 +1,9 @@
+mesa (24.2.8-1~bpo12+1pop1) jammy; urgency=medium
+
+  * Backport to Jammy
+
+ -- Michael Aaron Murphy <michael@mmurphy.dev>  Mon, 24 Mar 2025 21:44:07 +0100
+
 mesa (24.2.8-1~bpo12+1) bookworm-backports; urgency=medium
 
   * Rebuild for bookworm-backports.
