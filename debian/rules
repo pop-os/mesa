@@ -109,7 +109,7 @@ else
 
   # WSL supports only amd64 and arm64
   ifneq (,$(filter $(DEB_HOST_ARCH), amd64 arm64))
-	GALLIUM_DRIVERS += d3d12
+	# GALLIUM_DRIVERS += d3d12
   endif
 
   # LLVM is required for building r300g, radeonsi and llvmpipe drivers.

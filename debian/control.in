@@ -6,13 +6,12 @@ Uploaders: Andreas Boll <aboll@debian.org>
 Standards-Version: 4.1.4
 Build-Depends:
  debhelper-compat (= 13),
- directx-headers-dev (>= 1.613.0) [linux-amd64 linux-arm64],
  flatbuffers-compiler [linux-arm64],
  glslang-tools [@LLVM_ARCHS@],
- meson (>= 1.4.0),
+ meson (>= 0.61),
  quilt (>= 0.63-8.2~),
  pkgconf,
- libdrm-dev (>= 2.4.121),
+ libdrm-dev (>= 2.4.110),
  libx11-dev,
  libxxf86vm-dev,
  libexpat1-dev,

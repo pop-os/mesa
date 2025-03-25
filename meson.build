@@ -6,7 +6,7 @@ project(
   ['c', 'cpp'],
   version : files('VERSION'),
   license : 'MIT',
-  meson_version : '>= 1.1.0',
+  meson_version : '>= 0.61',
   default_options : [
     'buildtype=debugoptimized',
     'b_ndebug=if-release',
@@ -303,8 +303,11 @@ endif
 
 with_intel_vk_rt = get_option('intel-rt') \
   .disable_auto_if(not with_intel_vk) \
-  .disable_if(host_machine.cpu_family() != 'x86_64', error_message : 'Intel Ray Tracing is only supported on x86_64') \
   .allowed()
+
+if with_intel_vk_rt and host_machine.cpu_family() != 'x86_64'
+  error('Intel Ray Tracing is only supported on x86_64')
+endif
 
 with_any_intel = [
   with_gallium_crocus,
@@ -629,7 +632,7 @@ prog_glslang = find_program('glslangValidator', native : true,
 if prog_glslang.found()
   # Check if glslang has depfile support. Support was added in 11.3.0, but
   # Windows path support was broken until 11.9.0.
-  # 
+  #
   # It is intentional to check the build machine, since we need to ensure that
   # glslang will output valid paths on the build platform
   _glslang_check = build_machine.system() == 'windows' ? '>= 11.9.0' : '>= 11.3.0'
@@ -980,16 +983,16 @@ endif
 # otherwise define MESA_DEBUG to 0
 pre_args += '-DMESA_DEBUG=@0@'.format(with_mesa_debug.to_int())
 
-with_split_debug = get_option('split-debug') \
-  .disable_if(not cc.has_argument('-gsplit-dwarf'),
-    error_message : 'split-debug requires compiler -gsplit-dwarf support') \
-  .disable_if(not cc.has_link_argument('-Wl,--gdb-index'),
-    error_message : 'split-debug requires the linker argument -Wl,--gdb-index')
-
-if with_split_debug.allowed() and get_option('debug')
-  add_project_arguments('-gsplit-dwarf', language : ['c', 'cpp'])
-  add_project_link_arguments('-Wl,--gdb-index', language : ['c', 'cpp'])
-endif
+# with_split_debug = get_option('split-debug') \
+#   .disable_if(not cc.has_argument('-gsplit-dwarf'),
+#     error_message : 'split-debug requires compiler -gsplit-dwarf support') \
+#   .disable_if(not cc.has_link_argument('-Wl,--gdb-index'),
+#     error_message : 'split-debug requires the linker argument -Wl,--gdb-index')
+#
+# if with_split_debug.allowed() and get_option('debug')
+#   add_project_arguments('-gsplit-dwarf', language : ['c', 'cpp'])
+#   add_project_link_arguments('-Wl,--gdb-index', language : ['c', 'cpp'])
+# endif
 
 with_shader_cache = get_option('shader-cache') \
   .require(host_machine.system() != 'windows', error_message : 'Shader Cache does not currently work on Windows') \
@@ -1677,10 +1680,10 @@ dep_libdrm_amdgpu = null_dep
 dep_libdrm_radeon = null_dep
 dep_libdrm_intel = null_dep
 
-_drm_amdgpu_ver = '2.4.121'
+_drm_amdgpu_ver = '2.4.120'
 _drm_radeon_ver = '2.4.71'
-_drm_intel_ver = '2.4.75'
-_drm_ver = '2.4.109'
+_drm_intel_ver = '2.4.120'
+_drm_ver = '2.4.120'
 
 _libdrm_checks = [
   ['intel', with_gallium_i915],
@@ -1958,7 +1961,7 @@ endif
 # so add a define to work silence these issues.
 if get_option('b_sanitize') == 'thread'
   pre_args += '-DTHREAD_SANITIZER=1'
-  # meson versions prior to 1.4 will warn "Consider using the built-in option for sanitizers ..." 
+  # meson versions prior to 1.4 will warn "Consider using the built-in option for sanitizers ..."
   # later on because it only checks whether the option starts with "-fsanitize",
   # but there is no built-in option for adding a blacklist
   tsan_blacklist = '-fsanitize-blacklist=@0@'.format(join_paths(meson.project_source_root(), 'build-support', 'tsan-blacklist.txt'))

@@ -85,9 +85,7 @@ endif
 has_spirv_link_workaround = cpp.has_member(
   'spvtools::LinkerOptions',
   'SetAllowPtrTypeMismatch(true)',
-  prefix : [
-    '#include <spirv-tools/linker.hpp>',
-  ],
+  prefix : '#include <spirv-tools/linker.hpp>',
   dependencies : dep_spirv_tools,
 )
 
