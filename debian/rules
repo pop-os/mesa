@@ -12,6 +12,9 @@ DEB_HOST_ARCH      ?= $(shell dpkg-architecture -qDEB_HOST_ARCH)
 DEB_HOST_ARCH_OS   ?= $(shell dpkg-architecture -qDEB_HOST_ARCH_OS)
 DEB_HOST_ARCH_CPU  ?= $(shell dpkg-architecture -qDEB_HOST_ARCH_CPU)
 
+# Set the rustc binary needed by Ubuntu
+export RUSTC=rustc-1.80
+
 # for finding the correct llvm-config when meson doesn't know about it yet
 LLVM_VERSION = 15
 export PATH:=/usr/lib/llvm-$(LLVM_VERSION)/bin/:$(PATH)
