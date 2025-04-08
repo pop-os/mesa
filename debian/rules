@@ -123,6 +123,9 @@ else
 	# drop virtio from armel, it doesn't build
 	ifneq (,$(filter $(DEB_HOST_ARCH), armel))
 		VULKAN_DRIVERS += amd swrast
+        # drop amd for arm64 because it does not build
+	elseif (,$(filter $(DEB_HOST_ARCH), arm64))
+	       VULKAN_DRIVERS += swrast virtio
 	else
 		VULKAN_DRIVERS += amd swrast virtio
 	endif
