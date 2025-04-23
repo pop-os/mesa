@@ -110,6 +110,12 @@ else
 	GALLIUM_DRIVERS += d3d12
   endif
 
+  # asahi supports only arm64, amd64 and i386
+  ifneq (,$(filter $(DEB_HOST_ARCH), arm64 amd64 i386))
+	GALLIUM_DRIVERS += asahi
+	VULKAN_DRIVERS += asahi
+  endif
+
   # LLVM is required for building r300g, radeonsi and llvmpipe drivers.
   # It's also required for building OpenCL support.
   ifneq (,$(filter $(DEB_HOST_ARCH), $(LLVM_ARCHS)))

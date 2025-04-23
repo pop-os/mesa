@@ -1,6 +1,7 @@
 mesa (25.1.0~rc1-1) UNRELEASED; urgency=medium
 
   * New upstream release candidate.
+  * rules: Enable asahi. (Closes: #1102725)
 
  -- Timo Aaltonen <tjaalton@debian.org>  Wed, 23 Apr 2025 15:55:26 +0300
 
