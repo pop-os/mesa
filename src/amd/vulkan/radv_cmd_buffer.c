@@ -9342,6 +9342,8 @@ radv_CmdBeginRendering(VkCommandBuffer commandBuffer, const VkRenderingInfo *pRe
 
    cmd_buffer->state.dirty_dynamic |=
       RADV_DYNAMIC_DEPTH_BIAS | RADV_DYNAMIC_STENCIL_TEST_ENABLE | RADV_DYNAMIC_COLOR_BLEND_ENABLE;
+   if (pdev->info.gfx_level >= GFX10_3)
+      cmd_buffer->state.dirty_dynamic |= RADV_DYNAMIC_FRAGMENT_SHADING_RATE;
    if (pdev->info.gfx_level >= GFX12)
       cmd_buffer->state.dirty_dynamic |= RADV_DYNAMIC_RASTERIZATION_SAMPLES;
 
@@ -11091,6 +11093,8 @@ radv_emit_msaa_state(struct radv_cmd_buffer *cmd_buffer)
                                     RADV_TRACKED_PA_SC_CONSERVATIVE_RASTERIZATION_CNTL, pa_sc_conservative_rast);
       radeon_end();
    }
+
+   cmd_buffer->state.dirty &= ~RADV_CMD_DIRTY_MSAA_STATE;
 }
 
 static void
@@ -11144,6 +11148,8 @@ radv_emit_clip_rects_state(struct radv_cmd_buffer *cmd_buffer)
 
    radeon_set_context_reg(R_02820C_PA_SC_CLIPRECT_RULE, cliprect_rule);
    radeon_end();
+
+   cmd_buffer->state.dirty &= ~RADV_CMD_DIRTY_CLIP_RECTS_STATE;
 }
 
 static void

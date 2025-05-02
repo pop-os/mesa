@@ -1346,7 +1346,7 @@ bi_emit_load_ubo(bi_builder *b, nir_intrinsic_instr *instr)
 static void
 bi_emit_load_push_constant(bi_builder *b, nir_intrinsic_instr *instr)
 {
-   assert(!b->shader->inputs->push_uniforms && "can't mix push constant forms");
+   assert(!b->shader->inputs->pushable_ubos && "can't mix push constant forms");
 
    nir_src *offset = &instr->src[0];
    assert(!nir_intrinsic_base(instr) && "base must be zero");
@@ -5018,6 +5018,19 @@ bi_lower_bit_size(const nir_instr *instr, void *data)
          if (pan_arch(gpu_id) < 11)
             return 0;
          return (nir_src_bit_size(alu->src[0].src) == 32) ? 0 : 32;
+      case nir_op_iadd:
+      case nir_op_isub:
+      case nir_op_iadd_sat:
+      case nir_op_uadd_sat:
+      case nir_op_isub_sat:
+      case nir_op_usub_sat:
+      case nir_op_ineg:
+      case nir_op_iabs:
+         /* On v11+, IABS.v4s8, IADD.v4s8 and ISUB.v4s8 are gone */
+         if (pan_arch(gpu_id) < 11)
+            return 0;
+
+         return (nir_src_bit_size(alu->src[0].src) == 8) ? 16 : 0;
       default:
          return 0;
       }
@@ -5963,7 +5976,7 @@ bi_compile_variant_nir(nir_shader *nir,
    bi_validate(ctx, "Early lowering");
 
    /* Runs before copy prop */
-   if (optimize && ctx->inputs->push_uniforms) {
+   if (optimize && ctx->inputs->pushable_ubos) {
       bi_opt_push_ubo(ctx);
    }
 
@@ -5988,7 +6001,7 @@ bi_compile_variant_nir(nir_shader *nir,
       bi_opt_dce(ctx, false);
       bi_opt_cse(ctx);
       bi_opt_dce(ctx, false);
-      if (ctx->inputs->push_uniforms)
+      if (ctx->inputs->pushable_ubos)
          bi_opt_reorder_push(ctx);
       bi_validate(ctx, "Optimization passes");
    }

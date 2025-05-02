@@ -18,6 +18,14 @@ protected:
                            enum brw_reg_type add_type,
                            enum brw_reg_type op_type,
                            bool expected_cmod_prop_progress);
+
+   void test_cmp_to_add_sat(enum brw_conditional_mod before,
+                            bool add_negative_src0,
+                            bool add_negative_constant,
+                            bool expected_cmod_prop_progress);
+
+   void test_subtract_merge(enum brw_conditional_mod before,
+                            bool expected_cmod_prop_progress);
 };
 
 TEST_F(cmod_propagation_test, basic)
@@ -516,7 +524,9 @@ TEST_F(cmod_propagation_test, add_not_merge_with_compare)
    EXPECT_NO_PROGRESS(brw_opt_cmod_propagation, bld);
 }
 
-TEST_F(cmod_propagation_test, subtract_merge_with_compare)
+void
+cmod_propagation_test::test_subtract_merge(enum brw_conditional_mod before,
+                                           bool expected_cmod_prop_progress)
 {
    brw_builder bld = make_shader();
    brw_builder exp = make_shader();
@@ -526,13 +536,47 @@ TEST_F(cmod_propagation_test, subtract_merge_with_compare)
    brw_reg src1 = vgrf(bld, exp, BRW_TYPE_F);
 
    bld.ADD(dest, src0, negate(src1));
-   bld.CMP(bld.null_reg_f(), src0, src1, BRW_CONDITIONAL_L);
+   bld.CMP(bld.null_reg_f(), src0, src1, before);
 
-   EXPECT_PROGRESS(brw_opt_cmod_propagation, bld);
+   EXPECT_PROGRESS_RESULT(expected_cmod_prop_progress,
+                          brw_opt_cmod_propagation, bld);
 
-   exp.ADD(dest, src0, negate(src1))->conditional_mod = BRW_CONDITIONAL_L;
+   if (expected_cmod_prop_progress) {
+      exp.ADD(dest, src0, negate(src1))
+         ->conditional_mod = before;
 
-   EXPECT_SHADERS_MATCH(bld, exp);
+      EXPECT_SHADERS_MATCH(bld, exp);
+   }
+}
+
+TEST_F(cmod_propagation_test, subtract_merge_with_compare_l)
+{
+   test_subtract_merge(BRW_CONDITIONAL_L, true);
+}
+
+TEST_F(cmod_propagation_test, subtract_merge_with_compare_g)
+{
+   test_subtract_merge(BRW_CONDITIONAL_G, true);
+}
+
+TEST_F(cmod_propagation_test, subtract_merge_with_compare_le)
+{
+   test_subtract_merge(BRW_CONDITIONAL_LE, false);
+}
+
+TEST_F(cmod_propagation_test, subtract_merge_with_compare_ge)
+{
+   test_subtract_merge(BRW_CONDITIONAL_GE, false);
+}
+
+TEST_F(cmod_propagation_test, subtract_merge_with_compare_z)
+{
+   test_subtract_merge(BRW_CONDITIONAL_Z, false);
+}
+
+TEST_F(cmod_propagation_test, subtract_merge_with_compare_nz)
+{
+   test_subtract_merge(BRW_CONDITIONAL_NZ, false);
 }
 
 TEST_F(cmod_propagation_test, subtract_immediate_merge_with_compare)
@@ -570,16 +614,17 @@ TEST_F(cmod_propagation_test, subtract_merge_with_compare_intervening_add)
    brw_reg dest0 = vgrf(bld, exp, BRW_TYPE_F);
    brw_reg dest1 = vgrf(bld, exp, BRW_TYPE_F);
    brw_reg src0  = vgrf(bld, exp, BRW_TYPE_F);
-   brw_reg src1  = vgrf(bld, exp, BRW_TYPE_F);
+   brw_reg one          = brw_imm_f(1.0f);
+   brw_reg negative_one = brw_imm_f(-1.0f);
 
-   bld.ADD(dest0, src0, negate(src1));
-   bld.ADD(dest1, src0, src1);
-   bld.CMP(bld.null_reg_f(), src0, src1, BRW_CONDITIONAL_L);
+   bld.ADD(dest0, src0, negative_one);
+   bld.ADD(dest1, src0, one);
+   bld.CMP(bld.null_reg_f(), src0, one, BRW_CONDITIONAL_L);
 
    EXPECT_PROGRESS(brw_opt_cmod_propagation, bld);
 
-   exp.ADD(dest0, src0, negate(src1))->conditional_mod = BRW_CONDITIONAL_L;
-   exp.ADD(dest1, src0, src1);
+   exp.ADD(dest0, src0, negative_one)->conditional_mod = BRW_CONDITIONAL_L;
+   exp.ADD(dest1, src0, one);
 
    EXPECT_SHADERS_MATCH(bld, exp);
 }
@@ -591,11 +636,12 @@ TEST_F(cmod_propagation_test, subtract_not_merge_with_compare_intervening_partia
    brw_reg dest0 = bld.vgrf(BRW_TYPE_F);
    brw_reg dest1 = bld.vgrf(BRW_TYPE_F);
    brw_reg src0  = bld.vgrf(BRW_TYPE_F);
-   brw_reg src1  = bld.vgrf(BRW_TYPE_F);
+   brw_reg one          = brw_imm_f(1.0f);
+   brw_reg negative_one = brw_imm_f(-1.0f);
 
-   bld.ADD(dest0, src0, negate(src1));
-   set_predicate(BRW_PREDICATE_NORMAL, bld.ADD(dest1, src0, negate(src1)));
-   bld.CMP(bld.null_reg_f(), src0, src1, BRW_CONDITIONAL_L);
+   bld.ADD(dest0, src0, negative_one);
+   set_predicate(BRW_PREDICATE_NORMAL, bld.ADD(dest1, src0, one));
+   bld.CMP(bld.null_reg_f(), src0, one, BRW_CONDITIONAL_L);
 
    EXPECT_NO_PROGRESS(brw_opt_cmod_propagation, bld);
 }
@@ -607,32 +653,14 @@ TEST_F(cmod_propagation_test, subtract_not_merge_with_compare_intervening_add)
    brw_reg dest0 = bld.vgrf(BRW_TYPE_F);
    brw_reg dest1 = bld.vgrf(BRW_TYPE_F);
    brw_reg src0 = bld.vgrf(BRW_TYPE_F);
-   brw_reg src1 = bld.vgrf(BRW_TYPE_F);
+   brw_reg one          = brw_imm_f(1.0f);
+   brw_reg negative_one = brw_imm_f(-1.0f);
 
-   bld.ADD(dest0, src0, negate(src1));
-   set_condmod(BRW_CONDITIONAL_EQ, bld.ADD(dest1, src0, src1));
-   bld.CMP(bld.null_reg_f(), src0, src1, BRW_CONDITIONAL_L);
+   bld.ADD(dest0, src0, negative_one);
+   set_condmod(BRW_CONDITIONAL_EQ, bld.ADD(dest1, src0, one));
+   bld.CMP(bld.null_reg_f(), src0, one, BRW_CONDITIONAL_L);
 
    EXPECT_NO_PROGRESS(brw_opt_cmod_propagation, bld);
-}
-
-TEST_F(cmod_propagation_test, add_merge_with_compare)
-{
-   brw_builder bld = make_shader();
-   brw_builder exp = make_shader();
-
-   brw_reg dest = vgrf(bld, exp, BRW_TYPE_F);
-   brw_reg src0 = vgrf(bld, exp, BRW_TYPE_F);
-   brw_reg src1 = vgrf(bld, exp, BRW_TYPE_F);
-
-   bld.ADD(dest, src0, src1);
-   bld.CMP(bld.null_reg_f(), src0, negate(src1), BRW_CONDITIONAL_L);
-
-   EXPECT_PROGRESS(brw_opt_cmod_propagation, bld);
-
-   exp.ADD(dest, src0, src1)->conditional_mod = BRW_CONDITIONAL_L;
-
-   EXPECT_SHADERS_MATCH(bld, exp);
 }
 
 TEST_F(cmod_propagation_test, negative_subtract_merge_with_compare)
@@ -642,17 +670,17 @@ TEST_F(cmod_propagation_test, negative_subtract_merge_with_compare)
 
    brw_reg dest = vgrf(bld, exp, BRW_TYPE_F);
    brw_reg src0 = vgrf(bld, exp, BRW_TYPE_F);
-   brw_reg src1 = vgrf(bld, exp, BRW_TYPE_F);
+   brw_reg one  = brw_imm_f(1.0f);
 
-   bld.ADD(dest, src1, negate(src0));
-   bld.CMP(bld.null_reg_f(), src0, src1, BRW_CONDITIONAL_L);
+   bld.ADD(dest, negate(src0), one);
+   bld.CMP(bld.null_reg_f(), src0, one, BRW_CONDITIONAL_L);
 
    EXPECT_PROGRESS(brw_opt_cmod_propagation, bld);
 
-   /* The result of the subtract is the negatiion of the result of the
+   /* The result of the subtract is the negation of the result of the
     * implicit subtract in the compare, so the condition must change.
     */
-   exp.ADD(dest, src1, negate(src0))->conditional_mod = BRW_CONDITIONAL_G;
+   exp.ADD(dest, negate(src0), one)->conditional_mod = BRW_CONDITIONAL_G;
 
    EXPECT_SHADERS_MATCH(bld, exp);
 }
@@ -665,25 +693,26 @@ TEST_F(cmod_propagation_test, subtract_delete_compare)
    brw_reg dest  = vgrf(bld, exp, BRW_TYPE_F);
    brw_reg dest1 = vgrf(bld, exp, BRW_TYPE_F);
    brw_reg src0  = vgrf(bld, exp, BRW_TYPE_F);
-   brw_reg src1  = vgrf(bld, exp, BRW_TYPE_F);
    brw_reg src2  = vgrf(bld, exp, BRW_TYPE_F);
+   brw_reg one          = brw_imm_f(1.0f);
+   brw_reg negative_one = brw_imm_f(-1.0f);
 
-   set_condmod(BRW_CONDITIONAL_L, bld.ADD(dest, src0, negate(src1)));
+   set_condmod(BRW_CONDITIONAL_L, bld.ADD(dest, src0, negative_one));
    set_predicate(BRW_PREDICATE_NORMAL, bld.MOV(dest1, src2));
-   bld.CMP(bld.null_reg_f(), src0, src1, BRW_CONDITIONAL_L);
+   bld.CMP(bld.null_reg_f(), src0, one, BRW_CONDITIONAL_L);
 
    /* = Before =
-    * 0: add.l.f0(8)     dest0:F src0:F  -src1:F
+    * 0: add.l.f0(8)     dest0:F src0:F  -1.0:F
     * 1: (+f0) mov(0)    dest1:F src2:F
-    * 2: cmp.l.f0(8)     null:F  src0:F  src1:F
+    * 2: cmp.l.f0(8)     null:F  src0:F  1.0:F
     *
     * = After =
-    * 0: add.l.f0(8)     dest:F  src0:F  -src1:F
+    * 0: add.l.f0(8)     dest:F  src0:F  -1.0:F
     * 1: (+f0) mov(0)    dest1:F src2:F
     */
    EXPECT_PROGRESS(brw_opt_cmod_propagation, bld);
 
-   set_condmod(BRW_CONDITIONAL_L, exp.ADD(dest, src0, negate(src1)));
+   set_condmod(BRW_CONDITIONAL_L, exp.ADD(dest, src0, negative_one));
    set_predicate(BRW_PREDICATE_NORMAL, exp.MOV(dest1, src2));
 
    EXPECT_SHADERS_MATCH(bld, exp);
@@ -700,27 +729,28 @@ TEST_F(cmod_propagation_test, subtract_delete_compare_other_flag)
    brw_reg dest  = vgrf(bld, exp, BRW_TYPE_F);
    brw_reg dest1 = vgrf(bld, exp, BRW_TYPE_F);
    brw_reg src0  = vgrf(bld, exp, BRW_TYPE_F);
-   brw_reg src1  = vgrf(bld, exp, BRW_TYPE_F);
    brw_reg src2  = vgrf(bld, exp, BRW_TYPE_F);
+   brw_reg one          = brw_imm_f(1.0f);
+   brw_reg negative_one = brw_imm_f(-1.0f);
 
-   set_condmod(BRW_CONDITIONAL_L, bld.ADD(dest, src0, negate(src1)))
+   set_condmod(BRW_CONDITIONAL_L, bld.ADD(dest, src0, negative_one))
       ->flag_subreg = 1;
    set_predicate(BRW_PREDICATE_NORMAL, bld.MOV(dest1, src2));
-   bld.CMP(bld.null_reg_f(), src0, src1, BRW_CONDITIONAL_L)
+   bld.CMP(bld.null_reg_f(), src0, one, BRW_CONDITIONAL_L)
       ->flag_subreg = 1;
 
    /* = Before =
-    * 0: add.l.f0.1(8)   dest0:F src0:F  -src1:F
+    * 0: add.l.f0.1(8)   dest0:F src0:F  -1.0:F
     * 1: (+f0) mov(0)    dest1:F src2:F
-    * 2: cmp.l.f0.1(8)   null:F  src0:F  src1:F
+    * 2: cmp.l.f0.1(8)   null:F  src0:F  1.0:F
     *
     * = After =
-    * 0: add.l.f0.1(8)   dest:F  src0:F  -src1:F
+    * 0: add.l.f0.1(8)   dest:F  src0:F  -1.0:F
     * 1: (+f0) mov(0)    dest1:F src2:F
     */
    EXPECT_PROGRESS(brw_opt_cmod_propagation, bld);
 
-   set_condmod(BRW_CONDITIONAL_L, exp.ADD(dest, src0, negate(src1)))
+   set_condmod(BRW_CONDITIONAL_L, exp.ADD(dest, src0, negative_one))
       ->flag_subreg = 1;
    set_predicate(BRW_PREDICATE_NORMAL, exp.MOV(dest1, src2));
 
@@ -733,10 +763,11 @@ TEST_F(cmod_propagation_test, subtract_to_mismatch_flag)
 
    brw_reg dest = bld.vgrf(BRW_TYPE_F);
    brw_reg src0 = bld.vgrf(BRW_TYPE_F);
-   brw_reg src1 = bld.vgrf(BRW_TYPE_F);
+   brw_reg one          = brw_imm_f(1.0f);
+   brw_reg negative_one = brw_imm_f(-1.0f);
 
-   set_condmod(BRW_CONDITIONAL_L, bld.ADD(dest, src0, negate(src1)));
-   bld.CMP(bld.null_reg_f(), src0, src1, BRW_CONDITIONAL_L)
+   set_condmod(BRW_CONDITIONAL_L, bld.ADD(dest, src0, negative_one));
+   bld.CMP(bld.null_reg_f(), src0, one, BRW_CONDITIONAL_L)
       ->flag_subreg = 1;
 
    EXPECT_NO_PROGRESS(brw_opt_cmod_propagation, bld);
@@ -750,26 +781,27 @@ TEST_F(cmod_propagation_test,
 
    brw_reg dest0 = vgrf(bld, exp, BRW_TYPE_F);
    brw_reg src0  = vgrf(bld, exp, BRW_TYPE_F);
-   brw_reg src1  = vgrf(bld, exp, BRW_TYPE_F);
+   brw_reg one          = brw_imm_f(1.0f);
+   brw_reg negative_one = brw_imm_f(-1.0f);
 
-   bld.ADD(dest0, src0, negate(src1));
-   bld.CMP(bld.null_reg_f(), src0, src1, BRW_CONDITIONAL_L)
+   bld.ADD(dest0, src0, negative_one);
+   bld.CMP(bld.null_reg_f(), src0, one, BRW_CONDITIONAL_L)
             ->flag_subreg = 1;
-   bld.CMP(bld.null_reg_f(), src0, src1, BRW_CONDITIONAL_L);
+   bld.CMP(bld.null_reg_f(), src0, one, BRW_CONDITIONAL_L);
 
    /* = Before =
-    * 0: add(8)         dest0:F src0:F  -src1:F
-    * 1: cmp.l.f0.1(8)  null:F  src0:F  src1:F
-    * 2: cmp.l.f0(8)    null:F  src0:F  src1:F
+    * 0: add(8)         dest0:F src0:F  -1.0:F
+    * 1: cmp.l.f0.1(8)  null:F  src0:F  1.0:F
+    * 2: cmp.l.f0(8)    null:F  src0:F  1.0:F
     *
     * = After =
-    * 0: add.l.f0(8)    dest0:F src0:F  -src1:F
-    * 1: cmp.l.f0.1(8)  null:F  src0:F  src1:F
+    * 0: add.l.f0(8)    dest0:F src0:F  -1.0:F
+    * 1: cmp.l.f0.1(8)  null:F  src0:F  1.0:F
     *
     * NOTE: Another perfectly valid after sequence would be:
     *
-    * 0: add.f0.1(8)    dest0:F src0:F  -src1:F
-    * 1: cmp.l.f0(8)    null:F  src0:F  src1:F
+    * 0: add.f0.1(8)    dest0:F src0:F  -1.0:F
+    * 1: cmp.l.f0(8)    null:F  src0:F  1.0:F
     *
     * However, the optimization pass starts at the end of the basic block.
     * Because of this, the cmp.l.f0 will always be chosen.  If the pass
@@ -777,8 +809,8 @@ TEST_F(cmod_propagation_test,
     */
    EXPECT_PROGRESS(brw_opt_cmod_propagation, bld);
 
-   exp.ADD(dest0, src0, negate(src1))->conditional_mod = BRW_CONDITIONAL_L;
-   exp.CMP(bld.null_reg_f(), src0, src1, BRW_CONDITIONAL_L)
+   exp.ADD(dest0, src0, negative_one)->conditional_mod = BRW_CONDITIONAL_L;
+   exp.CMP(bld.null_reg_f(), src0, one, BRW_CONDITIONAL_L)
             ->flag_subreg = 1;
 
    EXPECT_SHADERS_MATCH(bld, exp);
@@ -793,27 +825,28 @@ TEST_F(cmod_propagation_test,
    brw_reg dest0 = vgrf(bld, exp, BRW_TYPE_F);
    brw_reg dest1 = vgrf(bld, exp, BRW_TYPE_F);
    brw_reg src0  = vgrf(bld, exp, BRW_TYPE_F);
-   brw_reg src1  = vgrf(bld, exp, BRW_TYPE_F);
    brw_reg src2  = vgrf(bld, exp, BRW_TYPE_F);
    brw_reg zero  = brw_imm_f(0.0f);
+   brw_reg one          = brw_imm_f(1.0f);
+   brw_reg negative_one = brw_imm_f(-1.0f);
 
-   bld.ADD(dest0, src0, negate(src1));
+   bld.ADD(dest0, src0, negative_one);
    set_predicate(BRW_PREDICATE_NORMAL, bld.SEL(dest1, src2, zero))
       ->flag_subreg = 1;
-   bld.CMP(bld.null_reg_f(), src0, src1, BRW_CONDITIONAL_L);
+   bld.CMP(bld.null_reg_f(), src0, one, BRW_CONDITIONAL_L);
 
    /* = Before =
-    * 0: add(8)         dest0:F src0:F  -src1:F
+    * 0: add(8)         dest0:F src0:F  -1.0:F
     * 1: (+f0.1) sel(8) dest1   src2    0.0f
-    * 2: cmp.l.f0(8)    null:F  src0:F  src1:F
+    * 2: cmp.l.f0(8)    null:F  src0:F  1.0:F
     *
     * = After =
-    * 0: add.l.f0(8)    dest0:F src0:F  -src1:F
+    * 0: add.l.f0(8)    dest0:F src0:F  -1.0:F
     * 1: (+f0.1) sel(8) dest1   src2    0.0f
     */
    EXPECT_PROGRESS(brw_opt_cmod_propagation, bld);
 
-   exp.ADD(dest0, src0, negate(src1))->conditional_mod = BRW_CONDITIONAL_L;
+   exp.ADD(dest0, src0, negative_one)->conditional_mod = BRW_CONDITIONAL_L;
    set_predicate(BRW_PREDICATE_NORMAL, exp.SEL(dest1, src2, zero))
       ->flag_subreg = 1;
 
@@ -828,25 +861,26 @@ TEST_F(cmod_propagation_test, subtract_delete_compare_derp)
    brw_reg dest0 = vgrf(bld, exp, BRW_TYPE_F);
    brw_reg dest1 = vgrf(bld, exp, BRW_TYPE_F);
    brw_reg src0  = vgrf(bld, exp, BRW_TYPE_F);
-   brw_reg src1  = vgrf(bld, exp, BRW_TYPE_F);
+   brw_reg one          = brw_imm_f(1.0f);
+   brw_reg negative_one = brw_imm_f(-1.0f);
 
-   set_condmod(BRW_CONDITIONAL_L, bld.ADD(dest0, src0, negate(src1)));
-   set_predicate(BRW_PREDICATE_NORMAL, bld.ADD(dest1, negate(src0), src1));
-   bld.CMP(bld.null_reg_f(), src0, src1, BRW_CONDITIONAL_L);
+   set_condmod(BRW_CONDITIONAL_L, bld.ADD(dest0, src0, negative_one));
+   set_predicate(BRW_PREDICATE_NORMAL, bld.ADD(dest1, negate(src0), one));
+   bld.CMP(bld.null_reg_f(), src0, one, BRW_CONDITIONAL_L);
 
    /* = Before =
-    * 0: add.l.f0(8)     dest0:F src0:F  -src1:F
-    * 1: (+f0) add(0)    dest1:F -src0:F src1:F
-    * 2: cmp.l.f0(8)     null:F  src0:F  src1:F
+    * 0: add.l.f0(8)     dest0:F src0:F  -1.0:F
+    * 1: (+f0) add(0)    dest1:F -src0:F 1.0:F
+    * 2: cmp.l.f0(8)     null:F  src0:F  1.0:F
     *
     * = After =
-    * 0: add.l.f0(8)     dest0:F src0:F  -src1:F
-    * 1: (+f0) add(0)    dest1:F -src0:F src1:F
+    * 0: add.l.f0(8)     dest0:F src0:F  -1.0:F
+    * 1: (+f0) add(0)    dest1:F -src0:F 1.0:F
     */
    EXPECT_PROGRESS(brw_opt_cmod_propagation, bld);
 
-   set_condmod(BRW_CONDITIONAL_L, exp.ADD(dest0, src0, negate(src1)));
-   set_predicate(BRW_PREDICATE_NORMAL, exp.ADD(dest1, negate(src0), src1));
+   set_condmod(BRW_CONDITIONAL_L, exp.ADD(dest0, src0, negative_one));
+   set_predicate(BRW_PREDICATE_NORMAL, exp.ADD(dest1, negate(src0), one));
 
    EXPECT_SHADERS_MATCH(bld, exp);
 }
@@ -2202,63 +2236,181 @@ TEST_F(cmod_propagation_test, not_to_or_intervening_mismatch_flag_read)
    EXPECT_SHADERS_MATCH(bld, exp);
 }
 
-TEST_F(cmod_propagation_test, cmp_to_add_float_e)
-{
-   brw_builder bld = make_shader();
-
-   brw_reg dest = bld.vgrf(BRW_TYPE_F);
-   brw_reg src0 = bld.vgrf(BRW_TYPE_F);
-   brw_reg neg10(brw_imm_f(-10.0f));
-   brw_reg pos10(brw_imm_f(10.0f));
-
-   bld.ADD(dest, src0, neg10)->saturate = true;
-   bld.CMP(bld.null_reg_f(), src0, pos10, BRW_CONDITIONAL_EQ);
-
-   EXPECT_NO_PROGRESS(brw_opt_cmod_propagation, bld);
-}
-
-TEST_F(cmod_propagation_test, cmp_to_add_float_g)
+void
+cmod_propagation_test::test_cmp_to_add_sat(enum brw_conditional_mod before,
+                                           bool add_negative_src0,
+                                           bool add_negative_constant,
+                                           bool expected_cmod_prop_progress)
 {
    brw_builder bld = make_shader();
    brw_builder exp = make_shader();
 
    brw_reg dest  = vgrf(bld, exp, BRW_TYPE_F);
    brw_reg src0  = vgrf(bld, exp, BRW_TYPE_F);
-   brw_reg neg10 = brw_imm_f(-10.0f);
-   brw_reg pos10 = brw_imm_f(10.0f);
+   brw_reg neg = brw_imm_f(-0.5f);
+   brw_reg pos = brw_imm_f(0.5f);
 
-   bld.ADD(dest, src0, neg10)->saturate = true;
-   bld.CMP(bld.null_reg_f(), src0, pos10, BRW_CONDITIONAL_G);
+   bld.ADD(dest,
+           add_negative_src0 ? negate(src0) : src0,
+           add_negative_constant ? neg : pos)
+      ->saturate = true;
 
-   EXPECT_PROGRESS(brw_opt_cmod_propagation, bld);
+   /* The parity of negations between the ADD and the CMP must be
+    * different. Otherwise the ADD and the CMP aren't performing the same
+    * arithmetic, and the optimization won't trigger.
+    */
+   const bool cmp_negative_constant =
+      add_negative_constant == add_negative_src0;
 
-   brw_inst *add = exp.ADD(dest, src0, neg10);
-   add->saturate = true;
-   add->conditional_mod = BRW_CONDITIONAL_G;
+   bld.CMP(bld.null_reg_f(),
+           src0,
+           cmp_negative_constant ? neg : pos,
+           before);
 
-   EXPECT_SHADERS_MATCH(bld, exp);
+   EXPECT_PROGRESS_RESULT(expected_cmod_prop_progress,
+                          brw_opt_cmod_propagation, bld);
+
+   if (expected_cmod_prop_progress) {
+      const enum brw_conditional_mod after =
+         add_negative_src0 ? brw_swap_cmod(before) : before;
+
+      brw_inst *add = exp.ADD(dest,
+                              add_negative_src0 ? negate(src0) : src0,
+                              add_negative_constant ? neg : pos);
+      add->saturate = true;
+      add->conditional_mod = after;
+
+      EXPECT_SHADERS_MATCH(bld, exp);
+   }
 }
 
-TEST_F(cmod_propagation_test, cmp_to_add_float_le)
+TEST_F(cmod_propagation_test, cmp_g_to_add_src0_neg_constant)
 {
-   brw_builder bld = make_shader();
-   brw_builder exp = make_shader();
+   /* This works even if src0 is NaN. (NaN > 0.5) is false, and (0.0 > 0.5) is
+    * false.
+    */
+   test_cmp_to_add_sat(BRW_CONDITIONAL_G, false, true, true);
+}
 
-   brw_reg dest  = vgrf(bld, exp, BRW_TYPE_F);
-   brw_reg src0  = vgrf(bld, exp, BRW_TYPE_F);
-   brw_reg neg10 = brw_imm_f(-10.0f);
-   brw_reg pos10 = brw_imm_f(10.0f);
+TEST_F(cmod_propagation_test, cmp_g_to_add_src0_pos_constant)
+{
+   /* This fails if src0 is NaN. (NaN > -0.5) is false, but (0.0 > -0.5) is
+    * true.
+    */
+   test_cmp_to_add_sat(BRW_CONDITIONAL_G, false, false, false);
+}
 
-   bld.ADD(dest, src0, neg10)->saturate = true;
-   bld.CMP(bld.null_reg_f(), src0, pos10, BRW_CONDITIONAL_LE);
+TEST_F(cmod_propagation_test, cmp_g_to_add_neg_src0_neg_constant)
+{
+   /* This is effectively the same as cmp_l_to_add_src0_neg_constant. */
+   test_cmp_to_add_sat(BRW_CONDITIONAL_G, true, true, false);
+}
 
-   EXPECT_PROGRESS(brw_opt_cmod_propagation, bld);
+TEST_F(cmod_propagation_test, cmp_g_to_add_neg_src0_pos_constant)
+{
+   /* This is effectively the same as cmp_l_to_add_src0_pos_constant. */
+   test_cmp_to_add_sat(BRW_CONDITIONAL_G, true, false, false);
+}
 
-   brw_inst *add = exp.ADD(dest, src0, neg10);
-   add->saturate = true;
-   add->conditional_mod = BRW_CONDITIONAL_LE;
+TEST_F(cmod_propagation_test, cmp_l_to_add_src0_neg_constant)
+{
+   test_cmp_to_add_sat(BRW_CONDITIONAL_L, false, true, false);
+}
 
-   EXPECT_SHADERS_MATCH(bld, exp);
+TEST_F(cmod_propagation_test, cmp_l_to_add_src0_pos_constant)
+{
+   test_cmp_to_add_sat(BRW_CONDITIONAL_L, false, false, false);
+}
+
+TEST_F(cmod_propagation_test, cmp_l_to_add_neg_src0_neg_constant)
+{
+   /* This is effectively the same as cmp_g_to_add_src0_neg_constant. */
+   test_cmp_to_add_sat(BRW_CONDITIONAL_L, true, true, true);
+}
+
+TEST_F(cmod_propagation_test, cmp_l_to_add_neg_src0_pos_constant)
+{
+   test_cmp_to_add_sat(BRW_CONDITIONAL_L, true, false, false);
+}
+
+TEST_F(cmod_propagation_test, cmp_le_to_add_src0_neg_constant)
+{
+   test_cmp_to_add_sat(BRW_CONDITIONAL_LE, false, true, false);
+}
+
+TEST_F(cmod_propagation_test, cmp_le_to_add_src0_pos_constant)
+{
+   test_cmp_to_add_sat(BRW_CONDITIONAL_LE, false, false, false);
+}
+
+TEST_F(cmod_propagation_test, cmp_le_to_add_neg_src0_neg_constant)
+{
+   test_cmp_to_add_sat(BRW_CONDITIONAL_LE, true, true, false);
+}
+
+TEST_F(cmod_propagation_test, cmp_le_to_add_neg_src0_pos_constant)
+{
+   test_cmp_to_add_sat(BRW_CONDITIONAL_LE, true, false, false);
+}
+
+TEST_F(cmod_propagation_test, cmp_ge_to_add_src0_neg_constant)
+{
+   test_cmp_to_add_sat(BRW_CONDITIONAL_GE, false, true, false);
+}
+
+TEST_F(cmod_propagation_test, cmp_ge_to_add_src0_pos_constant)
+{
+   test_cmp_to_add_sat(BRW_CONDITIONAL_GE, false, false, false);
+}
+
+TEST_F(cmod_propagation_test, cmp_ge_to_add_neg_src0_neg_constant)
+{
+   test_cmp_to_add_sat(BRW_CONDITIONAL_GE, true, true, false);
+}
+
+TEST_F(cmod_propagation_test, cmp_ge_to_add_neg_src0_pos_constant)
+{
+   test_cmp_to_add_sat(BRW_CONDITIONAL_GE, true, false, false);
+}
+
+TEST_F(cmod_propagation_test, cmp_nz_to_add_src0_neg_constant)
+{
+   test_cmp_to_add_sat(BRW_CONDITIONAL_NZ, false, true, false);
+}
+
+TEST_F(cmod_propagation_test, cmp_nz_to_add_src0_pos_constant)
+{
+   test_cmp_to_add_sat(BRW_CONDITIONAL_NZ, false, false, false);
+}
+
+TEST_F(cmod_propagation_test, cmp_nz_to_add_neg_src0_neg_constant)
+{
+   test_cmp_to_add_sat(BRW_CONDITIONAL_NZ, true, true, false);
+}
+
+TEST_F(cmod_propagation_test, cmp_nz_to_add_neg_src0_pos_constant)
+{
+   test_cmp_to_add_sat(BRW_CONDITIONAL_NZ, true, false, false);
+}
+
+TEST_F(cmod_propagation_test, cmp_z_to_add_src0_neg_constant)
+{
+   test_cmp_to_add_sat(BRW_CONDITIONAL_Z, false, true, false);
+}
+
+TEST_F(cmod_propagation_test, cmp_z_to_add_src0_pos_constant)
+{
+   test_cmp_to_add_sat(BRW_CONDITIONAL_Z, false, false, false);
+}
+
+TEST_F(cmod_propagation_test, cmp_z_to_add_neg_src0_neg_constant)
+{
+   test_cmp_to_add_sat(BRW_CONDITIONAL_Z, true, true, false);
+}
+
+TEST_F(cmod_propagation_test, cmp_z_to_add_neg_src0_pos_constant)
+{
+   test_cmp_to_add_sat(BRW_CONDITIONAL_Z, true, false, false);
 }
 
 TEST_F(cmod_propagation_test, prop_across_sel)
