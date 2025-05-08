@@ -1,6 +1,6 @@
-mesa (25.1.0~rc3-1) UNRELEASED; urgency=medium
+mesa (25.1.0-1) UNRELEASED; urgency=medium
 
-  * New upstream release candidate.
+  * New upstream release.
   * rules: Enable asahi. (Closes: #1102725)
   * Drop libosmesa*, removed upstream.
   * libgbm-dev.install: Updated.
