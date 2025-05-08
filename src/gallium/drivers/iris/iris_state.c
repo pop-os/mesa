@@ -9107,14 +9107,16 @@ iris_upload_compute_walker(struct iris_context *ice,
       }
    }
 
+   uint32_t total_shared = shader->total_shared + grid->variable_shared_mem;
    struct GENX(INTERFACE_DESCRIPTOR_DATA) idd = {};
-   idd.KernelStartPointer = KSP(shader);
+   idd.KernelStartPointer =
+      KSP(shader) + iris_cs_data_prog_offset(cs_data, dispatch.simd_size);
    idd.NumberofThreadsinGPGPUThreadGroup = dispatch.threads;
    idd.SharedLocalMemorySize =
-      intel_compute_slm_encode_size(GFX_VER, shader->total_shared);
+      intel_compute_slm_encode_size(GFX_VER, total_shared);
    idd.PreferredSLMAllocationSize =
       intel_compute_preferred_slm_calc_encode_size(devinfo,
-                                                   shader->total_shared,
+                                                   total_shared,
                                                    dispatch.group_size,
                                                    dispatch.simd_size);
    idd.SamplerStatePointer = shs->sampler_table.offset;
@@ -9263,15 +9265,6 @@ iris_upload_gpgpu_walker(struct iris_context *ice,
       }
    }
 
-   for (unsigned i = 0; i < IRIS_MAX_GLOBAL_BINDINGS; i++) {
-      struct pipe_resource *res = ice->state.global_bindings[i];
-      if (!res)
-         break;
-
-      iris_use_pinned_bo(batch, iris_resource_bo(res),
-                         true, IRIS_DOMAIN_NONE);
-   }
-
    if (stage_dirty & (IRIS_STAGE_DIRTY_SAMPLER_STATES_CS |
                       IRIS_STAGE_DIRTY_BINDINGS_CS |
                       IRIS_STAGE_DIRTY_CONSTANTS_CS |
@@ -9327,6 +9320,20 @@ iris_upload_gpgpu_walker(struct iris_context *ice,
 #endif /* #if GFX_VERx10 >= 125 */
 
 static void
+iris_use_global_bindings(struct iris_context *ice,
+                         struct iris_batch *batch)
+{
+   for (unsigned i = 0; i < IRIS_MAX_GLOBAL_BINDINGS; i++) {
+      struct pipe_resource *res = ice->state.global_bindings[i];
+      if (!res)
+         break;
+
+      iris_use_pinned_bo(batch, iris_resource_bo(res),
+                        true, IRIS_DOMAIN_NONE);
+   }
+}
+
+static void
 iris_upload_compute_state(struct iris_context *ice,
                           struct iris_batch *batch,
                           const struct pipe_grid_info *grid)
@@ -9366,6 +9373,8 @@ iris_upload_compute_state(struct iris_context *ice,
    if (ice->state.need_border_colors)
       iris_use_pinned_bo(batch, border_color_pool->bo, false,
                          IRIS_DOMAIN_NONE);
+
+   iris_use_global_bindings(ice, batch);
 
 #if GFX_VER >= 12
    genX(invalidate_aux_map_state)(batch);
