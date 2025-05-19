@@ -1,4 +1,4 @@
-mesa (25.1.0-1) UNRELEASED; urgency=medium
+mesa (25.1.0-1) experimental; urgency=medium
 
   * New upstream release.
   * rules: Enable asahi. (Closes: #1102725)
@@ -7,7 +7,7 @@ mesa (25.1.0-1) UNRELEASED; urgency=medium
   * libglx-mesa0.symbols: Updated.
   * rules: Migrate to llvm-20.
 
- -- Timo Aaltonen <tjaalton@debian.org>  Wed, 23 Apr 2025 15:55:26 +0300
+ -- Timo Aaltonen <tjaalton@debian.org>  Mon, 19 May 2025 16:10:14 +0300
 
 mesa (25.0.5-2) unstable; urgency=medium
 
