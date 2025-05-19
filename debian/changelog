@@ -4,6 +4,7 @@ mesa (25.1.0-1) UNRELEASED; urgency=medium
   * rules: Enable asahi. (Closes: #1102725)
   * Drop libosmesa*, removed upstream.
   * libgbm-dev.install: Updated.
+  * libglx-mesa0.symbols: Updated.
 
  -- Timo Aaltonen <tjaalton@debian.org>  Wed, 23 Apr 2025 15:55:26 +0300
 
