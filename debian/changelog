@@ -5,6 +5,7 @@ mesa (25.1.0-1) UNRELEASED; urgency=medium
   * Drop libosmesa*, removed upstream.
   * libgbm-dev.install: Updated.
   * libglx-mesa0.symbols: Updated.
+  * rules: Migrate to llvm-20.
 
  -- Timo Aaltonen <tjaalton@debian.org>  Wed, 23 Apr 2025 15:55:26 +0300
 
