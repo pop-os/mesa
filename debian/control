@@ -12,7 +12,7 @@ Build-Depends:
  spirv-tools (>= 2024.4~rc1) [amd64 arm64 armel armhf i386 loong64 mips64el powerpc ppc64 ppc64el riscv64 s390x sparc64 x32],
  meson (>= 1.4.0),
  pkgconf,
- libdrm-dev (>= 2.4.121),
+ libdrm-dev (>= 2.4.125-1),
  libx11-dev,
  libxxf86vm-dev,
  libexpat1-dev,
