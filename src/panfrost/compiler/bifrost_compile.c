@@ -2231,9 +2231,9 @@ bi_emit_intrinsic(bi_builder *b, nir_intrinsic_instr *instr)
       break;
 
    case nir_intrinsic_shader_clock:
-      assert(nir_intrinsic_memory_scope(instr) == SCOPE_SUBGROUP);
       bi_ld_gclk_u64_to(b, dst, BI_SOURCE_CYCLE_COUNTER);
       bi_split_def(b, &instr->def);
+      b->shader->info.has_ld_gclk_instr = true;
       break;
 
    case nir_intrinsic_ddx:
@@ -3356,11 +3356,25 @@ bi_emit_alu(bi_builder *b, nir_alu_instr *instr)
    case nir_op_fround_even:
    case nir_op_fceil:
    case nir_op_ffloor:
-   case nir_op_ftrunc:
+   case nir_op_ftrunc: {
       /* On v11+, FROUND.v2s16 is gone, we lower this in nir_lower_bit_size */
       assert(sz != 16 || b->shader->arch < 11);
-      bi_fround_to(b, sz, dst, s0, bi_nir_round(instr->op));
+
+      enum bi_round round = bi_nir_round(instr->op);
+
+      /* On v11+, FROUND does not flush subnormals to zero even when configured
+       * in the shader program header */
+      if (b->shader->arch >= 11 &&
+          (round == BI_ROUND_RTP || round == BI_ROUND_RTN) &&
+          b->shader->ftz_fp32) {
+         bi_instr *flush = bi_flush_to(b, 32, bi_temp(b->shader), s0);
+         flush->ftz = true;
+         s0 = flush->dest[0];
+      }
+
+      bi_fround_to(b, sz, dst, s0, round);
       break;
+   }
 
    case nir_op_fmin:
       bi_fmin_to(b, sz, dst, s0, s1);
@@ -5011,6 +5025,7 @@ bi_lower_bit_size(const nir_instr *instr, void *data)
       case nir_op_fround_even:
       case nir_op_fceil:
       case nir_op_ffloor:
+      case nir_op_ffract:
       case nir_op_ftrunc:
       case nir_op_frexp_sig:
       case nir_op_frexp_exp:
@@ -5896,6 +5911,7 @@ bi_compile_variant_nir(nir_shader *nir,
    unsigned execution_mode = nir->info.float_controls_execution_mode;
    ctx->rtz_fp16 = nir_is_rounding_mode_rtz(execution_mode, 16);
    ctx->rtz_fp32 = nir_is_rounding_mode_rtz(execution_mode, 32);
+   ctx->ftz_fp32 = nir_is_denorm_flush_to_zero(execution_mode, 32);
 
    if (idvs == BI_IDVS_POSITION || idvs == BI_IDVS_VARYING) {
       /* Specializing shaders for IDVS is destructive, so we need to
@@ -6192,6 +6208,7 @@ bi_compile_variant(nir_shader *nir,
 
    info->ubo_mask |= ctx->ubo_mask;
    info->tls_size = MAX2(info->tls_size, ctx->info.tls_size);
+   info->has_shader_clk_instr = ctx->info.has_ld_gclk_instr;
 
    if (idvs == BI_IDVS_VARYING) {
       info->vs.secondary_enable = (binary->size > offset);
@@ -6280,10 +6297,12 @@ bifrost_compile_shader_nir(nir_shader *nir,
     */
    NIR_PASS(_, nir, pan_nir_lower_zs_store);
 
-   info->vs.idvs = bi_should_idvs(nir, inputs);
+   if (nir->info.stage == MESA_SHADER_VERTEX) {
+      info->vs.idvs = bi_should_idvs(nir, inputs);
 
-   if (info->vs.idvs)
-      NIR_PASS(_, nir, bifrost_nir_lower_shader_output);
+      if (info->vs.idvs)
+         NIR_PASS(_, nir, bifrost_nir_lower_shader_output);
+   }
 
    bi_optimize_nir(nir, inputs->gpu_id, inputs->is_blend);
 
@@ -6291,12 +6310,14 @@ bifrost_compile_shader_nir(nir_shader *nir,
 
    pan_nir_collect_varyings(nir, info, PAN_MEDIUMP_VARY_32BIT);
 
-   /* On Avalon, IDVS is only in one binary */
-   if (info->vs.idvs && pan_arch(inputs->gpu_id) >= 12) {
-      bi_compile_variant(nir, inputs, binary, info, BI_IDVS_ALL);
-   } else if (info->vs.idvs) {
-      bi_compile_variant(nir, inputs, binary, info, BI_IDVS_POSITION);
-      bi_compile_variant(nir, inputs, binary, info, BI_IDVS_VARYING);
+   if (nir->info.stage == MESA_SHADER_VERTEX && info->vs.idvs) {
+      /* On Avalon, IDVS is only in one binary */
+      if (pan_arch(inputs->gpu_id) >= 12)
+         bi_compile_variant(nir, inputs, binary, info, BI_IDVS_ALL);
+      else {
+         bi_compile_variant(nir, inputs, binary, info, BI_IDVS_POSITION);
+         bi_compile_variant(nir, inputs, binary, info, BI_IDVS_VARYING);
+      }
    } else {
       bi_compile_variant(nir, inputs, binary, info, BI_IDVS_NONE);
    }

@@ -255,6 +255,10 @@ vk_pipeline_hash_shader_stage(VkPipelineCreateFlags2KHR pipeline_flags,
       _mesa_sha1_update(&ctx, &rstate->uniform_buffers, sizeof(rstate->uniform_buffers));
       _mesa_sha1_update(&ctx, &rstate->vertex_inputs, sizeof(rstate->vertex_inputs));
       _mesa_sha1_update(&ctx, &rstate->images, sizeof(rstate->images));
+      _mesa_sha1_update(&ctx, &rstate->null_uniform_buffer_descriptor,
+                        sizeof(rstate->null_uniform_buffer_descriptor));
+      _mesa_sha1_update(&ctx, &rstate->null_storage_buffer_descriptor,
+                        sizeof(rstate->null_storage_buffer_descriptor));
    }
 
    _mesa_sha1_update(&ctx, info->pName, strlen(info->pName));
@@ -1189,7 +1193,7 @@ vk_graphics_pipeline_compile_shaders(struct vk_device *device,
       /* Don't try to re-compile any fast-link shaders */
       if (!(pipeline->base.flags &
             VK_PIPELINE_CREATE_2_LINK_TIME_OPTIMIZATION_BIT_EXT)) {
-         assert(partition[p + 1] == partition[p] + 1);
+         assert(ops->link_geom_stages || partition[p + 1] == partition[p] + 1);
          if (stages[partition[p]].shader != NULL)
             continue;
       }

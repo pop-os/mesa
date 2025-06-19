@@ -304,6 +304,8 @@ nvk_cmd_dispatch_shader(struct nvk_cmd_buffer *cmd,
                         uint32_t groupCountY,
                         uint32_t groupCountZ)
 {
+   struct nvk_device *dev = nvk_cmd_buffer_device(cmd);
+
    struct nvk_root_descriptor_table root = {
       .cs.group_count = {
          groupCountX,
@@ -321,6 +323,11 @@ nvk_cmd_dispatch_shader(struct nvk_cmd_buffer *cmd,
    if (result != VK_SUCCESS) {
       vk_command_buffer_set_error(&cmd->vk, result);
       return;
+   }
+
+   if (shader != NULL) {
+      nvk_device_ensure_slm(dev, shader->info.slm_size,
+                                 shader->info.crs_size);
    }
 
    struct nv_push *p = nvk_cmd_buffer_push(cmd, 8);
@@ -512,7 +519,7 @@ nvk_CmdDispatchIndirect(VkCommandBuffer commandBuffer,
    }
 
    struct nv_push *p;
-   if (nvk_cmd_buffer_compute_cls(cmd) >= TURING_A) {
+   if (nvk_cmd_buffer_compute_cls(cmd) >= TURING_COMPUTE_A) {
       p = nvk_cmd_buffer_push(cmd, 14);
       P_IMMD(p, NVC597, SET_MME_DATA_FIFO_CONFIG, FIFO_SIZE_SIZE_4KB);
       P_1INC(p, NV9097, CALL_MME_MACRO(NVK_MME_DISPATCH_INDIRECT));
