@@ -15,6 +15,26 @@ mesa (25.1.0-1) experimental; urgency=medium
 
  -- Timo Aaltonen <tjaalton@debian.org>  Mon, 19 May 2025 16:10:14 +0300
 
+mesa (25.0.7-2) unstable; urgency=medium
+
+  * patches: Revert a commit to fix mobian vm's. (Closes: #1107895)
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Tue, 17 Jun 2025 12:07:43 +0300
+
+mesa (25.0.7-1) unstable; urgency=medium
+
+  * control: Bump rustc dependency to match upstream.
+  * control: Bump wayland-protocols build-dep.
+  * control: Bump directx-headers build-dep.
+  * control: Bump spirv-tools build dep for Intel shader compiler.
+  * New upstream release. (Closes: #1105831)
+  * rules: Drop obsolete removals.
+  * patches: Drop a fix for lp2101817, since 25.0.6 carries a separate
+    fix for that.
+  * Revert a bad commit which broke Intel Haswell. (LP: #2113508)
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Wed, 11 Jun 2025 17:14:37 +0300
+
 mesa (25.0.5-2) unstable; urgency=medium
 
   [ Johannes Schauer Marin Rodrigues ]
