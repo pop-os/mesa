@@ -1,6 +1,7 @@
 mesa (25.1.4-1) UNRELEASED; urgency=medium
 
   * New upstream release.
+  * patches: Drop upstreamed patches.
 
  -- Timo Aaltonen <tjaalton@debian.org>  Thu, 19 Jun 2025 07:31:17 +0300
 
