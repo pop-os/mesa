@@ -1,4 +1,4 @@
-mesa (25.1.5-1) UNRELEASED; urgency=medium
+mesa (25.1.5-1) experimental; urgency=medium
 
   [ Jianfeng Liu ]
   * d/rules: Enable iris and intel vulkan driver for loong64
@@ -6,7 +6,7 @@ mesa (25.1.5-1) UNRELEASED; urgency=medium
   [ Timo Aaltonen ]
   * New upstream release.
 
- -- Timo Aaltonen <tjaalton@debian.org>  Thu, 26 Jun 2025 20:35:55 +0300
+ -- Timo Aaltonen <tjaalton@debian.org>  Thu, 03 Jul 2025 18:43:48 +0300
 
 mesa (25.1.4-1) experimental; urgency=medium
 
