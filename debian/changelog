@@ -1,3 +1,9 @@
+mesa (25.1.5-1pop0) noble; urgency=medium
+
+  * Pop!_OS patches
+
+ -- Jeremy Soller <jeremy@system76.com>  Fri, 25 Jul 2025 09:48:24 -0600
+
 mesa (25.1.5-1) experimental; urgency=medium
 
   [ Jianfeng Liu ]
