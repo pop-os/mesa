@@ -49,11 +49,11 @@ Build-Depends:
  libelf-dev [amd64 arm64 armhf i386],
  libwayland-dev (>= 1.15.0) [linux-any],
  libwayland-egl-backend-dev (>= 1.15.0) [linux-any],
- llvm-20-dev [amd64 arm64 armhf i386],
- libclang-20-dev [amd64 arm64 armhf i386],
- libclang-cpp20-dev [amd64 arm64 armhf i386],
- libclc-20-dev [amd64 arm64 armhf i386],
- libclc-20 [amd64 arm64 armhf i386],
+ llvm-19-dev [amd64 arm64 armhf i386],
+ libclang-19-dev [amd64 arm64 armhf i386],
+ libclang-cpp19-dev [amd64 arm64 armhf i386],
+ libclc-19-dev [amd64 arm64 armhf i386],
+ libclc-19 [amd64 arm64 armhf i386],
  wayland-protocols (>= 1.38),
  zlib1g-dev,
  libglvnd-core-dev (>= 1.3.2),
@@ -63,8 +63,8 @@ Build-Depends:
  rustfmt-1.80 [amd64 arm64],
  bindgen (>= 0.66.1~) [amd64 arm64],
  cbindgen [amd64 arm64],
- llvm-spirv-20 [amd64 arm64],
- libllvmspirvlib-20-dev [amd64 arm64 armhf i386],
+ llvm-spirv-19 [amd64 arm64],
+ libllvmspirvlib-19-dev [amd64 arm64 armhf i386],
  librust-paste-dev [amd64 arm64],
  librust-syn-dev (>= 2.0.48) [amd64 arm64],
 Rules-Requires-Root: no
@@ -376,7 +376,7 @@ Section: libs
 Architecture: amd64 arm64 armhf i386
 Pre-Depends: ${misc:Pre-Depends}
 Depends:
- libclc-20,
+ libclc-19,
  ocl-icd-libopencl1 | libopencl1,
  ${shlibs:Depends},
  ${misc:Depends},
