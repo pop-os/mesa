@@ -447,9 +447,11 @@ unsigned int radeon_enc_write_pps(struct radeon_encoder *enc, uint8_t nal_byte, 
    radeon_bs_code_fixed_bits(&bs, (enc->enc_pic.spec_misc.deblocking_filter_control_present_flag), 1);
    radeon_bs_code_fixed_bits(&bs, (enc->enc_pic.spec_misc.constrained_intra_pred_flag), 1);
    radeon_bs_code_fixed_bits(&bs, (enc->enc_pic.spec_misc.redundant_pic_cnt_present_flag), 1);
-   radeon_bs_code_fixed_bits(&bs, (enc->enc_pic.spec_misc.transform_8x8_mode), 1);
-   radeon_bs_code_fixed_bits(&bs, 0x0, 1); /* pic_scaling_matrix_present_flag */
-   radeon_bs_code_se(&bs, enc->enc_pic.h264_deblock.cr_qp_offset); /* second_chroma_qp_index_offset */
+   if (enc->enc_pic.h264.desc->pic_ctrl.more_rbsp_data) {
+      radeon_bs_code_fixed_bits(&bs, (enc->enc_pic.spec_misc.transform_8x8_mode), 1);
+      radeon_bs_code_fixed_bits(&bs, 0x0, 1); /* pic_scaling_matrix_present_flag */
+      radeon_bs_code_se(&bs, enc->enc_pic.h264_deblock.cr_qp_offset); /* second_chroma_qp_index_offset */
+   }
 
    radeon_bs_code_fixed_bits(&bs, 0x1, 1);
    radeon_bs_byte_align(&bs);
@@ -1039,12 +1041,16 @@ static void radeon_enc_encode_params(struct radeon_encoder *enc)
       enc->chroma->u.gfx9.surf_pitch : enc->luma->u.gfx9.surf_pitch;
    enc->enc_pic.enc_params.input_pic_swizzle_mode = enc->luma->u.gfx9.swizzle_mode;
 
+   uint32_t luma_offset =
+      enc->luma->u.gfx9.surf_offset | (enc->luma->tile_swizzle << 8);
+   uint32_t chroma_offset =
+      enc->chroma ? enc->chroma->u.gfx9.surf_offset | (enc->chroma->tile_swizzle << 8) : 0;
+
    RADEON_ENC_BEGIN(enc->cmd.enc_params);
    RADEON_ENC_CS(enc->enc_pic.enc_params.pic_type);
    RADEON_ENC_CS(enc->enc_pic.enc_params.allowed_max_bitstream_size);
-   RADEON_ENC_READ(enc->handle, RADEON_DOMAIN_VRAM, enc->luma->u.gfx9.surf_offset);
-   RADEON_ENC_READ(enc->handle, RADEON_DOMAIN_VRAM, enc->chroma ?
-      enc->chroma->u.gfx9.surf_offset : enc->luma->u.gfx9.surf_pitch);
+   RADEON_ENC_READ(enc->handle, RADEON_DOMAIN_VRAM, luma_offset);
+   RADEON_ENC_READ(enc->handle, RADEON_DOMAIN_VRAM, chroma_offset);
    RADEON_ENC_CS(enc->enc_pic.enc_params.input_pic_luma_pitch);
    RADEON_ENC_CS(enc->enc_pic.enc_params.input_pic_chroma_pitch);
    RADEON_ENC_CS(enc->enc_pic.enc_params.input_pic_swizzle_mode);

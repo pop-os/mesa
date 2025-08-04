@@ -287,6 +287,9 @@ assert_memhandle_type(VkExternalMemoryHandleTypeFlags types)
    unsigned valid[] = {
       VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT,
       VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT,
+#if DETECT_OS_ANDROID
+      VK_EXTERNAL_MEMORY_HANDLE_TYPE_ANDROID_HARDWARE_BUFFER_BIT_ANDROID,
+#endif
    };
    for (unsigned i = 0; i < ARRAY_SIZE(valid); i++) {
       if (types & valid[i])
@@ -987,7 +990,7 @@ lvp_get_properties(const struct lvp_physical_device *device, struct vk_propertie
       .maxDescriptorSetUpdateAfterBindStorageImages = MAX_DESCRIPTORS,
       .maxDescriptorSetUpdateAfterBindInputAttachments = MAX_DESCRIPTORS,
 
-      .supportedDepthResolveModes = VK_RESOLVE_MODE_SAMPLE_ZERO_BIT | VK_RESOLVE_MODE_AVERAGE_BIT,
+      .supportedDepthResolveModes = VK_RESOLVE_MODE_SAMPLE_ZERO_BIT,
       .supportedStencilResolveModes = VK_RESOLVE_MODE_SAMPLE_ZERO_BIT,
       .independentResolveNone = false,
       .independentResolve = false,
@@ -1915,12 +1918,7 @@ VKAPI_ATTR VkResult VKAPI_CALL lvp_AllocateMemory(
    VkResult error = VK_ERROR_OUT_OF_DEVICE_MEMORY;
    assert(pAllocateInfo->sType == VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO);
    int priority = 0;
-
-   if (pAllocateInfo->allocationSize == 0) {
-      /* Apparently, this is allowed */
-      *pMem = VK_NULL_HANDLE;
-      return VK_SUCCESS;
-   }
+   bool is_ahb_export_alloc = false;
 
    vk_foreach_struct_const(ext, pAllocateInfo->pNext) {
       switch ((unsigned)ext->sType) {
@@ -1950,6 +1948,20 @@ VKAPI_ATTR VkResult VKAPI_CALL lvp_AllocateMemory(
       default:
          break;
       }
+   }
+
+#if DETECT_OS_ANDROID
+   is_ahb_export_alloc = !ahb_import_info && export_info &&
+      export_info->handleTypes & VK_EXTERNAL_MEMORY_HANDLE_TYPE_ANDROID_HARDWARE_BUFFER_BIT_ANDROID;
+#endif
+
+   /* Can early return with size 0 if not AHB export alloc. See
+    * VUID-VkMemoryAllocateInfo-pNext-01874 for details.
+    */
+   if (pAllocateInfo->allocationSize == 0 && !is_ahb_export_alloc) {
+      /* Apparently, this is allowed */
+      *pMem = VK_NULL_HANDLE;
+      return VK_SUCCESS;
    }
 
 #ifdef PIPE_MEMORY_FD
@@ -1987,8 +1999,7 @@ VKAPI_ATTR VkResult VKAPI_CALL lvp_AllocateMemory(
       error = lvp_import_ahb_memory(device, mem, ahb_import_info);
       if (error != VK_SUCCESS)
          goto fail;
-   } else if(export_info &&
-             (export_info->handleTypes & VK_EXTERNAL_MEMORY_HANDLE_TYPE_ANDROID_HARDWARE_BUFFER_BIT_ANDROID)) {
+   } else if (is_ahb_export_alloc) {
       error = lvp_create_ahb_memory(device, mem, pAllocateInfo);
       if (error != VK_SUCCESS)
          goto fail;
@@ -1999,13 +2010,12 @@ VKAPI_ATTR VkResult VKAPI_CALL lvp_AllocateMemory(
       bool dmabuf = import_info->handleType == VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT;
       uint64_t size;
       if(!device->pscreen->import_memory_fd(device->pscreen, import_info->fd, &mem->pmem, &size, dmabuf)) {
-         close(import_info->fd);
          error = VK_ERROR_INVALID_EXTERNAL_HANDLE;
          goto fail;
       }
       if(size < pAllocateInfo->allocationSize) {
          device->pscreen->free_memory_fd(device->pscreen, mem->pmem);
-         close(import_info->fd);
+         error = VK_ERROR_INVALID_EXTERNAL_HANDLE;
          goto fail;
       }
       if (export_info && export_info->handleTypes == import_info->handleType) {
@@ -2050,6 +2060,7 @@ VKAPI_ATTR VkResult VKAPI_CALL lvp_AllocateMemory(
    return VK_SUCCESS;
 
 fail:
+   vk_object_base_finish(&mem->base);
    vk_free2(&device->vk.alloc, pAllocator, mem);
    return vk_error(device, error);
 }
@@ -2074,6 +2085,11 @@ VKAPI_ATTR void VKAPI_CALL lvp_FreeMemory(
       break;
 #ifdef PIPE_MEMORY_FD
    case LVP_DEVICE_MEMORY_TYPE_DMA_BUF:
+#if DETECT_OS_ANDROID
+      if (mem->android_hardware_buffer)
+         AHardwareBuffer_release(mem->android_hardware_buffer);
+      FALLTHROUGH;
+#endif
    case LVP_DEVICE_MEMORY_TYPE_OPAQUE_FD:
       device->pscreen->free_memory_fd(device->pscreen, mem->pmem);
       if(mem->backed_fd >= 0)
@@ -2146,8 +2162,13 @@ VKAPI_ATTR void VKAPI_CALL lvp_GetDeviceBufferMemoryRequirements(
    VkBuffer _buffer;
    if (lvp_CreateBuffer(_device, pInfo->pCreateInfo, NULL, &_buffer) != VK_SUCCESS)
       return;
-   LVP_FROM_HANDLE(lvp_buffer, buffer, _buffer);
-   pMemoryRequirements->memoryRequirements.size = buffer->total_size;
+
+   assert(pInfo->pNext == NULL);
+   const VkBufferMemoryRequirementsInfo2 info = {
+      .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_REQUIREMENTS_INFO_2,
+      .buffer = _buffer,
+   };
+   lvp_GetBufferMemoryRequirements2(_device, &info, pMemoryRequirements);
    lvp_DestroyBuffer(_device, _buffer, NULL);
 }
 
@@ -2164,8 +2185,22 @@ VKAPI_ATTR void VKAPI_CALL lvp_GetDeviceImageMemoryRequirements(
    if (lvp_CreateImage(_device, pInfo->pCreateInfo, NULL, &_image) != VK_SUCCESS)
       return;
    LVP_FROM_HANDLE(lvp_image, image, _image);
-   pMemoryRequirements->memoryRequirements.size = image->size;
-   pMemoryRequirements->memoryRequirements.alignment = image->alignment;
+
+   /* Per spec VUs of VkImageMemoryRequirementsInfo2 */
+   const bool need_plane_info =
+      image->vk.create_flags & VK_IMAGE_CREATE_DISJOINT_BIT &&
+      (image->plane_count > 1 ||
+       image->vk.tiling == VK_IMAGE_TILING_DRM_FORMAT_MODIFIER_EXT);
+   const VkImagePlaneMemoryRequirementsInfo plane_info = {
+      .sType = VK_STRUCTURE_TYPE_IMAGE_PLANE_MEMORY_REQUIREMENTS_INFO,
+      .planeAspect = pInfo->planeAspect,
+   };
+   const VkImageMemoryRequirementsInfo2 base_info = {
+      .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_REQUIREMENTS_INFO_2,
+      .pNext = need_plane_info ? &plane_info : NULL,
+      .image = _image,
+   };
+   lvp_GetImageMemoryRequirements2(_device, &base_info, pMemoryRequirements);
    lvp_DestroyImage(_device, _image, NULL);
 }
 

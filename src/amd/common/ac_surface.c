@@ -804,6 +804,29 @@ static unsigned bpe_to_format(struct radeon_surf *surf)
    return ADDR_FMT_INVALID;
 }
 
+static bool
+is_astc_format(unsigned format)
+{
+   switch (format) {
+   case ADDR_FMT_ASTC_5x4:
+   case ADDR_FMT_ASTC_5x5:
+   case ADDR_FMT_ASTC_6x5:
+   case ADDR_FMT_ASTC_6x6:
+   case ADDR_FMT_ASTC_8x5:
+   case ADDR_FMT_ASTC_8x6:
+   case ADDR_FMT_ASTC_8x8:
+   case ADDR_FMT_ASTC_10x5:
+   case ADDR_FMT_ASTC_10x6:
+   case ADDR_FMT_ASTC_10x8:
+   case ADDR_FMT_ASTC_10x10:
+   case ADDR_FMT_ASTC_12x10:
+   case ADDR_FMT_ASTC_12x12:
+      return true;
+   default:
+      return false;
+   }
+}
+
 /* The addrlib pitch alignment is forced to this number for all chips to support interop
  * between any 2 chips.
  */
@@ -1205,8 +1228,8 @@ static uint64_t ac_estimate_size(const struct ac_surf_config *config,
    assert(bpp);
    unsigned num_samples = MAX2(1, config->info.samples);
    unsigned bpe = bpp / 8;
-   unsigned width = align(in_width, align_width * blk_w);
-   unsigned height = align(in_height , align_height * blk_h);
+   unsigned width = util_align_npot(in_width, align_width * blk_w);
+   unsigned height = util_align_npot(in_height , align_height * blk_h);
    unsigned depth = align(config->is_3d ? config->info.depth :
                           config->is_cube ? 6 : config->info.array_size, align_depth);
    unsigned tile_size_bytes = align_width * align_height * align_depth * num_samples * bpe;
@@ -1813,7 +1836,7 @@ static int gfx9_get_preferred_swizzle_mode(ADDR_HANDLE addrlib, const struct rad
    /* With PRT images we want to force 64 KiB block size so that the image
     * created is consistent with the format properties returned in Vulkan
     * independent of the image. */
-   if (sin.flags.prt) {
+   if (surf->flags & RADEON_SURF_PRT) {
       sin.forbiddenBlock.macroThin4KB = 1;
       sin.forbiddenBlock.macroThick4KB = 1;
       if (info->gfx_level >= GFX11) {
@@ -1821,6 +1844,9 @@ static int gfx9_get_preferred_swizzle_mode(ADDR_HANDLE addrlib, const struct rad
          sin.forbiddenBlock.gfx11.thick256KB = 1;
       }
       sin.forbiddenBlock.linear = 1;
+
+      if (in->numSamples > 1 && info->gfx_level >= GFX10)
+         assert(sin.flags.prt == 0);
    } else if (surf->flags & RADEON_SURF_PREFER_4K_ALIGNMENT) {
       sin.forbiddenBlock.macroThin64KB = 1;
       sin.forbiddenBlock.macroThick64KB = 1;
@@ -2546,7 +2572,10 @@ static int gfx9_compute_surface(struct ac_addrlib *addrlib, const struct radeon_
    AddrSurfInfoIn.flags.texture = (is_color_surface && !(surf->flags & RADEON_SURF_NO_TEXTURE)) ||
                                   (surf->flags & RADEON_SURF_TC_COMPATIBLE_HTILE);
    AddrSurfInfoIn.flags.opt4space = 1;
-   AddrSurfInfoIn.flags.prt = (surf->flags & RADEON_SURF_PRT) != 0;
+   /* For GFX10+ MSAA PRT surface won't use the prt flag because it's not supported. */
+   AddrSurfInfoIn.flags.prt = (surf->flags & RADEON_SURF_PRT) != 0 &&
+                              (config->info.samples <= 1 || info->gfx_level < GFX10) &&
+                              is_color_surface;
 
    AddrSurfInfoIn.numMipLevels = config->info.levels;
    AddrSurfInfoIn.numSamples = MAX2(1, config->info.samples);
@@ -3370,6 +3399,8 @@ static bool gfx12_compute_surface(struct ac_addrlib *addrlib, const struct radeo
       AddrSurfInfoIn.swizzleMode = ADDR3_LINEAR;
    } else if (surf->flags & RADEON_SURF_VIDEO_REFERENCE) {
       AddrSurfInfoIn.swizzleMode = ADDR3_256B_2D;
+   } else if (is_astc_format(AddrSurfInfoIn.format)) {
+      AddrSurfInfoIn.swizzleMode = config->is_3d ? ADDR3_4KB_3D : ADDR3_4KB_2D;
    } else {
       AddrSurfInfoIn.swizzleMode = gfx12_select_swizzle_mode(addrlib, info, config, surf,
                                                              &AddrSurfInfoIn, surf->flags);

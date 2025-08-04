@@ -3359,7 +3359,7 @@ zink_shader_spirv_compile(struct zink_screen *screen, struct zink_shader *zs, st
       sci.setLayoutCount = pg->num_dsl;
       sci.pSetLayouts = pg->dsl;
    } else {
-      sci.setLayoutCount = zs->info.stage + 1;
+      sci.setLayoutCount = zs->info.stage == MESA_SHADER_COMPUTE ? 1 : ZINK_GFX_SHADER_COUNT;
       dsl[zs->info.stage] = zs->precompile.dsl;;
       sci.pSetLayouts = dsl;
    }
@@ -5427,16 +5427,17 @@ loop_io_var_mask(nir_shader *nir, nir_variable_mode mode, bool indirect, bool pa
 {
    ASSERTED bool is_vertex_input = nir->info.stage == MESA_SHADER_VERTEX && mode == nir_var_shader_in;
    u_foreach_bit64(slot, mask) {
+      unsigned location = slot;
       if (patch)
-         slot += VARYING_SLOT_PATCH0;
+         location += VARYING_SLOT_PATCH0;
 
       /* this should've been handled explicitly */
-      assert(is_vertex_input || !is_clipcull_dist(slot));
+      assert(is_vertex_input || !is_clipcull_dist(location));
 
       unsigned remaining = 0;
       do {
          /* scan the slot for usage */
-         struct rework_io_state ris = scan_io_var_slot(nir, mode, slot, indirect);
+         struct rework_io_state ris = scan_io_var_slot(nir, mode, location, indirect);
          /* one of these must be true or things have gone very wrong */
          assert(indirect || ris.component_mask || find_rework_var(nir, &ris) || remaining);
          /* release builds only */
@@ -6442,11 +6443,14 @@ gfx_shader_prune(struct zink_screen *screen, struct zink_shader *shader)
    assert(stage < ZINK_GFX_SHADER_COUNT);
    util_queue_fence_wait(&prog->base.cache_fence);
    unsigned stages_present = prog->stages_present;
+   unsigned stages_remaining = prog->stages_remaining;
    if (prog->shaders[MESA_SHADER_TESS_CTRL] &&
-         prog->shaders[MESA_SHADER_TESS_CTRL]->non_fs.is_generated)
+         prog->shaders[MESA_SHADER_TESS_CTRL]->non_fs.is_generated) {
       stages_present &= ~BITFIELD_BIT(MESA_SHADER_TESS_CTRL);
+      stages_remaining &= ~BITFIELD_BIT(MESA_SHADER_TESS_CTRL);
+   }
    unsigned idx = zink_program_cache_stages(stages_present);
-   if (!prog->base.removed && prog->stages_present == prog->stages_remaining &&
+   if (!prog->base.removed && stages_present == stages_remaining &&
          (stage == MESA_SHADER_FRAGMENT || !shader->non_fs.is_generated)) {
       struct hash_table *ht = &prog->base.ctx->program_cache[idx];
       simple_mtx_lock(&prog->base.ctx->program_lock[idx]);

@@ -44,7 +44,7 @@
 #define RENCODE_V3_FW_INTERFACE_MINOR_VERSION 27
 
 #define RENCODE_V2_FW_INTERFACE_MAJOR_VERSION 1
-#define RENCODE_V2_FW_INTERFACE_MINOR_VERSION 18
+#define RENCODE_V2_FW_INTERFACE_MINOR_VERSION 20
 
 #define RENCODE_FW_INTERFACE_MAJOR_VERSION 1
 #define RENCODE_FW_INTERFACE_MINOR_VERSION 15
@@ -393,6 +393,7 @@ radv_enc_session_init(struct radv_cmd_buffer *cmd_buffer, const struct VkVideoEn
    }
    RADEON_ENC_CS(vid->enc_session.display_remote);
    if (pdev->enc_hw_ver >= RADV_VIDEO_ENC_HW_4) {
+      RADEON_ENC_CS(vid->enc_session.WA_flags);
       RADEON_ENC_CS(0);
    }
    RADEON_ENC_END();
@@ -493,8 +494,9 @@ radv_enc_spec_misc_hevc(struct radv_cmd_buffer *cmd_buffer, const struct VkVideo
    RADEON_ENC_CS(1); // enc->enc_pic.hevc_spec_misc.quarter_pel_enabled
    if (pdev->enc_hw_ver >= RADV_VIDEO_ENC_HW_3) {
       RADEON_ENC_CS(!pps->flags.transform_skip_enabled_flag);
-      RADEON_ENC_CS(pps->flags.cu_qp_delta_enabled_flag);
    }
+   if (pdev->enc_hw_ver >= RADV_VIDEO_ENC_HW_2)
+      RADEON_ENC_CS(pps->flags.cu_qp_delta_enabled_flag);
    RADEON_ENC_END();
 }
 
@@ -1280,7 +1282,8 @@ radv_enc_rc_per_pic(struct radv_cmd_buffer *cmd_buffer, const VkVideoEncodeInfoK
    RADEON_ENC_CS(per_pic->enabled_filler_data);
    RADEON_ENC_CS(per_pic->skip_frame_enable);
    RADEON_ENC_CS(per_pic->enforce_hrd);
-   RADEON_ENC_CS(0xFFFFFFFF); // reserved_0xff
+   if (pdev->enc_hw_ver >= RADV_VIDEO_ENC_HW_3)
+      RADEON_ENC_CS(0xFFFFFFFF); // qvbr_quality_level
    RADEON_ENC_END();
 }
 
@@ -1298,9 +1301,12 @@ radv_enc_params(struct radv_cmd_buffer *cmd_buffer, const VkVideoEncodeInfoKHR *
    struct radv_device *device = radv_cmd_buffer_device(cmd_buffer);
    const struct radv_physical_device *pdev = radv_device_physical(device);
    struct radeon_cmdbuf *cs = cmd_buffer->cs;
+   uint32_t array_idx = enc_info->srcPictureResource.baseArrayLayer + src_iv->vk.base_array_layer;
    uint64_t va = src_img->bindings[0].addr;
-   uint64_t luma_va = va + src_img->planes[0].surface.u.gfx9.surf_offset;
-   uint64_t chroma_va = va + src_img->planes[1].surface.u.gfx9.surf_offset;
+   uint64_t luma_va = va + src_img->planes[0].surface.u.gfx9.surf_offset +
+                      array_idx * src_img->planes[0].surface.u.gfx9.surf_slice_size;
+   uint64_t chroma_va = va + src_img->planes[1].surface.u.gfx9.surf_offset +
+                        array_idx * src_img->planes[1].surface.u.gfx9.surf_slice_size;
    uint32_t pic_type;
    unsigned int slot_idx = 0xffffffff;
    unsigned int max_layers = cmd_buffer->video.vid->rc_layer_control.max_num_temporal_layers;
@@ -1564,15 +1570,6 @@ begin(struct radv_cmd_buffer *cmd_buffer, const VkVideoEncodeInfoKHR *enc_info)
 
    radv_enc_op_init(cmd_buffer);
    radv_enc_session_init(cmd_buffer, enc_info);
-   if (vid->vk.op == VK_VIDEO_CODEC_OPERATION_ENCODE_H264_BIT_KHR) {
-      radv_enc_slice_control(cmd_buffer, enc_info);
-      radv_enc_spec_misc_h264(cmd_buffer, enc_info);
-      radv_enc_deblocking_filter_h264(cmd_buffer, enc_info);
-   } else if (vid->vk.op == VK_VIDEO_CODEC_OPERATION_ENCODE_H265_BIT_KHR) {
-      radv_enc_slice_control_hevc(cmd_buffer, enc_info);
-      radv_enc_spec_misc_hevc(cmd_buffer, enc_info);
-      radv_enc_deblocking_filter_hevc(cmd_buffer, enc_info);
-   }
    radv_enc_layer_control(cmd_buffer, &vid->rc_layer_control);
    radv_enc_rc_session_init(cmd_buffer);
    radv_enc_quality_params(cmd_buffer);
@@ -1655,12 +1652,16 @@ radv_vcn_encode_video(struct radv_cmd_buffer *cmd_buffer, const VkVideoEncodeInf
       } while (++i < vid->rc_layer_control.num_temporal_layers);
    }
 
-   // encode headers
-   // ctx
    if (vid->vk.op == VK_VIDEO_CODEC_OPERATION_ENCODE_H264_BIT_KHR) {
+      radv_enc_slice_control(cmd_buffer, enc_info);
+      radv_enc_spec_misc_h264(cmd_buffer, enc_info);
+      radv_enc_deblocking_filter_h264(cmd_buffer, enc_info);
       radv_enc_headers_h264(cmd_buffer, enc_info);
       radv_enc_ctx(cmd_buffer, enc_info);
    } else if (vid->vk.op == VK_VIDEO_CODEC_OPERATION_ENCODE_H265_BIT_KHR) {
+      radv_enc_slice_control_hevc(cmd_buffer, enc_info);
+      radv_enc_spec_misc_hevc(cmd_buffer, enc_info);
+      radv_enc_deblocking_filter_hevc(cmd_buffer, enc_info);
       radv_enc_headers_hevc(cmd_buffer, enc_info);
       radv_enc_ctx(cmd_buffer, enc_info);
    }

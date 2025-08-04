@@ -397,6 +397,7 @@ struct pipe_h264_sps
    uint8_t  mb_adaptive_frame_field_flag;
    uint8_t  direct_8x8_inference_flag;
    uint8_t  MinLumaBiPredSize8x8;
+   uint8_t  gaps_in_frame_num_value_allowed_flag;
    uint32_t pic_width_in_mbs_minus1;
    uint32_t pic_height_in_mbs_minus1;
 };
@@ -573,6 +574,7 @@ struct pipe_h264_enc_pic_control
       uint32_t deblocking_filter_control_present_flag : 1;
       uint32_t constrained_intra_pred_flag : 1;
       uint32_t redundant_pic_cnt_present_flag : 1;
+      uint32_t more_rbsp_data : 1;
       uint32_t transform_8x8_mode_flag : 1;
    };
    uint8_t nal_ref_idc;

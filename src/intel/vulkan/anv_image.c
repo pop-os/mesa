@@ -1467,14 +1467,6 @@ alloc_private_binding(struct anv_device *device,
    if (binding->memory_range.size == 0)
       return VK_SUCCESS;
 
-   const VkImageSwapchainCreateInfoKHR *swapchain_info =
-      vk_find_struct_const(create_info->pNext, IMAGE_SWAPCHAIN_CREATE_INFO_KHR);
-
-   if (swapchain_info && swapchain_info->swapchain != VK_NULL_HANDLE) {
-      /* The image will be bound to swapchain memory. */
-      return VK_SUCCESS;
-   }
-
    VkResult result = anv_device_alloc_bo(device, "image-binding-private",
                                          binding->memory_range.size, 0, 0,
                                          &binding->address.bo);
@@ -2128,13 +2120,34 @@ resolve_ahw_image(struct anv_device *device,
 #endif
 }
 
-static void
+static VkResult
 resolve_anb_image(struct anv_device *device,
                   struct anv_image *image,
                   const VkNativeBufferANDROID *gralloc_info)
 {
 #if DETECT_OS_ANDROID && ANDROID_API_LEVEL >= 29
    VkResult result;
+
+   /* Do not close the gralloc handle's dma_buf. The lifetime of the dma_buf
+    * must exceed that of the gralloc handle, and we do not own the gralloc
+    * handle.
+    */
+   int dma_buf = gralloc_info->handle->data[0];
+
+   /* If this function fails and if the imported bo was resident in the cache,
+    * we should avoid updating the bo's flags. Therefore, we defer updating
+    * the flags until success is certain.
+    *
+    */
+   struct anv_bo *bo = NULL;
+   result = anv_device_import_bo(device, dma_buf,
+                                 ANV_BO_ALLOC_EXTERNAL,
+                                 0 /* client_address */,
+                                 &bo);
+   if (result != VK_SUCCESS) {
+      return vk_errorf(device, result,
+                       "failed to import dma-buf from VkNativeBufferANDROID");
+   }
 
    /* Check tiling. */
    enum isl_tiling tiling;
@@ -2154,7 +2167,44 @@ resolve_anb_image(struct anv_device *device,
    result = add_all_surfaces_implicit_layout(device, image, NULL, gralloc_info->stride,
                                              isl_tiling_flags,
                                              ISL_SURF_USAGE_DISABLE_AUX_BIT);
-   assert(result == VK_SUCCESS);
+   if (result != VK_SUCCESS) {
+      anv_device_release_bo(device, bo);
+      return vk_errorf(device, result,
+                       "failed to add surfaces from VkNativeBufferANDROID");
+   }
+
+   VkMemoryRequirements2 mem_reqs = {
+      .sType = VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2,
+   };
+
+   anv_image_get_memory_requirements(device, image, image->vk.aspects,
+                                     &mem_reqs);
+
+   VkDeviceSize aligned_image_size =
+      align64(mem_reqs.memoryRequirements.size,
+              mem_reqs.memoryRequirements.alignment);
+
+   if (bo->size < aligned_image_size) {
+      result = vk_errorf(device, VK_ERROR_INVALID_EXTERNAL_HANDLE,
+                         "dma-buf from VkNativeBufferANDROID is too small for "
+                         "VkImage: %"PRIu64"B < %"PRIu64"B",
+                         bo->size, aligned_image_size);
+      anv_device_release_bo(device, bo);
+      return result;
+   }
+
+   assert(!image->disjoint);
+   assert(image->n_planes == 1);
+   assert(image->planes[0].primary_surface.memory_range.binding ==
+          ANV_IMAGE_MEMORY_BINDING_MAIN);
+   assert(image->bindings[ANV_IMAGE_MEMORY_BINDING_MAIN].address.bo == NULL);
+   assert(image->bindings[ANV_IMAGE_MEMORY_BINDING_MAIN].address.offset == 0);
+   image->bindings[ANV_IMAGE_MEMORY_BINDING_MAIN].address.bo = bo;
+   image->from_gralloc = true;
+
+   return VK_SUCCESS;
+#else
+   return VK_ERROR_EXTENSION_NOT_PRESENT;
 #endif
 }
 
@@ -2694,6 +2744,21 @@ anv_bind_image_memory(struct anv_device *device,
          assert(image->vk.aspects == swapchain_image->vk.aspects);
          assert(mem == NULL);
 
+         /* Remove the internally allocated private binding since we're going
+          * to replace everything with BOs from the WSI image, we don't want
+          * to leak the current BO.
+          */
+         struct anv_bo *private_bo =
+            image->bindings[ANV_IMAGE_MEMORY_BINDING_PRIVATE].address.bo;
+         if (private_bo) {
+            assert(image->bindings[ANV_IMAGE_MEMORY_BINDING_PRIVATE].memory_range.size);
+            assert(!image->bindings[ANV_IMAGE_MEMORY_BINDING_PRIVATE].host_map);
+
+            ANV_DMR_BO_FREE(&image->vk.base, private_bo);
+            anv_device_release_bo(device, private_bo);
+            image->bindings[ANV_IMAGE_MEMORY_BINDING_PRIVATE].address.bo = NULL;
+         }
+
          for (int j = 0; j < ARRAY_SIZE(image->bindings); ++j) {
             assert(memory_ranges_equal(image->bindings[j].memory_range,
                                        swapchain_image->bindings[j].memory_range));
@@ -2706,8 +2771,7 @@ anv_bind_image_memory(struct anv_device *device,
          /* We must bump the private binding's bo's refcount because, unlike the other
           * bindings, its lifetime is not application-managed.
           */
-         struct anv_bo *private_bo =
-            image->bindings[ANV_IMAGE_MEMORY_BINDING_PRIVATE].address.bo;
+         private_bo = image->bindings[ANV_IMAGE_MEMORY_BINDING_PRIVATE].address.bo;
          if (private_bo)
             anv_bo_ref(private_bo);
 
@@ -2720,11 +2784,11 @@ anv_bind_image_memory(struct anv_device *device,
       case VK_STRUCTURE_TYPE_NATIVE_BUFFER_ANDROID: {
          const VkNativeBufferANDROID *gralloc_info =
             (const VkNativeBufferANDROID *)s;
-         result = anv_image_bind_from_gralloc(device, image, gralloc_info);
+
+         result = resolve_anb_image(device, image, gralloc_info);
          if (result != VK_SUCCESS)
             return result;
 
-         resolve_anb_image(device, image, gralloc_info);
          did_bind = true;
          break;
       }

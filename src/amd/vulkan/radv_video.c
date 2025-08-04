@@ -607,8 +607,8 @@ radv_GetPhysicalDeviceVideoCapabilitiesKHR(VkPhysicalDevice physicalDevice, cons
    pCapabilities->flags = 0;
    pCapabilities->pictureAccessGranularity.width = VK_VIDEO_H264_MACROBLOCK_WIDTH;
    pCapabilities->pictureAccessGranularity.height = VK_VIDEO_H264_MACROBLOCK_HEIGHT;
-   pCapabilities->minCodedExtent.width = VK_VIDEO_H264_MACROBLOCK_WIDTH;
-   pCapabilities->minCodedExtent.height = VK_VIDEO_H264_MACROBLOCK_HEIGHT;
+   pCapabilities->minCodedExtent.width = 64;
+   pCapabilities->minCodedExtent.height = 64;
 
    struct VkVideoDecodeCapabilitiesKHR *dec_caps = NULL;
    struct VkVideoEncodeCapabilitiesKHR *enc_caps = NULL;
@@ -635,8 +635,8 @@ radv_GetPhysicalDeviceVideoCapabilitiesKHR(VkPhysicalDevice physicalDevice, cons
          enc_caps->supportedEncodeFeedbackFlags = VK_VIDEO_ENCODE_FEEDBACK_BITSTREAM_BUFFER_OFFSET_BIT_KHR |
                                                   VK_VIDEO_ENCODE_FEEDBACK_BITSTREAM_BYTES_WRITTEN_BIT_KHR;
       }
-      pCapabilities->minBitstreamBufferOffsetAlignment = 16;
-      pCapabilities->minBitstreamBufferSizeAlignment = 16;
+      pCapabilities->minBitstreamBufferOffsetAlignment = 256;
+      pCapabilities->minBitstreamBufferSizeAlignment = 8;
    }
 
    switch (pVideoProfile->videoCodecOperation) {
@@ -731,6 +731,8 @@ radv_GetPhysicalDeviceVideoCapabilitiesKHR(VkPhysicalDevice physicalDevice, cons
       ext->maxLevel = STD_VIDEO_AV1_LEVEL_6_1; /* For VCN3/4, the only h/w currently with AV1 decode support */
       strcpy(pCapabilities->stdHeaderVersion.extensionName, VK_STD_VULKAN_VIDEO_CODEC_AV1_DECODE_EXTENSION_NAME);
       pCapabilities->stdHeaderVersion.specVersion = VK_STD_VULKAN_VIDEO_CODEC_AV1_DECODE_SPEC_VERSION;
+      pCapabilities->minCodedExtent.width = 16;
+      pCapabilities->minCodedExtent.height = 16;
       break;
    }
    case VK_VIDEO_CODEC_OPERATION_ENCODE_H264_BIT_KHR: {
@@ -1247,10 +1249,15 @@ get_h264_msg(struct radv_video_session *vid, struct radv_video_session_params *p
 
    result.sps_info_flags = 0;
 
-   result.sps_info_flags |= sps->flags.direct_8x8_inference_flag << 0;
-   result.sps_info_flags |= sps->flags.mb_adaptive_frame_field_flag << 1;
-   result.sps_info_flags |= sps->flags.frame_mbs_only_flag << 2;
-   result.sps_info_flags |= sps->flags.delta_pic_order_always_zero_flag << 3;
+   result.sps_info_flags |= sps->flags.direct_8x8_inference_flag
+                            << RDECODE_SPS_INFO_H264_DIRECT_8X8_INFERENCE_FLAG_SHIFT;
+   result.sps_info_flags |= sps->flags.mb_adaptive_frame_field_flag
+                            << RDECODE_SPS_INFO_H264_MB_ADAPTIVE_FRAME_FIELD_FLAG_SHIFT;
+   result.sps_info_flags |= sps->flags.frame_mbs_only_flag << RDECODE_SPS_INFO_H264_FRAME_MBS_ONLY_FLAG_SHIFT;
+   result.sps_info_flags |= sps->flags.delta_pic_order_always_zero_flag
+                            << RDECODE_SPS_INFO_H264_DELTA_PIC_ORDER_ALWAYS_ZERO_FLAG_SHIFT;
+   result.sps_info_flags |= sps->flags.gaps_in_frame_num_value_allowed_flag
+                            << RDECODE_SPS_INFO_H264_GAPS_IN_FRAME_NUM_VALUE_ALLOWED_FLAG_SHIFT;
    if (vid->dpb_type != DPB_DYNAMIC_TIER_2)
       result.sps_info_flags |= 1 << RDECODE_SPS_INFO_H264_EXTENSION_SUPPORT_FLAG_SHIFT;
 
@@ -2155,10 +2162,15 @@ get_uvd_h264_msg(struct radv_video_session *vid, struct radv_video_session_param
 
    result.sps_info_flags = 0;
 
-   result.sps_info_flags |= sps->flags.direct_8x8_inference_flag << 0;
-   result.sps_info_flags |= sps->flags.mb_adaptive_frame_field_flag << 1;
-   result.sps_info_flags |= sps->flags.frame_mbs_only_flag << 2;
-   result.sps_info_flags |= sps->flags.delta_pic_order_always_zero_flag << 3;
+   result.sps_info_flags |= sps->flags.direct_8x8_inference_flag
+                            << RDECODE_SPS_INFO_H264_DIRECT_8X8_INFERENCE_FLAG_SHIFT;
+   result.sps_info_flags |= sps->flags.mb_adaptive_frame_field_flag
+                            << RDECODE_SPS_INFO_H264_MB_ADAPTIVE_FRAME_FIELD_FLAG_SHIFT;
+   result.sps_info_flags |= sps->flags.frame_mbs_only_flag << RDECODE_SPS_INFO_H264_FRAME_MBS_ONLY_FLAG_SHIFT;
+   result.sps_info_flags |= sps->flags.delta_pic_order_always_zero_flag
+                            << RDECODE_SPS_INFO_H264_DELTA_PIC_ORDER_ALWAYS_ZERO_FLAG_SHIFT;
+   result.sps_info_flags |= sps->flags.gaps_in_frame_num_value_allowed_flag
+                            << RDECODE_SPS_INFO_H264_GAPS_IN_FRAME_NUM_VALUE_ALLOWED_FLAG_SHIFT;
    result.sps_info_flags |= 1 << RDECODE_SPS_INFO_H264_EXTENSION_SUPPORT_FLAG_SHIFT;
 
    result.bit_depth_luma_minus8 = sps->bit_depth_luma_minus8;

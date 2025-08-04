@@ -131,6 +131,7 @@ impl Deref for QueueContext<'_> {
 impl Drop for QueueContext<'_> {
     fn drop(&mut self) {
         self.set_constant_buffer(0, &[]);
+        self.ctx.clear_shader_images(self.dev.caps.max_write_images);
         if self.kernel_state.get_mut().builds.is_some() {
             // SAFETY: We simply unbind here. The bound cso will only be dropped at the end of this
             //         drop handler.
@@ -365,10 +366,10 @@ impl Queue {
             // Waiting on the last event is good enough here as the queue will process it in order
             // It's not a problem if the weak ref is invalid as that means the work is already done
             // and waiting isn't necessary anymore.
-            let err = last.upgrade().map(|e| e.wait()).unwrap_or_default();
-            if err < 0 {
-                return Err(err);
-            }
+            //
+            // We also ignore any error state of events as it's the callers responsibility to check
+            // for it if it cares.
+            last.upgrade().map(|e| e.wait());
         }
         Ok(())
     }
