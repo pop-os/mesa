@@ -54,7 +54,6 @@ LLVM_ARCHS     = amd64 arm64 armel armhf i386 loong64 mips64el powerpc ppc64 ppc
 RUSTICL_ARCHS  = amd64 arm64 armel armhf i386 loong64 mips64el powerpc ppc64 ppc64el riscv64 s390x x32
 NVK_ARCHS      = amd64 arm64 armhf i386 ppc64 riscv64 x32
 VALGRIND_ARCHS = amd64 arm64 armhf i386 mips64el powerpc ppc64 ppc64el s390x
-WINE_ARCHS     = amd64 arm64 armel armhf i386
 
 # hurd doesn't do direct rendering
 ifeq ($(DEB_HOST_ARCH_OS), hurd)
@@ -139,11 +138,6 @@ else
 	ifneq (,$(filter $(DEB_HOST_ARCH), $(NVK_ARCHS)))
 		export MESON_PACKAGE_CACHE_DIR=/usr/share/cargo/registry/
 		VULKAN_DRIVERS += nouveau
-	endif
-
-	# nine makes sense only on archs that build wine
-	ifneq (,$(filter $(DEB_HOST_ARCH), $(WINE_ARCHS)))
-		confflags_GALLIUM += -Dgallium-nine=true
 	endif
 
 	# gfxstream only builds on 64bit
@@ -323,5 +317,4 @@ regen_control:
 	    -e"s,@RUSTICL_ARCHS@,$(RUSTICL_ARCHS),g" \
 	    -e"s,@NVK_ARCHS@,$(NVK_ARCHS),g" \
 	    -e"s,@VALGRIND_ARCHS@,$(VALGRIND_ARCHS),g" \
-	    -e"s,@WINE_ARCHS@,$(WINE_ARCHS),g" \
 	    debian/control.in > debian/control
