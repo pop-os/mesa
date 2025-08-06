@@ -1,3 +1,2 @@
-etc/OpenCL/vendors/mesa.icd
-usr/lib/*/gallium-pipe/*.so
-usr/lib/*/libMesaOpenCL*
+etc/OpenCL/vendors/rusticl.icd
+usr/lib/*/libRusticlOpenCL*

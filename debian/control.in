@@ -312,7 +312,7 @@ Description: Mesa Vulkan graphics drivers
 
 Package: mesa-opencl-icd
 Section: libs
-Architecture: @LLVM_ARCHS@
+Architecture: @RUSTICL_ARCHS@
 Pre-Depends: ${misc:Pre-Depends}
 Depends:
  libclc-@LLVM_VERSION@,
