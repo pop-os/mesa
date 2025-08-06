@@ -91,8 +91,6 @@ else
   ifneq (,$(filter $(DEB_HOST_ARCH), amd64 i386 x32 loong64))
 	GALLIUM_DRIVERS += crocus i915 iris svga
 	VULKAN_DRIVERS += intel intel_hasvk
-	# svga needs xa state tracker
-	confflags_GALLIUM += -Dgallium-xa=enabled
   endif
 
   ifneq (,$(filter $(DEB_HOST_ARCH), amd64))

@@ -3,6 +3,7 @@ mesa (25.2.0-1) UNRELEASED; urgency=medium
   * New upstream release.
   * patches: Drop upstreamed and obsolete bits.
   * Drop libd3dadapter9*, gallium-nine is no more.
+  * Drop libxatracker*, gallium-xa is gone.
 
  -- Timo Aaltonen <tjaalton@debian.org>  Wed, 06 Aug 2025 22:06:11 +0300
 
