@@ -88,9 +88,14 @@ else
   endif
 
   # Build intel drivers on archs where libdrm-intel is installed
-  ifneq (,$(filter $(DEB_HOST_ARCH), amd64 i386 x32 loong64))
-	GALLIUM_DRIVERS += crocus i915 iris svga
-	VULKAN_DRIVERS += intel intel_hasvk
+  ifneq (,$(filter $(DEB_HOST_ARCH), amd64 i386 x32))
+	GALLIUM_DRIVERS += crocus i915 svga
+	VULKAN_DRIVERS += intel_hasvk
+  endif
+
+  ifneq (,$(filter $(DEB_HOST_ARCH), amd64 arm64 i386 loong64 x32 ppc64el))
+	GALLIUM_DRIVERS += iris
+	VULKAN_DRIVERS += intel
   endif
 
   ifneq (,$(filter $(DEB_HOST_ARCH), amd64))
