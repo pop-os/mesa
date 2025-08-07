@@ -5,6 +5,8 @@ mesa (25.2.0-1) UNRELEASED; urgency=medium
   * Drop libd3dadapter9*, gallium-nine is no more.
   * Drop libxatracker*, gallium-xa is gone.
   * Drop libMesaOpenCL from mesa-opencl-icd, clover is gone.
+  * control: Bump meson and bindgen build-deps, add librust-rustc-2-hash-dev
+    for nvk.
 
  -- Timo Aaltonen <tjaalton@debian.org>  Wed, 06 Aug 2025 22:06:11 +0300
 
