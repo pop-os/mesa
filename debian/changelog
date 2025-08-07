@@ -14,6 +14,7 @@ mesa (25.2.0-1) UNRELEASED; urgency=medium
     source.
   * rules: Enable iris/anv on arm64 & ppc64el. (Closes: #1100537)
   * rules: intel-clc is gone.
+  * rules: Enable iris/anv on riscv64. (Closes: #1108849)
 
  -- Timo Aaltonen <tjaalton@debian.org>  Wed, 06 Aug 2025 22:06:11 +0300
 

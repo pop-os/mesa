@@ -93,7 +93,7 @@ else
 	VULKAN_DRIVERS += intel_hasvk
   endif
 
-  ifneq (,$(filter $(DEB_HOST_ARCH), amd64 arm64 i386 loong64 x32 ppc64el))
+  ifneq (,$(filter $(DEB_HOST_ARCH), amd64 arm64 i386 loong64 x32 ppc64el riscv64))
 	GALLIUM_DRIVERS += iris
 	VULKAN_DRIVERS += intel
   endif
