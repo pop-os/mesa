@@ -10,6 +10,8 @@ mesa (25.2.0-1) UNRELEASED; urgency=medium
   * libegl-mesa0.symbols: Updated.
   * rules: Drop shared-glapi build option, it's deprecated and doesn't
     do anything.
+  * rules: Restore quilt, as source3.0 applies patches when building the
+    source.
 
  -- Timo Aaltonen <tjaalton@debian.org>  Wed, 06 Aug 2025 22:06:11 +0300
 

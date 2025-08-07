@@ -288,7 +288,7 @@ override_dh_makeshlibs:
 	dh_makeshlibs -a -- -c4
 
 %:
-	dh $@ \
+	dh $@ --with quilt \
 		--builddirectory=build/ \
 		--buildsystem=meson
 

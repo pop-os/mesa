@@ -11,6 +11,7 @@ Build-Depends:
  glslang-tools [@LLVM_ARCHS@],
  spirv-tools (>= 2024.4~rc1) [@LLVM_ARCHS@],
  meson (>= 1.7.0),
+ quilt,
  pkgconf,
  libdrm-dev (>= 2.4.125-1),
  libx11-dev,
