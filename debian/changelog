@@ -8,6 +8,8 @@ mesa (25.2.0-1) UNRELEASED; urgency=medium
   * control: Bump meson and bindgen build-deps, add librust-rustc-2-hash-dev
     for nvk.
   * libegl-mesa0.symbols: Updated.
+  * rules: Drop shared-glapi build option, it's deprecated and doesn't
+    do anything.
 
  -- Timo Aaltonen <tjaalton@debian.org>  Wed, 06 Aug 2025 22:06:11 +0300
 

@@ -181,7 +181,6 @@ confflags += \
 	-Dvulkan-drivers="[$(VULKAN_DRIVERS_LIST)]" \
 	-Dvulkan-layers="[$(VULKAN_LAYERS_LIST)]" \
 	-Dglvnd=enabled \
-	-Dshared-glapi=enabled \
 	-Db_ndebug=true \
 	-Dbuild-tests=true \
 	-Dtools=drm-shim \
