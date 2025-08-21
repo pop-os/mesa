@@ -11,7 +11,7 @@ Build-Depends:
  glslang-tools [amd64 arm64 armhf i386],
  spirv-tools (>= 2024.4~rc1) [amd64 arm64 armhf i386],
  meson-1.5,
- pkgconf,
+ pkg-config,
  libdrm-dev (>= 2.4.125-1),
  libx11-dev,
  libxxf86vm-dev,
