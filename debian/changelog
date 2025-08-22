@@ -1,3 +1,15 @@
+mesa (25.2.1-1) unstable; urgency=medium
+
+  [ Timo Aaltonen ]
+  * New upstream release.
+  * rules: Don't clean up .pc dir. (Closes: #1111295)
+  * control, rules: Drop quilt again, unnecessary now.
+
+  [ Fabio Pedretti ]
+  * rules: Disable sse2 disabling on i386.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Fri, 22 Aug 2025 14:01:57 +0300
+
 mesa (25.2.0-1) experimental; urgency=medium
 
   * New upstream release.
