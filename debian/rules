@@ -54,7 +54,7 @@ confflags_SSE2 = -Dsse2=true
 confflags_TEFLON = -Dteflon=false
 
 LLVM_ARCHS     = amd64 arm64 armhf i386
-RUSTICL_ARCHS  = amd64 arm64
+RUSTICL_ARCHS  =
 NVK_ARCHS      =
 VALGRIND_ARCHS = amd64 arm64 armhf i386
 WINE_ARCHS     = amd64 arm64 armhf i386
