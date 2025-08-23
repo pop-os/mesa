@@ -55,7 +55,7 @@ confflags_TEFLON = -Dteflon=false
 
 LLVM_ARCHS     = amd64 arm64 armhf i386
 RUSTICL_ARCHS  = amd64 arm64
-NVK_ARCHS      = amd64 arm64
+NVK_ARCHS      =
 VALGRIND_ARCHS = amd64 arm64 armhf i386
 WINE_ARCHS     = amd64 arm64 armhf i386
 
