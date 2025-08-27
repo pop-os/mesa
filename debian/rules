@@ -161,11 +161,6 @@ else
 	confflags_GALLIUM += -Dgallium-va=enabled
 	confflags_GALLIUM += -Dvideo-codecs="all"
   endif
-
-  # Teflon only supports arm64
-  ifneq (,$(filter $(DEB_HOST_ARCH), arm64))
-	confflags_TEFLON = -Dteflon=true
-  endif
 endif
 
 ifeq ($(DEB_HOST_ARCH), i386)

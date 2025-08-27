@@ -7,7 +7,6 @@ Standards-Version: 4.1.4
 Build-Depends:
  debhelper-compat (= 13),
  directx-headers-dev (>= 1.614.1) [linux-amd64 linux-arm64],
- flatbuffers-compiler [linux-arm64],
  glslang-tools [amd64 arm64 armhf i386],
  spirv-tools (>= 2024.4~rc1) [amd64 arm64 armhf i386],
  meson-1.5,
@@ -16,7 +15,6 @@ Build-Depends:
  libx11-dev,
  libxxf86vm-dev,
  libexpat1-dev,
- libflatbuffers-dev [linux-arm64],
  libsensors-dev [!hurd-any],
  libxfixes-dev,
  libxext-dev,
@@ -292,19 +290,6 @@ Description: shared infrastructure for Mesa drivers
  This package contains libgallium, a private library shared between
  multiple Mesa drivers. This library is an implementation detail of Mesa
  and should not be used directly by user code.
-
-Package: mesa-teflon-delegate
-Section: libs
-Architecture: arm64
-Depends:
- ${shlibs:Depends},
- ${misc:Depends},
-Pre-Depends: ${misc:Pre-Depends}
-Multi-Arch: same
-Description: Mesa TensorFlow Lite external delegate
- TensorFlow Lite delegate which can make use of NPUs to accelerate ML
- inference. It is implemented in the form of a external delegate, a shared
- library which the TensorFlow Lite runtime can load at startup.
 
 Package: mesa-va-drivers
 Section: libs
