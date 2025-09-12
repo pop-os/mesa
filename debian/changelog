@@ -1,8 +1,12 @@
 mesa (25.3.3-1) UNRELEASED; urgency=medium
 
+  [ Timo Aaltonen ]
   * New upstream release.
 
- -- Timo Aaltonen <tjaalton@debian.org>  Wed, 07 Jan 2026 14:15:09 +0200
+  [ Simon McVittie ]
+  * Use the upstream solution for #980148
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Wed, 07 Jan 2026 14:26:13 +0200
 
 mesa (25.3.2-2) unstable; urgency=medium
 
