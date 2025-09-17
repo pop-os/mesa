@@ -1,3 +1,9 @@
+mesa (25.2.3-1) UNRELEASED; urgency=medium
+
+  * New upstream release. (LP: #2122654)
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Wed, 17 Sep 2025 17:51:49 +0300
+
 mesa (25.2.2-1) unstable; urgency=medium
 
   [ Simon McVittie ]
