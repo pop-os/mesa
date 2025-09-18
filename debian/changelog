@@ -1,9 +1,9 @@
-mesa (25.2.3-1) UNRELEASED; urgency=medium
+mesa (25.2.3-1) unstable; urgency=medium
 
   * New upstream release. (LP: #2122654)
   * patches: Fix crash on intel xe with 16kB page size. (Closes: #1115467)
 
- -- Timo Aaltonen <tjaalton@debian.org>  Wed, 17 Sep 2025 17:51:49 +0300
+ -- Timo Aaltonen <tjaalton@debian.org>  Thu, 18 Sep 2025 11:08:11 +0300
 
 mesa (25.2.2-1) unstable; urgency=medium
 
