@@ -1,0 +1,5 @@
+path_max.diff
+src_glx_dri_common.h.diff
+disable_ppc64el_assembly.diff
+rename-rsqrtf.diff
+0001-anv-Use-os_get_page_size-for-mmap-offset-alignment-t.patch
