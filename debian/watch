@@ -1,3 +1,7 @@
-version=3
-opts="uversionmangle=s/-rc/~rc/,dversionmangle=s/\+repack//,pgpsigurlmangle=s/$/.sig/,pasv" \
-https://mesa.freedesktop.org/archive/mesa-(.*)\.tar\.xz
+Version: 5
+
+Source: https://archive.mesa3d.org/
+Dversion-Mangle: s/\+repack//
+Uversion-Mangle: auto
+Matching-Pattern: mesa-@ANY_VERSION@@ARCHIVE_EXT@
+Pgp-Sig-Url-Mangle: s%@ARCHIVE_EXT@$%.sig%
