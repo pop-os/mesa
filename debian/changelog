@@ -4,6 +4,8 @@ mesa (25.3.0~rc1-1) UNRELEASED; urgency=medium
   * watch: Update to version 5.
   * patches: Drop upstreamed patches.
   * control: Bump build-dep on directx-headers-dev.
+  * rules: Add a script to rewrite local rust subprojects to use the
+    distro registry.
 
  -- Timo Aaltonen <tjaalton@debian.org>  Thu, 16 Oct 2025 16:36:58 +0300
 
