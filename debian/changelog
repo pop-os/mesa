@@ -1,6 +1,7 @@
 mesa (25.3.0~rc2-1) UNRELEASED; urgency=medium
 
   * New upstream release candidate.
+  * rules: Add rocket gallium driver for arm. (Closes: #1118656)
 
  -- Timo Aaltonen <tjaalton@debian.org>  Fri, 24 Oct 2025 09:53:37 +0300
 

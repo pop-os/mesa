@@ -72,7 +72,7 @@ else
 
   # Freedreno requires arm in addition
   ifneq (,$(filter arm arm64,$(DEB_HOST_ARCH_CPU)))
-	GALLIUM_DRIVERS += freedreno
+	GALLIUM_DRIVERS += freedreno rocket
   endif
 
   # etnaviv, tegra, vc4 and v3d kernel support are only available on armhf and arm64
