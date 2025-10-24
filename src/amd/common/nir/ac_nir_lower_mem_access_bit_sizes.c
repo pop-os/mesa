@@ -109,23 +109,37 @@ lower_mem_access_cb(nir_intrinsic_op intrin, uint8_t bytes, uint8_t bit_size, ui
    nir_mem_access_size_align res;
 
    if (intrin == nir_intrinsic_load_shared || intrin == nir_intrinsic_store_shared) {
-      /* Split unsupported shared access. */
-      res.bit_size = MIN2(bit_size, combined_align * 8ull);
-      res.align = res.bit_size / 8;
       /* Don't use >64-bit LDS loads for performance reasons. */
       unsigned max_bytes = intrin == nir_intrinsic_store_shared && cb_data->gfx_level >= GFX7 ? 16 : 8;
       bytes = MIN3(bytes, combined_align, max_bytes);
       bytes = bytes == 12 ? bytes : round_down_to_power_of_2(bytes);
+
+      /* Split unsupported shared access. */
+      res.bit_size = MIN2(bit_size, bytes * 8ull);
+      res.align = res.bit_size / 8;
       res.num_components = bytes / res.align;
       res.shift = nir_mem_access_shift_method_bytealign_amd;
       return res;
    }
 
+   const bool is_buffer_load = intrin == nir_intrinsic_load_ubo ||
+                               intrin == nir_intrinsic_load_ssbo ||
+                               intrin == nir_intrinsic_load_constant;
+
    if (is_smem) {
+      const bool supported_subdword = cb_data->gfx_level >= GFX12 &&
+                                      intrin != nir_intrinsic_load_push_constant &&
+                                      (!cb_data->use_llvm || intrin != nir_intrinsic_load_ubo);
+
       /* Round up subdword loads if unsupported. */
-      const bool supported_subdword = cb_data->gfx_level >= GFX12 && intrin != nir_intrinsic_load_push_constant;
-      if (bit_size < 32 && (bytes >= 3 || !supported_subdword))
+      if (bytes <= 2 && combined_align % bytes == 0 && supported_subdword) {
+         bit_size = bytes * 8;
+      } else if (bytes % 4 || combined_align % 4) {
+         if (is_buffer_load)
+            bytes += 4 - MIN2(combined_align, 4);
          bytes = align(bytes, 4);
+         bit_size = 32;
+      }
 
       /* Generally, require an alignment of 4. */
       res.align = MIN2(4, bytes);
@@ -138,9 +152,6 @@ lower_mem_access_cb(nir_intrinsic_op intrin, uint8_t bytes, uint8_t bit_size, ui
       if (!util_is_power_of_two_nonzero(bytes) && (cb_data->gfx_level < GFX12 || bytes != 12)) {
          const uint8_t larger = util_next_power_of_two(bytes);
          const uint8_t smaller = larger / 2;
-         const bool is_buffer_load = intrin == nir_intrinsic_load_ubo ||
-                                     intrin == nir_intrinsic_load_ssbo ||
-                                     intrin == nir_intrinsic_load_constant;
          const bool is_aligned = align_mul % smaller == 0;
 
          /* Overfetch up to 1 dword if this is a bounds-checked buffer load or the access is aligned. */
@@ -185,8 +196,8 @@ lower_mem_access_cb(nir_intrinsic_op intrin, uint8_t bytes, uint8_t bit_size, ui
 
    const uint32_t max_pad = 4 - MIN2(combined_align, 4);
 
-   /* Global loads don't have bounds checking, so increasing the size might not be safe. */
-   if (intrin == nir_intrinsic_load_global || intrin == nir_intrinsic_load_global_constant) {
+   /* Global/scratch loads don't have bounds checking, so increasing the size might not be safe. */
+   if (!is_buffer_load) {
       if (align_mul < 4) {
          /* If we split the load, only lower it to 32-bit if this is a SMEM load. */
          const unsigned chunk_bytes = align(bytes, 4) - max_pad;
