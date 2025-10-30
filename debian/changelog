@@ -1,6 +1,7 @@
 mesa (25.2.6-1) UNRELEASED; urgency=medium
 
   * New upstream release.
+  * patches: Drop renaming of rsqrtf, upstreamed.
 
  -- Timo Aaltonen <tjaalton@debian.org>  Thu, 30 Oct 2025 11:21:53 +0200
 
