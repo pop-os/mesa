@@ -894,7 +894,6 @@ radv_enc_slice_header(struct radv_cmd_buffer *cmd_buffer, const VkVideoEncodeInf
    uint32_t num_bits[RENCODE_SLICE_HEADER_TEMPLATE_MAX_NUM_INSTRUCTIONS] = {0};
    const struct VkVideoEncodeH264PictureInfoKHR *h264_picture_info =
       vk_find_struct_const(enc_info->pNext, VIDEO_ENCODE_H264_PICTURE_INFO_KHR);
-   int slice_count = h264_picture_info->naluSliceEntryCount;
    const StdVideoEncodeH264PictureInfo *pic = h264_picture_info->pStdPictureInfo;
    const StdVideoH264SequenceParameterSet *sps =
       vk_video_find_h264_enc_std_sps(&cmd_buffer->video.params->vk, pic->seq_parameter_set_id);
@@ -906,8 +905,6 @@ radv_enc_slice_header(struct radv_cmd_buffer *cmd_buffer, const VkVideoEncodeInf
    unsigned int cdw_start = 0;
    unsigned int cdw_filled = 0;
    unsigned int bits_copied = 0;
-
-   assert(slice_count <= 1);
 
    struct radv_device *device = radv_cmd_buffer_device(cmd_buffer);
    const struct radv_physical_device *pdev = radv_device_physical(device);
@@ -3053,11 +3050,36 @@ radv_video_patch_encode_session_parameters(struct radv_device *device, struct vk
       }
       break;
    case VK_VIDEO_CODEC_OPERATION_ENCODE_H265_BIT_KHR: {
-      /*
-       * AMD firmware requires these flags to be set in h265 with RC modes,
-       * VCN 3 need 1.27 and VCN 4 needs 1.7 or newer to pass the CTS tests,
-       * dEQP-VK.video.encode.h265_rc_*.
-       */
+      for (unsigned i = 0; i < params->h265_enc.h265_sps_count; i++) {
+         uint32_t pic_width_in_luma_samples =
+             params->h265_enc.h265_sps[i].base.pic_width_in_luma_samples;
+         uint32_t pic_height_in_luma_samples =
+             params->h265_enc.h265_sps[i].base.pic_height_in_luma_samples;
+         uint32_t aligned_pic_width = align(pic_width_in_luma_samples, 64);
+         uint32_t aligned_pic_height = align(pic_height_in_luma_samples, 16);
+
+         /* Override the unaligned pic_{width,height} and make up for it with conformance window
+          * cropping */
+         params->h265_enc.h265_sps[i].base.pic_width_in_luma_samples = aligned_pic_width;
+         params->h265_enc.h265_sps[i].base.pic_height_in_luma_samples = aligned_pic_height;
+
+         if (aligned_pic_width != pic_width_in_luma_samples ||
+             aligned_pic_height != pic_height_in_luma_samples) {
+            params->h265_enc.h265_sps[i].base.flags.conformance_window_flag = 1;
+            params->h265_enc.h265_sps[i].base.conf_win_right_offset +=
+               (aligned_pic_width - pic_width_in_luma_samples) / 2;
+            params->h265_enc.h265_sps[i].base.conf_win_bottom_offset +=
+               (aligned_pic_height - pic_height_in_luma_samples) / 2;
+         }
+
+         /* VCN supports only the following block sizes (resulting in 64x64 CTBs with any coding
+          * block size) */
+         params->h265_enc.h265_sps[i].base.log2_min_luma_coding_block_size_minus3 = 0;
+         params->h265_enc.h265_sps[i].base.log2_diff_max_min_luma_coding_block_size = 3;
+         params->h265_enc.h265_sps[i].base.log2_min_luma_transform_block_size_minus2 = 0;
+         params->h265_enc.h265_sps[i].base.log2_diff_max_min_luma_transform_block_size = 3;
+      }
+
       for (unsigned i = 0; i < params->h265_enc.h265_pps_count; i++) {
          params->h265_enc.h265_pps[i].base.flags.cu_qp_delta_enabled_flag = 1;
          params->h265_enc.h265_pps[i].base.diff_cu_qp_delta_depth = 0;
@@ -3158,6 +3180,14 @@ radv_GetEncodedVideoSessionParametersKHR(VkDevice device,
          assert(sps);
          char *data_ptr = pData ? (char *)pData + vps_size : NULL;
          vk_video_encode_h265_sps(sps, size_limit, &sps_size, data_ptr);
+
+         if (pFeedbackInfo) {
+            struct VkVideoEncodeH265SessionParametersFeedbackInfoKHR *h265_feedback_info =
+               vk_find_struct(pFeedbackInfo->pNext, VIDEO_ENCODE_H265_SESSION_PARAMETERS_FEEDBACK_INFO_KHR);
+            pFeedbackInfo->hasOverrides = VK_TRUE;
+            if (h265_feedback_info)
+               h265_feedback_info->hasStdSPSOverrides = VK_TRUE;
+         }
       }
       if (h265_get_info->writeStdPPS) {
          const StdVideoH265PictureParameterSet *pps =

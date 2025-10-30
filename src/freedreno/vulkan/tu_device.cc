@@ -2166,12 +2166,16 @@ tu_create_copy_timestamp_cs(struct tu_u_trace_submission_data *submission_data,
    tu_device *device = cmd_buffers[0]->device;
    uint32_t cs_size = trace_chunks_to_copy * 6 * 2 + 3;
 
+   mtx_lock(&device->copy_timestamp_cs_pool_mutex);
    if (!list_is_empty(&device->copy_timestamp_cs_pool)) {
       submission_data->timestamp_copy_data =
          list_first_entry(&device->copy_timestamp_cs_pool,
                           struct tu_copy_timestamp_data, node);
       list_del(&submission_data->timestamp_copy_data->node);
-   } else {
+   }
+   mtx_unlock(&device->copy_timestamp_cs_pool_mutex);
+
+   if (!submission_data->timestamp_copy_data) {
       submission_data->timestamp_copy_data =
          (struct tu_copy_timestamp_data *) vk_zalloc(
             &device->vk.alloc, sizeof(struct tu_copy_timestamp_data), 8,
@@ -2295,8 +2299,11 @@ tu_u_trace_submission_data_finish(
       if (u_trace_enabled(&device->trace_context)) {
          tu_cs_reset(&submission_data->timestamp_copy_data->cs);
          u_trace_fini(&submission_data->timestamp_copy_data->trace);
+
+         mtx_lock(&device->copy_timestamp_cs_pool_mutex);
          list_addtail(&submission_data->timestamp_copy_data->node,
                       &device->copy_timestamp_cs_pool);
+         mtx_unlock(&device->copy_timestamp_cs_pool_mutex);
       } else {
          tu_free_copy_timestamp_data(device,
                                      submission_data->timestamp_copy_data);
@@ -2508,6 +2515,31 @@ tu_device_get_timestamp(struct vk_device *vk_device, uint64_t *timestamp)
    return ret == 0 ? VK_SUCCESS : VK_ERROR_UNKNOWN;
 }
 
+void
+tu_device_destroy_mutexes(struct tu_device *device)
+{
+   mtx_destroy(&device->bo_mutex);
+   mtx_destroy(&device->pipeline_mutex);
+   mtx_destroy(&device->autotune_mutex);
+   mtx_destroy(&device->kgsl_profiling_mutex);
+   mtx_destroy(&device->event_mutex);
+   mtx_destroy(&device->trace_mutex);
+   mtx_destroy(&device->radix_sort_mutex);
+   mtx_destroy(&device->fiber_pvtmem_bo.mtx);
+   mtx_destroy(&device->wave_pvtmem_bo.mtx);
+   mtx_destroy(&device->mutex);
+   mtx_destroy(&device->copy_timestamp_cs_pool_mutex);
+   for (unsigned i = 0; i < ARRAY_SIZE(device->scratch_bos); i++)
+      mtx_destroy(&device->scratch_bos[i].construct_mtx);
+
+   u_rwlock_destroy(&device->dma_bo_lock);
+   pthread_mutex_destroy(&device->submit_mutex);
+
+   if (device->physical_device->has_set_iova) {
+      mtx_destroy(&device->vma_mutex);
+   }
+}
+
 VKAPI_ATTR VkResult VKAPI_CALL
 tu_CreateDevice(VkPhysicalDevice physicalDevice,
                 const VkDeviceCreateInfo *pCreateInfo,
@@ -2598,6 +2630,14 @@ tu_CreateDevice(VkPhysicalDevice physicalDevice,
    mtx_init(&device->kgsl_profiling_mutex, mtx_plain);
    mtx_init(&device->event_mutex, mtx_plain);
    mtx_init(&device->trace_mutex, mtx_plain);
+   mtx_init(&device->radix_sort_mutex, mtx_plain);
+   mtx_init(&device->fiber_pvtmem_bo.mtx, mtx_plain);
+   mtx_init(&device->wave_pvtmem_bo.mtx, mtx_plain);
+   mtx_init(&device->mutex, mtx_plain);
+   mtx_init(&device->copy_timestamp_cs_pool_mutex, mtx_plain);
+   for (unsigned i = 0; i < ARRAY_SIZE(device->scratch_bos); i++)
+      mtx_init(&device->scratch_bos[i].construct_mtx, mtx_plain);
+
    u_rwlock_init(&device->dma_bo_lock);
    pthread_mutex_init(&device->submit_mutex, NULL);
 
@@ -2655,8 +2695,6 @@ tu_CreateDevice(VkPhysicalDevice physicalDevice,
       goto fail_queues;
 
    util_sparse_array_init(&device->accel_struct_ranges, sizeof(VkDeviceSize), 256);
-
-   mtx_init(&device->radix_sort_mutex, mtx_plain);
 
    {
       struct ir3_compiler_options ir3_options = {
@@ -2854,14 +2892,6 @@ tu_CreateDevice(VkPhysicalDevice physicalDevice,
       goto fail_timeline_cond;
    }
 
-   for (unsigned i = 0; i < ARRAY_SIZE(device->scratch_bos); i++)
-      mtx_init(&device->scratch_bos[i].construct_mtx, mtx_plain);
-
-   mtx_init(&device->fiber_pvtmem_bo.mtx, mtx_plain);
-   mtx_init(&device->wave_pvtmem_bo.mtx, mtx_plain);
-
-   mtx_init(&device->mutex, mtx_plain);
-
    device->use_z24uint_s8uint =
       physical_device->info->a6xx.has_z24uint_s8uint &&
       (!border_color_without_format ||
@@ -2954,7 +2984,7 @@ fail_queues:
          vk_free(&device->vk.alloc, device->queues[i]);
    }
 
-   u_rwlock_destroy(&device->dma_bo_lock);
+   tu_device_destroy_mutexes(device);
    tu_drm_device_finish(device);
    vk_device_finish(&device->vk);
    vk_free(&device->vk.alloc, device);
@@ -3055,7 +3085,7 @@ tu_DestroyDevice(VkDevice _device, const VkAllocationCallbacks *pAllocator)
       util_vma_heap_finish(&device->vma);
 
    util_sparse_array_finish(&device->bo_map);
-   u_rwlock_destroy(&device->dma_bo_lock);
+   tu_device_destroy_mutexes(device);
 
    u_vector_finish(&device->zombie_vmas);
 

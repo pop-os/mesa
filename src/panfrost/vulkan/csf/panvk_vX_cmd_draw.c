@@ -2474,7 +2474,8 @@ panvk_cmd_draw_indirect(struct panvk_cmd_buffer *cmdbuf,
    uint32_t patch_attribs =
       cmdbuf->state.gfx.vi.attribs_changing_on_base_instance;
    uint32_t vs_res_table_size =
-      panvk_shader_res_table_count(&cmdbuf->state.gfx.vs.desc);
+      panvk_shader_res_table_count(&cmdbuf->state.gfx.vs.desc) *
+      pan_size(RESOURCE);
    bool patch_faus = shader_uses_sysval(vs, graphics, vs.first_vertex) ||
                      shader_uses_sysval(vs, graphics, vs.base_instance);
    struct cs_index draw_params_addr = cs_scratch_reg64(b, 0);
@@ -2500,6 +2501,9 @@ panvk_cmd_draw_indirect(struct panvk_cmd_buffer *cmdbuf,
 
    if (patch_faus)
       cs_move64_to(b, vs_fau_addr, cmdbuf->state.gfx.vs.push_uniforms);
+
+   if (patch_attribs != 0)
+      cs_move64_to(b, vs_drv_set, vs_desc_state->driver_set.dev_addr);
 
    cs_move64_to(b, draw_params_addr, draw->indirect.buffer_dev_addr);
    cs_move32_to(b, draw_id, 0);
@@ -2528,8 +2532,6 @@ panvk_cmd_draw_indirect(struct panvk_cmd_buffer *cmdbuf,
       }
 
       if (patch_attribs != 0) {
-         cs_move64_to(b, vs_drv_set, vs_desc_state->driver_set.dev_addr);
-
          /* If firstInstance=0, skip the offset adjustment. */
          cs_if(b, MALI_CS_CONDITION_NEQUAL,
                cs_sr_reg32(b, IDVS, INSTANCE_OFFSET)) {

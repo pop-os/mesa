@@ -210,8 +210,8 @@ tu_CreateDescriptorSetLayout(
       if (binding->descriptorType == VK_DESCRIPTOR_TYPE_INLINE_UNIFORM_BLOCK)
          set_layout->has_inline_uniforms = true;
 
-      if (variable_flags && binding->binding < variable_flags->bindingCount &&
-          (variable_flags->pBindingFlags[binding->binding] &
+      if (variable_flags && j < variable_flags->bindingCount &&
+          (variable_flags->pBindingFlags[j] &
            VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT)) {
          assert(!binding->pImmutableSamplers); /* Terribly ill defined  how
                                                   many samplers are valid */
@@ -379,7 +379,7 @@ tu_GetDescriptorSetLayoutSupport(
       uint64_t max_count = MAX_SET_SIZE;
       unsigned descriptor_count = binding->descriptorCount;
       if (binding->descriptorType == VK_DESCRIPTOR_TYPE_INLINE_UNIFORM_BLOCK) {
-         max_count = MAX_SET_SIZE - size;
+         max_count = MAX_INLINE_UBO_RANGE - size;
          descriptor_count = descriptor_sz;
          descriptor_sz = 1;
       } else if (descriptor_sz) {
@@ -390,9 +390,9 @@ tu_GetDescriptorSetLayoutSupport(
          supported = false;
       }
 
-      if (variable_flags && binding->binding < variable_flags->bindingCount &&
+      if (variable_flags && i < variable_flags->bindingCount &&
           variable_count &&
-          (variable_flags->pBindingFlags[binding->binding] &
+          (variable_flags->pBindingFlags[i] &
            VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT)) {
          variable_count->maxVariableDescriptorCount =
             MIN2(UINT32_MAX, max_count);

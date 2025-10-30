@@ -1496,6 +1496,15 @@ r3d_dst_gmem(struct tu_cmd_buffer *cmd, struct tu_cs *cs,
       gmem_offset = tu_attachment_gmem_offset(cmd, att, layer);
    }
 
+   /* On a7xx we must always use FMT6_Z24_UNORM_S8_UINT_AS_R8G8B8A8. See
+    * blit_base_format().
+    */
+   if (CHIP >= A7XX && att->format == VK_FORMAT_D24_UNORM_S8_UINT) {
+      RB_MRT_BUF_INFO = pkt_field_set(A6XX_RB_MRT_BUF_INFO_COLOR_FORMAT,
+                                      RB_MRT_BUF_INFO,
+                                      FMT6_Z24_UNORM_S8_UINT_AS_R8G8B8A8);
+   }
+
    tu_cs_emit_regs(cs,
                    RB_MRT_BUF_INFO(CHIP, 0, .dword = RB_MRT_BUF_INFO),
                    A6XX_RB_MRT_PITCH(0, 0),
@@ -1568,7 +1577,8 @@ r3d_setup(struct tu_cmd_buffer *cmd,
       tu_cs_emit_call(cs, cmd->device->dbg_renderpass_stomp_cs);
    }
 
-   enum a6xx_format fmt = blit_base_format<CHIP>(dst_format, ubwc, false);
+   enum a6xx_format fmt = blit_base_format<CHIP>(dst_format, ubwc, 
+                                                 blit_param & R3D_DST_GMEM);
    fixup_dst_format(src_format, &dst_format, &fmt);
 
    if (!cmd->state.pass) {
@@ -4609,7 +4619,7 @@ clear_sysmem_attachment(struct tu_cmd_buffer *cmd,
    enum pipe_format format = vk_format_to_pipe_format(vk_format);
    const struct tu_framebuffer *fb = cmd->state.framebuffer;
    const struct tu_image_view *iview = cmd->state.attachments[a];
-   const uint32_t clear_views = cmd->state.pass->attachments[a].clear_views;
+   const uint32_t used_views = cmd->state.pass->attachments[a].used_views;
    const struct blit_ops *ops = &r2d_ops<CHIP>;
    const VkClearValue *value = &cmd->state.clear_values[a];
    if (cmd->state.pass->attachments[a].samples > 1)
@@ -4624,7 +4634,7 @@ clear_sysmem_attachment(struct tu_cmd_buffer *cmd,
                cmd->state.render_area.extent);
    ops->clear_value(cmd, cs, format, value);
 
-   for_each_layer(i, clear_views, fb->layers) {
+   for_each_layer(i, used_views, fb->layers) {
       if (separate_ds) {
          if (vk_format == VK_FORMAT_D32_SFLOAT) {
             ops->dst_depth(cs, iview, i);
@@ -4705,7 +4715,7 @@ tu_clear_gmem_attachment(struct tu_cmd_buffer *cmd,
 
    tu_emit_clear_gmem_attachment<CHIP>(cmd, cs, resolve_group, a, 0,
                                  cmd->state.framebuffer->layers,
-                                 attachment->clear_views,
+                                 attachment->used_views,
                                  attachment->clear_mask,
                                  &cmd->state.clear_values[a], NULL);
 }
@@ -4726,7 +4736,7 @@ tu7_generic_clear_attachment(struct tu_cmd_buffer *cmd,
                              iview->view.ubwc_enabled, att->samples);
 
    enum pipe_format format = vk_format_to_pipe_format(att->format);
-   for_each_layer(i, att->clear_views, cmd->state.framebuffer->layers) {
+   for_each_layer(i, att->used_views, cmd->state.framebuffer->layers) {
       uint32_t layer = i + 0;
       uint32_t mask =
          aspect_write_mask_generic_clear(format, att->clear_mask);
@@ -4807,7 +4817,7 @@ tu_emit_blit(struct tu_cmd_buffer *cmd,
    uint32_t buffer_id = tu_resolve_group_include_buffer<CHIP>(resolve_group, format);
    event_blit_setup(cs, buffer_id, attachment, blit_event_type, clear_mask);
 
-   for_each_layer(i, attachment->clear_views, cmd->state.framebuffer->layers) {
+   for_each_layer(i, attachment->used_views, cmd->state.framebuffer->layers) {
       event_blit_dst_view blt_view = blt_view_from_tu_view(iview, i);
       event_blit_run<CHIP>(cmd, cs, attachment, &blt_view, separate_stencil);
    }
@@ -4916,7 +4926,7 @@ load_3d_blit(struct tu_cmd_buffer *cmd,
    /* Wait for CACHE_INVALIDATE to land */
    tu_cs_emit_wfi(cs);
 
-   for_each_layer(i, att->clear_views, cmd->state.framebuffer->layers) {
+   for_each_layer(i, att->used_views, cmd->state.framebuffer->layers) {
       if (cmd->state.pass->has_fdm) {
          struct apply_load_coords_state state = {
             .view = i,
