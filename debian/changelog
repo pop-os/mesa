@@ -2,6 +2,7 @@ mesa (25.2.6-1) UNRELEASED; urgency=medium
 
   * New upstream release.
   * patches: Drop renaming of rsqrtf, upstreamed.
+  * patches: Disable CCS for Intel Xe2. (LP: #2127717)
 
  -- Timo Aaltonen <tjaalton@debian.org>  Thu, 30 Oct 2025 11:21:53 +0200
 
