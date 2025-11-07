@@ -1,4 +1,4 @@
-mesa (25.3.0~rc4-1) UNRELEASED; urgency=medium
+mesa (25.3.0~rc4-1) experimental; urgency=medium
 
   * New upstream release candidate.
   * rules: Enable anti-lag and screenshot vulkan layers.
@@ -8,7 +8,7 @@ mesa (25.3.0~rc4-1) UNRELEASED; urgency=medium
   * mesa-vulkan-drivers: Add mesa-screenshot-control.py.
   * mesa-vulkan-drivers.lintian-overrides: Updated.
 
- -- Timo Aaltonen <tjaalton@debian.org>  Sun, 26 Oct 2025 11:34:25 +0200
+ -- Timo Aaltonen <tjaalton@debian.org>  Fri, 07 Nov 2025 12:54:12 +0200
 
 mesa (25.3.0~rc2-1) experimental; urgency=medium
 
