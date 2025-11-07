@@ -6,6 +6,7 @@ mesa (25.3.0~rc4-1) UNRELEASED; urgency=medium
   * Wrap-and-sort.
   * control: Add libpng-dev build-dep for screenshot vulkan layer.
   * mesa-vulkan-drivers: Add mesa-screenshot-control.py.
+  * mesa-vulkan-drivers.lintian-overrides: Updated.
 
  -- Timo Aaltonen <tjaalton@debian.org>  Sun, 26 Oct 2025 11:34:25 +0200
 
