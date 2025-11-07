@@ -196,6 +196,9 @@ brw_compile_tcs(const struct brw_compiler *compiler,
 
    brw_prog_data_init(&prog_data->base.base, &params->base);
 
+   brw_fill_tess_info_from_shader_info(&prog_data->tess_info,
+                                       &nir->info);
+
    nir->info.outputs_written = key->outputs_written;
    nir->info.patch_outputs_written = key->patch_outputs_written;
 
@@ -221,6 +224,7 @@ brw_compile_tcs(const struct brw_compiler *compiler,
       BITSET_TEST(nir->info.system_values_read, SYSTEM_VALUE_PRIMITIVE_ID);
 
    prog_data->input_vertices = key->input_vertices;
+   prog_data->output_vertices = nir->info.tess.tcs_vertices_out;
    prog_data->patch_count_threshold = get_patch_count_threshold(key->input_vertices);
 
    if (compiler->use_tcs_multi_patch) {

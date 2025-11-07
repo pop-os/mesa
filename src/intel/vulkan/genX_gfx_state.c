@@ -490,7 +490,12 @@ anv_raster_polygon_mode(const struct anv_cmd_graphics_state *gfx,
       }
       UNREACHABLE("Unsupported GS output topology");
    } else if (gfx->shaders[MESA_SHADER_TESS_EVAL] != NULL) {
-      switch (get_gfx_tes_prog_data(gfx)->output_topology) {
+      struct brw_tess_info tess_info =
+         brw_merge_tess_info(
+            get_gfx_tcs_prog_data(gfx)->tess_info,
+            get_gfx_tes_prog_data(gfx)->tess_info);
+
+      switch (brw_tess_info_output_topology(tess_info)) {
       case INTEL_TESS_OUTPUT_TOPOLOGY_POINT:
          return VK_POLYGON_MODE_POINT;
 
@@ -500,8 +505,10 @@ anv_raster_polygon_mode(const struct anv_cmd_graphics_state *gfx,
       case INTEL_TESS_OUTPUT_TOPOLOGY_TRI_CW:
       case INTEL_TESS_OUTPUT_TOPOLOGY_TRI_CCW:
          return polygon_mode;
+
+      default:
+         UNREACHABLE("Unsupported TCS output topology");
       }
-      UNREACHABLE("Unsupported TCS output topology");
    } else {
       switch (primitive_topology) {
       case VK_PRIMITIVE_TOPOLOGY_POINT_LIST:
@@ -1318,6 +1325,22 @@ update_cps(struct anv_gfx_dynamic_state *hw_state,
 #endif
 
 ALWAYS_INLINE static void
+update_ds(struct anv_gfx_dynamic_state *hw_state,
+          const struct anv_cmd_graphics_state *gfx)
+{
+   const struct brw_tes_prog_data *tes_prog_data = get_gfx_tes_prog_data(gfx);
+
+   if (tes_prog_data) {
+      struct brw_tess_info tess_info =
+         brw_merge_tess_info(get_gfx_tcs_prog_data(gfx)->tess_info,
+                             tes_prog_data->tess_info);
+
+      SET(DS, ds.ComputeWCoordinateEnable,
+              brw_tess_info_domain(tess_info) == INTEL_TESS_DOMAIN_TRI);
+   }
+}
+
+ALWAYS_INLINE static void
 update_te(struct anv_gfx_dynamic_state *hw_state,
           const struct anv_device *device,
           const struct vk_dynamic_graphics_state *dyn,
@@ -1326,16 +1349,28 @@ update_te(struct anv_gfx_dynamic_state *hw_state,
    const struct brw_tes_prog_data *tes_prog_data = get_gfx_tes_prog_data(gfx);
 
    if (tes_prog_data) {
+      struct brw_tess_info tess_info =
+         brw_merge_tess_info(get_gfx_tcs_prog_data(gfx)->tess_info,
+                             tes_prog_data->tess_info);
+
+      SET(TE, te.TEDomain, brw_tess_info_domain(tess_info));
+      SET(TE, te.Partitioning, brw_tess_info_partitioning(tess_info));
       if (dyn->ts.domain_origin == VK_TESSELLATION_DOMAIN_ORIGIN_LOWER_LEFT) {
-         SET(TE, te.OutputTopology, tes_prog_data->output_topology);
+         SET(TE, te.OutputTopology, brw_tess_info_output_topology(tess_info));
       } else {
-            /* When the origin is upper-left, we have to flip the winding order */
-         if (tes_prog_data->output_topology == OUTPUT_TRI_CCW) {
+         /* When the origin is upper-left, we have to flip the winding order */
+         enum intel_tess_output_topology output_topology =
+            brw_tess_info_output_topology(tess_info);
+         switch (output_topology) {
+         case  OUTPUT_TRI_CCW:
             SET(TE, te.OutputTopology, OUTPUT_TRI_CW);
-         } else if (tes_prog_data->output_topology == OUTPUT_TRI_CW) {
+            break;
+         case OUTPUT_TRI_CW:
             SET(TE, te.OutputTopology, OUTPUT_TRI_CCW);
-         } else {
-            SET(TE, te.OutputTopology, tes_prog_data->output_topology);
+            break;
+         default:
+            SET(TE, te.OutputTopology, output_topology);
+            break;
          }
       }
 
@@ -1595,48 +1630,48 @@ update_wm_depth_stencil(struct anv_gfx_dynamic_state *hw_state,
    struct vk_depth_stencil_state opt_ds = dyn->ds;
    vk_optimize_depth_stencil_state(&opt_ds, ds_aspects, true);
 
-   SET(WM_DEPTH_STENCIL, ds.DoubleSidedStencilEnable, true);
+   SET(WM_DEPTH_STENCIL, wm_ds.DoubleSidedStencilEnable, true);
 
-   SET(WM_DEPTH_STENCIL, ds.StencilTestMask,
+   SET(WM_DEPTH_STENCIL, wm_ds.StencilTestMask,
        opt_ds.stencil.front.compare_mask & 0xff);
-   SET(WM_DEPTH_STENCIL, ds.StencilWriteMask,
+   SET(WM_DEPTH_STENCIL, wm_ds.StencilWriteMask,
        opt_ds.stencil.front.write_mask & 0xff);
 
-   SET(WM_DEPTH_STENCIL, ds.BackfaceStencilTestMask, opt_ds.stencil.back.compare_mask & 0xff);
-   SET(WM_DEPTH_STENCIL, ds.BackfaceStencilWriteMask, opt_ds.stencil.back.write_mask & 0xff);
+   SET(WM_DEPTH_STENCIL, wm_ds.BackfaceStencilTestMask, opt_ds.stencil.back.compare_mask & 0xff);
+   SET(WM_DEPTH_STENCIL, wm_ds.BackfaceStencilWriteMask, opt_ds.stencil.back.write_mask & 0xff);
 
-   SET(WM_DEPTH_STENCIL, ds.StencilReferenceValue,
+   SET(WM_DEPTH_STENCIL, wm_ds.StencilReferenceValue,
        opt_ds.stencil.front.reference & 0xff);
-   SET(WM_DEPTH_STENCIL, ds.BackfaceStencilReferenceValue,
+   SET(WM_DEPTH_STENCIL, wm_ds.BackfaceStencilReferenceValue,
        opt_ds.stencil.back.reference & 0xff);
 
-   SET(WM_DEPTH_STENCIL, ds.DepthTestEnable, opt_ds.depth.test_enable);
-   SET(WM_DEPTH_STENCIL, ds.DepthBufferWriteEnable, opt_ds.depth.write_enable);
-   SET(WM_DEPTH_STENCIL, ds.DepthTestFunction,
+   SET(WM_DEPTH_STENCIL, wm_ds.DepthTestEnable, opt_ds.depth.test_enable);
+   SET(WM_DEPTH_STENCIL, wm_ds.DepthBufferWriteEnable, opt_ds.depth.write_enable);
+   SET(WM_DEPTH_STENCIL, wm_ds.DepthTestFunction,
                          vk_to_intel_compare_op[opt_ds.depth.compare_op]);
-   SET(WM_DEPTH_STENCIL, ds.StencilTestEnable, opt_ds.stencil.test_enable);
-   SET(WM_DEPTH_STENCIL, ds.StencilBufferWriteEnable,
+   SET(WM_DEPTH_STENCIL, wm_ds.StencilTestEnable, opt_ds.stencil.test_enable);
+   SET(WM_DEPTH_STENCIL, wm_ds.StencilBufferWriteEnable,
                          opt_ds.stencil.write_enable);
-   SET(WM_DEPTH_STENCIL, ds.StencilFailOp,
+   SET(WM_DEPTH_STENCIL, wm_ds.StencilFailOp,
                          vk_to_intel_stencil_op[opt_ds.stencil.front.op.fail]);
-   SET(WM_DEPTH_STENCIL, ds.StencilPassDepthPassOp,
+   SET(WM_DEPTH_STENCIL, wm_ds.StencilPassDepthPassOp,
                          vk_to_intel_stencil_op[opt_ds.stencil.front.op.pass]);
-   SET(WM_DEPTH_STENCIL, ds.StencilPassDepthFailOp,
+   SET(WM_DEPTH_STENCIL, wm_ds.StencilPassDepthFailOp,
                          vk_to_intel_stencil_op[
                             opt_ds.stencil.front.op.depth_fail]);
-   SET(WM_DEPTH_STENCIL, ds.StencilTestFunction,
+   SET(WM_DEPTH_STENCIL, wm_ds.StencilTestFunction,
                          vk_to_intel_compare_op[
                             opt_ds.stencil.front.op.compare]);
-   SET(WM_DEPTH_STENCIL, ds.BackfaceStencilFailOp,
+   SET(WM_DEPTH_STENCIL, wm_ds.BackfaceStencilFailOp,
                          vk_to_intel_stencil_op[
                             opt_ds.stencil.back.op.fail]);
-   SET(WM_DEPTH_STENCIL, ds.BackfaceStencilPassDepthPassOp,
+   SET(WM_DEPTH_STENCIL, wm_ds.BackfaceStencilPassDepthPassOp,
                          vk_to_intel_stencil_op[
                             opt_ds.stencil.back.op.pass]);
-   SET(WM_DEPTH_STENCIL, ds.BackfaceStencilPassDepthFailOp,
+   SET(WM_DEPTH_STENCIL, wm_ds.BackfaceStencilPassDepthFailOp,
                          vk_to_intel_stencil_op[
                             opt_ds.stencil.back.op.depth_fail]);
-   SET(WM_DEPTH_STENCIL, ds.BackfaceStencilTestFunction,
+   SET(WM_DEPTH_STENCIL, wm_ds.BackfaceStencilTestFunction,
                          vk_to_intel_compare_op[
                             opt_ds.stencil.back.op.compare]);
 
@@ -2335,11 +2370,14 @@ cmd_buffer_flush_gfx_runtime_state(struct anv_gfx_dynamic_state *hw_state,
       update_cps(hw_state, device, dyn);
 #endif /* GFX_VER >= 11 */
 
+   if (gfx->dirty & (ANV_CMD_DIRTY_HS | ANV_CMD_DIRTY_DS))
+      update_ds(hw_state, gfx);
+
    if (
 #if GFX_VERx10 >= 125
       (gfx->dirty & ANV_CMD_DIRTY_PRERASTER_SHADERS) ||
 #else
-      (gfx->dirty & ANV_CMD_DIRTY_DS) ||
+      (gfx->dirty & (ANV_CMD_DIRTY_HS | ANV_CMD_DIRTY_DS)) ||
 #endif
        BITSET_TEST(dyn->dirty, MESA_VK_DYNAMIC_TS_DOMAIN_ORIGIN))
       update_te(hw_state, device, dyn, gfx);
@@ -2506,10 +2544,14 @@ cmd_buffer_flush_gfx_runtime_state(struct anv_gfx_dynamic_state *hw_state,
        ((gfx->dirty & (ANV_CMD_DIRTY_HS | ANV_CMD_DIRTY_DS)) ||
         BITSET_TEST(dyn->dirty, MESA_VK_DYNAMIC_TS_PATCH_CONTROL_POINTS))) {
       assert(tcs_prog_data != NULL && tes_prog_data != NULL);
+      struct brw_tess_info tess_info =
+         brw_merge_tess_info(tcs_prog_data->tess_info,
+                             tes_prog_data->tess_info);
+
       SET(TESS_CONFIG, tess_config,
           intel_tess_config(dyn->ts.patch_control_points,
-                            tcs_prog_data->instances,
-                            tes_prog_data->domain,
+                            tcs_prog_data->output_vertices,
+                            brw_tess_info_domain(tess_info),
                             tcs_prog_data->base.vue_map.num_per_patch_slots,
                             tcs_prog_data->base.vue_map.num_per_vertex_slots,
                             tcs_prog_data->base.vue_map.builtins_slot_offset));
@@ -2975,6 +3017,8 @@ cmd_buffer_repack_gfx_state(struct anv_gfx_dynamic_state *hw_state,
       if (anv_gfx_has_stage(gfx, MESA_SHADER_TESS_EVAL)) {
          anv_gfx_pack_merge(te, GENX(3DSTATE_TE),
                             MESA_SHADER_TESS_EVAL, ds.te, te) {
+            SET(te, te, TEDomain);
+            SET(te, te, Partitioning);
             SET(te, te, OutputTopology);
 #if GFX_VERx10 >= 125
             SET(te, te, TessellationDistributionMode);
@@ -2986,27 +3030,27 @@ cmd_buffer_repack_gfx_state(struct anv_gfx_dynamic_state *hw_state,
    }
 
    if (IS_DIRTY(WM_DEPTH_STENCIL)) {
-      anv_gfx_pack(wm_ds, GENX(3DSTATE_WM_DEPTH_STENCIL), ds) {
-         SET(ds, ds, DoubleSidedStencilEnable);
-         SET(ds, ds, StencilTestMask);
-         SET(ds, ds, StencilWriteMask);
-         SET(ds, ds, BackfaceStencilTestMask);
-         SET(ds, ds, BackfaceStencilWriteMask);
-         SET(ds, ds, StencilReferenceValue);
-         SET(ds, ds, BackfaceStencilReferenceValue);
-         SET(ds, ds, DepthTestEnable);
-         SET(ds, ds, DepthBufferWriteEnable);
-         SET(ds, ds, DepthTestFunction);
-         SET(ds, ds, StencilTestEnable);
-         SET(ds, ds, StencilBufferWriteEnable);
-         SET(ds, ds, StencilFailOp);
-         SET(ds, ds, StencilPassDepthPassOp);
-         SET(ds, ds, StencilPassDepthFailOp);
-         SET(ds, ds, StencilTestFunction);
-         SET(ds, ds, BackfaceStencilFailOp);
-         SET(ds, ds, BackfaceStencilPassDepthPassOp);
-         SET(ds, ds, BackfaceStencilPassDepthFailOp);
-         SET(ds, ds, BackfaceStencilTestFunction);
+      anv_gfx_pack(wm_ds, GENX(3DSTATE_WM_DEPTH_STENCIL), wm_ds) {
+         SET(wm_ds, wm_ds, DoubleSidedStencilEnable);
+         SET(wm_ds, wm_ds, StencilTestMask);
+         SET(wm_ds, wm_ds, StencilWriteMask);
+         SET(wm_ds, wm_ds, BackfaceStencilTestMask);
+         SET(wm_ds, wm_ds, BackfaceStencilWriteMask);
+         SET(wm_ds, wm_ds, StencilReferenceValue);
+         SET(wm_ds, wm_ds, BackfaceStencilReferenceValue);
+         SET(wm_ds, wm_ds, DepthTestEnable);
+         SET(wm_ds, wm_ds, DepthBufferWriteEnable);
+         SET(wm_ds, wm_ds, DepthTestFunction);
+         SET(wm_ds, wm_ds, StencilTestEnable);
+         SET(wm_ds, wm_ds, StencilBufferWriteEnable);
+         SET(wm_ds, wm_ds, StencilFailOp);
+         SET(wm_ds, wm_ds, StencilPassDepthPassOp);
+         SET(wm_ds, wm_ds, StencilPassDepthFailOp);
+         SET(wm_ds, wm_ds, StencilTestFunction);
+         SET(wm_ds, wm_ds, BackfaceStencilFailOp);
+         SET(wm_ds, wm_ds, BackfaceStencilPassDepthPassOp);
+         SET(wm_ds, wm_ds, BackfaceStencilPassDepthFailOp);
+         SET(wm_ds, wm_ds, BackfaceStencilTestFunction);
       }
    }
 
@@ -3230,8 +3274,12 @@ cmd_buffer_repack_gfx_state(struct anv_gfx_dynamic_state *hw_state,
    if (IS_DIRTY(HS))
       anv_gfx_copy_protected(hs, GENX(3DSTATE_HS), MESA_SHADER_TESS_CTRL, hs.hs);
 
-   if (IS_DIRTY(DS))
-      anv_gfx_copy_protected(ds, GENX(3DSTATE_DS), MESA_SHADER_TESS_EVAL, ds.ds);
+   if (IS_DIRTY(DS)) {
+      anv_gfx_pack_merge_protected(ds, GENX(3DSTATE_DS),
+                                   MESA_SHADER_TESS_EVAL, ds.ds, ds) {
+         SET(ds, ds, ComputeWCoordinateEnable);
+      }
+   }
 
    if (IS_DIRTY(GS)) {
       anv_gfx_pack_merge_protected(gs, GENX(3DSTATE_GS),

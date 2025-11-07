@@ -2858,7 +2858,8 @@ radv_vcn_encode_video(struct radv_cmd_buffer *cmd_buffer, const VkVideoEncodeInf
 
    if (pdev->enc_hw_ver >= RADV_VIDEO_ENC_HW_2) {
       radv_vcn_sq_tail(cs, &cmd_buffer->video.sq);
-      radv_vcn_write_memory(cmd_buffer, feedback_query_va + RADV_ENC_FEEDBACK_STATUS_IDX * sizeof(uint32_t), 1);
+      if (radv_video_write_memory_supported(pdev) == RADV_VIDEO_WRITE_MEMORY_SUPPORT_FULL)
+         radv_vcn_write_memory(cmd_buffer, feedback_query_va + RADV_ENC_FEEDBACK_STATUS_IDX * sizeof(uint32_t), 1);
    }
 }
 
@@ -3163,6 +3164,36 @@ radv_video_patch_encode_session_parameters(struct radv_device *device, struct vk
       }
       break;
    case VK_VIDEO_CODEC_OPERATION_ENCODE_H265_BIT_KHR: {
+      for (unsigned i = 0; i < params->h265_enc.h265_sps_count; i++) {
+         uint32_t pic_width_in_luma_samples =
+             params->h265_enc.h265_sps[i].base.pic_width_in_luma_samples;
+         uint32_t pic_height_in_luma_samples =
+             params->h265_enc.h265_sps[i].base.pic_height_in_luma_samples;
+         uint32_t aligned_pic_width = align(pic_width_in_luma_samples, 64);
+         uint32_t aligned_pic_height = align(pic_height_in_luma_samples, 16);
+
+         /* Override the unaligned pic_{width,height} and make up for it with conformance window
+          * cropping */
+         params->h265_enc.h265_sps[i].base.pic_width_in_luma_samples = aligned_pic_width;
+         params->h265_enc.h265_sps[i].base.pic_height_in_luma_samples = aligned_pic_height;
+
+         if (aligned_pic_width != pic_width_in_luma_samples ||
+             aligned_pic_height != pic_height_in_luma_samples) {
+            params->h265_enc.h265_sps[i].base.flags.conformance_window_flag = 1;
+            params->h265_enc.h265_sps[i].base.conf_win_right_offset +=
+               (aligned_pic_width - pic_width_in_luma_samples) / 2;
+            params->h265_enc.h265_sps[i].base.conf_win_bottom_offset +=
+               (aligned_pic_height - pic_height_in_luma_samples) / 2;
+         }
+
+         /* VCN supports only the following block sizes (resulting in 64x64 CTBs with any coding
+          * block size) */
+         params->h265_enc.h265_sps[i].base.log2_min_luma_coding_block_size_minus3 = 0;
+         params->h265_enc.h265_sps[i].base.log2_diff_max_min_luma_coding_block_size = 3;
+         params->h265_enc.h265_sps[i].base.log2_min_luma_transform_block_size_minus2 = 0;
+         params->h265_enc.h265_sps[i].base.log2_diff_max_min_luma_transform_block_size = 3;
+      }
+
       for (unsigned i = 0; i < params->h265_enc.h265_pps_count; i++) {
          /* cu_qp_delta needs to be enabled if rate control is enabled. VCN2 and newer can also enable
           * it with rate control disabled. Since we don't know what rate control will be used, we
@@ -3265,6 +3296,14 @@ radv_GetEncodedVideoSessionParametersKHR(VkDevice device,
          assert(sps);
          char *data_ptr = pData ? (char *)pData + vps_size : NULL;
          vk_video_encode_h265_sps(sps, size_limit, &sps_size, data_ptr);
+
+         if (pFeedbackInfo) {
+            struct VkVideoEncodeH265SessionParametersFeedbackInfoKHR *h265_feedback_info =
+               vk_find_struct(pFeedbackInfo->pNext, VIDEO_ENCODE_H265_SESSION_PARAMETERS_FEEDBACK_INFO_KHR);
+            pFeedbackInfo->hasOverrides = VK_TRUE;
+            if (h265_feedback_info)
+               h265_feedback_info->hasStdSPSOverrides = VK_TRUE;
+         }
       }
       if (h265_get_info->writeStdPPS) {
          const StdVideoH265PictureParameterSet *pps = vk_video_find_h265_enc_std_pps(templ, h265_get_info->stdPPSId);
@@ -3418,17 +3457,20 @@ radv_video_encode_qp_map_supported(const struct radv_physical_device *pdev)
    return true;
 }
 
-bool
+enum radv_video_write_memory_support
 radv_video_write_memory_supported(const struct radv_physical_device *pdev)
 {
-   if (pdev->info.vcn_ip_version >= VCN_5_0_0)
-      return true;
-   else if (pdev->info.vcn_ip_version >= VCN_4_0_0)
-      return pdev->info.vcn_enc_minor_version >= 22;
-   else if (pdev->info.vcn_ip_version >= VCN_3_0_0)
-      return pdev->info.vcn_enc_minor_version >= 33;
-   else if (pdev->info.vcn_ip_version >= VCN_2_0_0)
-      return pdev->info.vcn_enc_minor_version >= 24;
-   else /* VCN 1 and UVD */
-      return false;
+   if (pdev->info.vcn_ip_version >= VCN_5_0_0) {
+      return RADV_VIDEO_WRITE_MEMORY_SUPPORT_PCIE_ATOMICS;
+   } else if (pdev->info.vcn_ip_version >= VCN_4_0_0) {
+      if (pdev->info.vcn_enc_minor_version >= 22)
+         return RADV_VIDEO_WRITE_MEMORY_SUPPORT_PCIE_ATOMICS;
+   } else if (pdev->info.vcn_ip_version >= VCN_3_0_0) {
+      if (pdev->info.vcn_enc_minor_version >= 33)
+         return RADV_VIDEO_WRITE_MEMORY_SUPPORT_PCIE_ATOMICS;
+   } else if (pdev->info.vcn_ip_version >= VCN_2_0_0) {
+      if (pdev->info.vcn_enc_minor_version >= 24)
+         return RADV_VIDEO_WRITE_MEMORY_SUPPORT_PCIE_ATOMICS;
+   }
+   return RADV_VIDEO_WRITE_MEMORY_SUPPORT_NONE;
 }

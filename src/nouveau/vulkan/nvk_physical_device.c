@@ -1045,7 +1045,7 @@ nvk_get_device_properties(const struct nvk_instance *instance,
       .maxSamplerDescriptorBufferBindings = 32,
       .maxEmbeddedImmutableSamplerBindings = 32,
       .maxEmbeddedImmutableSamplers = 4000,
-      .bufferCaptureReplayDescriptorDataSize = 0,
+      .bufferCaptureReplayDescriptorDataSize = sizeof(uint64_t),
       .imageCaptureReplayDescriptorDataSize = 0,
       .imageViewCaptureReplayDescriptorDataSize =
          sizeof(struct nvk_image_view_capture),
@@ -1141,8 +1141,13 @@ nvk_get_device_properties(const struct nvk_instance *instance,
       .robustStorageBufferAccessSizeAlignment = NVK_SSBO_BOUNDS_CHECK_ALIGNMENT,
       .robustUniformBufferAccessSizeAlignment = nvk_min_cbuf_alignment(info),
 
-      /* VK_EXT_sample_locations */
-      .sampleLocationSampleCounts = sample_counts,
+      /* VK_EXT_sample_locations
+       *
+       * There's a weird HW issue with per-sample interpolation for 1x.  It
+       * always interpolates at (0.5, 0.5) so we just disable custom sample
+       * locations for 1x.
+       */
+      .sampleLocationSampleCounts = sample_counts & ~VK_SAMPLE_COUNT_1_BIT,
       .maxSampleLocationGridSize = (VkExtent2D){ 1, 1 },
       .sampleLocationCoordinateRange[0] = 0.0f,
       .sampleLocationCoordinateRange[1] = 0.9375f,
@@ -1266,6 +1271,9 @@ nvk_physical_device_init_pipeline_cache(struct nvk_physical_device *pdev)
 
    _mesa_sha1_update(&sha_ctx, instance->driver_build_sha,
                      sizeof(instance->driver_build_sha));
+
+   _mesa_sha1_update(&sha_ctx, &pdev->info.chipset,
+                     sizeof(pdev->info.chipset));
 
    const uint64_t compiler_flags = nvk_physical_device_compiler_flags(pdev);
    _mesa_sha1_update(&sha_ctx, &compiler_flags, sizeof(compiler_flags));

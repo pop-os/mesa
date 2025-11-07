@@ -6111,6 +6111,13 @@ radv_emit_tess_domain_origin_state(struct radv_cmd_buffer *cmd_buffer)
    radeon_end();
 }
 
+static bool
+radv_is_dual_src_enabled(const struct radv_dynamic_state *dynamic_state)
+{
+   /* Dual-source blending must be ignored if blending isn't enabled for MRT0. */
+   return dynamic_state->blend_eq.mrt0_is_dual_src && !!(dynamic_state->color_blend_enable & 1u);
+}
+
 static struct radv_shader_part *
 lookup_ps_epilog(struct radv_cmd_buffer *cmd_buffer)
 {
@@ -6144,7 +6151,7 @@ lookup_ps_epilog(struct radv_cmd_buffer *cmd_buffer)
 
    state.color_write_mask = d->color_write_mask;
    state.color_blend_enable = d->color_blend_enable;
-   state.mrt0_is_dual_src = d->blend_eq.mrt0_is_dual_src;
+   state.mrt0_is_dual_src = radv_is_dual_src_enabled(&cmd_buffer->state.dynamic);
 
    if (d->vk.ms.alpha_to_coverage_enable) {
       /* Select a color export format with alpha when alpha to coverage is enabled. */
@@ -8114,6 +8121,8 @@ radv_mark_descriptors_dirty(struct radv_cmd_buffer *cmd_buffer, VkPipelineBindPo
    struct radv_descriptor_state *descriptors_state = radv_get_descriptors_state(cmd_buffer, bind_point);
 
    descriptors_state->dirty |= descriptors_state->valid;
+   if (descriptors_state->dynamic_offset_count)
+      descriptors_state->dirty_dynamic = true;
 }
 
 static void
@@ -8642,7 +8651,6 @@ radv_CmdBindPipeline(VkCommandBuffer commandBuffer, VkPipelineBindPoint pipeline
 
       if (cmd_buffer->state.compute_pipeline == compute_pipeline)
          return;
-      radv_mark_descriptors_dirty(cmd_buffer, pipelineBindPoint);
 
       radv_bind_shader(cmd_buffer, compute_pipeline->base.shaders[MESA_SHADER_COMPUTE], MESA_SHADER_COMPUTE);
 
@@ -8656,7 +8664,6 @@ radv_CmdBindPipeline(VkCommandBuffer commandBuffer, VkPipelineBindPoint pipeline
 
       if (cmd_buffer->state.rt_pipeline == rt_pipeline)
          return;
-      radv_mark_descriptors_dirty(cmd_buffer, pipelineBindPoint);
 
       radv_bind_shader(cmd_buffer, rt_pipeline->base.base.shaders[MESA_SHADER_INTERSECTION], MESA_SHADER_INTERSECTION);
       radv_bind_rt_prolog(cmd_buffer, rt_pipeline->prolog);
@@ -8690,7 +8697,6 @@ radv_CmdBindPipeline(VkCommandBuffer commandBuffer, VkPipelineBindPoint pipeline
 
       if (cmd_buffer->state.graphics_pipeline == graphics_pipeline)
          return;
-      radv_mark_descriptors_dirty(cmd_buffer, pipelineBindPoint);
 
       radv_foreach_stage (
          stage, (cmd_buffer->state.active_stages | graphics_pipeline->active_stages) & RADV_GRAPHICS_STAGE_BITS) {
@@ -8744,6 +8750,8 @@ radv_CmdBindPipeline(VkCommandBuffer commandBuffer, VkPipelineBindPoint pipeline
    cmd_buffer->descriptors[vk_to_bind_point(pipelineBindPoint)].dynamic_offset_count = pipeline->dynamic_offset_count;
    cmd_buffer->descriptors[vk_to_bind_point(pipelineBindPoint)].need_indirect_descriptors =
       pipeline->need_indirect_descriptors;
+
+   radv_mark_descriptors_dirty(cmd_buffer, pipelineBindPoint);
 }
 
 VKAPI_ATTR void VKAPI_CALL
@@ -11688,7 +11696,7 @@ radv_emit_cb_render_state(struct radv_cmd_buffer *cmd_buffer)
    const struct radv_rendering_state *render = &cmd_buffer->state.render;
    const struct radv_dynamic_state *d = &cmd_buffer->state.dynamic;
    unsigned cb_blend_control[MAX_RTS], sx_mrt_blend_opt[MAX_RTS];
-   const bool mrt0_is_dual_src = d->blend_eq.mrt0_is_dual_src;
+   const bool mrt0_is_dual_src = radv_is_dual_src_enabled(&cmd_buffer->state.dynamic);
    uint32_t cb_color_control = 0;
 
    const uint32_t cb_target_mask = d->color_write_enable & d->color_write_mask;
