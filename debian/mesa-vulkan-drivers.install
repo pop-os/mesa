@@ -1,4 +1,5 @@
 usr/bin/mesa-overlay-control.py
+usr/bin/mesa-screenshot-control.py
 usr/lib/*/libVkLayer_*.so
 usr/lib/*/libvulkan_*.so
 usr/share/drirc.d/00-radv-defaults.conf
