@@ -1,9 +1,9 @@
-mesa (25.2.7-1) UNRELEASED; urgency=medium
+mesa (25.2.7-1) unstable; urgency=medium
 
   * New upstream release.
   * control: Build-depend on spirv-tools-dev.
 
- -- Timo Aaltonen <tjaalton@debian.org>  Fri, 14 Nov 2025 10:30:55 +0200
+ -- Timo Aaltonen <tjaalton@debian.org>  Fri, 14 Nov 2025 15:48:09 +0200
 
 mesa (25.2.6-1) unstable; urgency=medium
 
