@@ -41,7 +41,7 @@
 #define ENC_ALIGNMENT 256
 
 #define RENCODE_V5_FW_INTERFACE_MAJOR_VERSION 1
-#define RENCODE_V5_FW_INTERFACE_MINOR_VERSION 3
+#define RENCODE_V5_FW_INTERFACE_MINOR_VERSION 10
 
 #define RENCODE_V4_FW_INTERFACE_MAJOR_VERSION 1
 #define RENCODE_V4_FW_INTERFACE_MINOR_VERSION 11
@@ -61,49 +61,6 @@ void
 radv_probe_video_encode(struct radv_physical_device *pdev)
 {
    pdev->video_encode_enabled = false;
-
-   if (pdev->info.vcn_ip_version >= VCN_5_0_0) {
-      pdev->video_encode_enabled = true;
-      return;
-   } else if (pdev->info.vcn_ip_version >= VCN_4_0_0) {
-      if (pdev->info.vcn_enc_major_version != RENCODE_V4_FW_INTERFACE_MAJOR_VERSION)
-         return;
-      if (pdev->info.vcn_enc_minor_version < RENCODE_V4_FW_INTERFACE_MINOR_VERSION)
-         return;
-
-      /* VCN 4 FW 1.22 has all the necessary pieces to pass CTS */
-      if (pdev->info.vcn_enc_minor_version >= 22) {
-         pdev->video_encode_enabled = true;
-         return;
-      }
-   } else if (pdev->info.vcn_ip_version >= VCN_3_0_0) {
-      if (pdev->info.vcn_enc_major_version != RENCODE_V3_FW_INTERFACE_MAJOR_VERSION)
-         return;
-      if (pdev->info.vcn_enc_minor_version < RENCODE_V3_FW_INTERFACE_MINOR_VERSION)
-         return;
-
-      /* VCN 3 FW 1.33 has all the necessary pieces to pass CTS */
-      if (pdev->info.vcn_enc_minor_version >= 33) {
-         pdev->video_encode_enabled = true;
-         return;
-      }
-   } else if (pdev->info.vcn_ip_version >= VCN_2_0_0) {
-      if (pdev->info.vcn_enc_major_version != RENCODE_V2_FW_INTERFACE_MAJOR_VERSION)
-         return;
-      if (pdev->info.vcn_enc_minor_version < RENCODE_V2_FW_INTERFACE_MINOR_VERSION)
-         return;
-
-      /* VCN 2 FW 1.24 has all the necessary pieces to pass CTS */
-      if (pdev->info.vcn_enc_minor_version >= 24) {
-         pdev->video_encode_enabled = true;
-         return;
-      }
-   } else {
-      if (pdev->info.vcn_enc_major_version != RENCODE_FW_INTERFACE_MAJOR_VERSION)
-         return;
-      if (pdev->info.vcn_enc_minor_version < RENCODE_FW_INTERFACE_MINOR_VERSION)
-         return;
-   }
 
    struct radv_instance *instance = radv_physical_device_instance(pdev);
    pdev->video_encode_enabled = !!(instance->perftest_flags & RADV_PERFTEST_VIDEO_ENCODE);
@@ -503,10 +460,10 @@ radv_enc_session_init(struct radv_cmd_buffer *cmd_buffer, const struct VkVideoEn
    if (pdev->enc_hw_ver >= RADV_VIDEO_ENC_HW_3)
       RADEON_ENC_CS(vid->enc_session.slice_output_enabled);
    RADEON_ENC_CS(vid->enc_session.display_remote);
-   if (pdev->enc_hw_ver == RADV_VIDEO_ENC_HW_4) {
+   if (pdev->enc_hw_ver == RADV_VIDEO_ENC_HW_4)
       RADEON_ENC_CS(vid->enc_session.WA_flags);
+   if (pdev->enc_hw_ver >= RADV_VIDEO_ENC_HW_4)
       RADEON_ENC_CS(0);
-   }
    RADEON_ENC_END();
 }
 
@@ -1092,6 +1049,9 @@ radv_enc_hevc_st_ref_pic_set(struct radv_cmd_buffer *cmd_buffer, const StdVideoH
    unsigned num_pic_total_curr = 0;
    unsigned int num_short_term_ref_pic_sets = sps->num_short_term_ref_pic_sets;
    unsigned int index = num_short_term_ref_pic_sets;
+
+   if (!rps)
+      return 0;
 
    if (index != 0)
       radv_enc_code_fixed_bits(cmd_buffer, rps->flags.inter_ref_pic_set_prediction_flag, 0x1);
@@ -2157,6 +2117,7 @@ radv_enc_params_av1(struct radv_cmd_buffer *cmd_buffer, const VkVideoEncodeInfoK
       RADEON_ENC_CS(av1_picture_info->referenceNameSlotIndices[i]);
    RADEON_ENC_CS(slot_idx_0);
    RADEON_ENC_CS(slot_idx_1);
+   RADEON_ENC_CS(av1_picture_info->pStdPictureInfo->order_hint);
    RADEON_ENC_END();
 }
 
@@ -2680,7 +2641,7 @@ radv_vcn_encode_video(struct radv_cmd_buffer *cmd_buffer, const VkVideoEncodeInf
    cmd_buffer->video.enc.total_task_size = 0;
 
    // task info
-   radv_enc_task_info(cmd_buffer, true);
+   radv_enc_task_info(cmd_buffer, feedback_query_va);
 
    if (vid->enc_need_begin) {
       begin(cmd_buffer, enc_info);
