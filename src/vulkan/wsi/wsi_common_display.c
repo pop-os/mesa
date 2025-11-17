@@ -2582,7 +2582,7 @@ color_xy_to_u16(float v)
 static inline uint16_t
 nits_to_u16(float nits)
 {
-   assert(nits >= 1.0f);
+   assert(nits >= 0.0f);
    assert(nits <= 65535.0f);
    /*
     * CTA-861-G
@@ -2596,7 +2596,7 @@ nits_to_u16(float nits)
 static inline uint16_t
 nits_to_u16_dark(float nits)
 {
-   assert(nits >= 0.0001f);
+   assert(nits >= 0.0000f);
    assert(nits <= 6.5535f);
    /*
     * CTA-861-G
@@ -2732,6 +2732,11 @@ drm_atomic_commit(wsi_display_connector *connector, struct wsi_display_image *im
          drmModeAtomicAddProperty(req, connector->id, connector->property[Colorspace],
                                   connector->colorspace_enum[drm_colorspace]);
       }
+
+      /* At least some drivers need a modeset for HDR or Colorspace change, e.g., amdgpu
+       * at least for Colorspace change or HDR en-/disable.
+       */
+      flags |= DRM_MODE_ATOMIC_ALLOW_MODESET;
 
       connector->color_outcome_serial = image->chain->color_outcome_serial;
    }
@@ -3076,6 +3081,15 @@ wsi_display_surface_create_swapchain(
          goto fail_init_images;
       }
    }
+
+   /* For a non-default colorspace, make sure that proper setup also works if
+    * a client app does not explicitly call vkSetHdrMetadataEXT(), but only
+    * selects a HDR colorspace. We assign the EDID provided metadata here, so
+    * the 1st atomic commit will assign colorspace and HDR metadata props to
+    * the connector to enable HDR or Wide color gamut modes.
+    */
+   if (create_info->imageColorSpace != VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
+      wsi_display_set_hdr_metadata(&chain->base, &chain->hdr_metadata);
 
    *swapchain_out = &chain->base;
 

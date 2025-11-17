@@ -1357,7 +1357,7 @@ llvmpipe_free_memory(struct pipe_screen *pscreen,
 #if DETECT_OS_LINUX
    struct llvmpipe_screen *screen = llvmpipe_screen(pscreen);
 
-   if (mem->fd) {
+   if (mem->fd >= 0) {
       mtx_lock(&screen->mem_mutex);
       util_vma_heap_free(&screen->mem_heap, mem->offset, mem->size);
       mtx_unlock(&screen->mem_mutex);
@@ -1415,8 +1415,7 @@ llvmpipe_resource_alloc_udmabuf(struct llvmpipe_screen *screen,
 
       struct pipe_memory_allocation *data =
          mmap(NULL, size, PROT_WRITE | PROT_READ, MAP_SHARED, mem_fd, 0);
-
-      if (!data)
+      if (data == MAP_FAILED)
          goto fail;
 
       alloc->mem_fd = mem_fd;
@@ -1486,6 +1485,9 @@ llvmpipe_import_memory_fd(struct pipe_screen *screen,
                           bool dmabuf)
 {
    struct llvmpipe_memory_allocation *alloc = CALLOC_STRUCT(llvmpipe_memory_allocation);
+   if (!alloc)
+      return false;
+
    alloc->mem_fd = -1;
    alloc->dmabuf_fd = -1;
 #if defined(HAVE_LIBDRM) && defined(HAVE_LINUX_UDMABUF_H)
@@ -1596,9 +1598,13 @@ llvmpipe_resource_bind_backing(struct pipe_screen *pscreen,
    if (!lpr->backable)
       return false;
 
-   if ((lpr->base.flags & PIPE_RESOURCE_FLAG_SPARSE) && offset < lpr->size_required) {
+   if (lpr->base.flags & PIPE_RESOURCE_FLAG_SPARSE) {
 #if DETECT_OS_LINUX
       struct llvmpipe_memory_allocation *mem = (struct llvmpipe_memory_allocation *)pmem;
+
+      if (offset >= lpr->size_required)
+         return false;
+
       if (mem) {
          if (llvmpipe_resource_is_texture(&lpr->base)) {
             mmap((char *)lpr->tex_data + offset, size, PROT_READ|PROT_WRITE,
@@ -1618,9 +1624,11 @@ llvmpipe_resource_bind_backing(struct pipe_screen *pscreen,
                  MAP_SHARED|MAP_FIXED|MAP_ANONYMOUS, -1, 0);
          }
       }
-#endif
 
       return true;
+#else
+      return false;
+#endif
    }
 
    addr = llvmpipe_map_memory(pscreen, pmem);

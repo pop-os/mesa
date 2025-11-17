@@ -449,6 +449,10 @@
    DRI_CONF_OPT_B(vk_wsi_force_swapchain_to_current_extent, def, \
                   "Force VkSwapchainCreateInfoKHR::imageExtent to be VkSurfaceCapabilities2KHR::currentExtent")
 
+#define DRI_CONF_VK_WSI_DISABLE_UNORDERED_SUBMITS(def) \
+   DRI_CONF_OPT_B(vk_wsi_disable_unordered_submits, def, \
+                  "Disable unordered WSI submits to workaround application synchronization bugs")
+
 #define DRI_CONF_VK_X11_OVERRIDE_MIN_IMAGE_COUNT(def) \
    DRI_CONF_OPT_I(vk_x11_override_min_image_count, def, 0, 999, \
                   "Override the VkSurfaceCapabilitiesKHR::minImageCount (0 = no override)")
@@ -519,6 +523,10 @@
 #define DRI_CONF_ALLOW_MULTISAMPLED_COPYTEXIMAGE(def) \
    DRI_CONF_OPT_B(allow_multisampled_copyteximage, def, \
                   "Allow CopyTexSubImage and other to copy sampled framebuffer")
+
+#define DRI_CONF_VERTEX_PROGRAM_DEFAULT_OUT(def) \
+   DRI_CONF_OPT_B(vertex_program_default_out, def, \
+                  "Initialize outputs of vertex program to a default value vec4(0, 0, 0, 1)")
 
 #define DRI_CONF_CUSTOM_BORDER_COLORS_WITHOUT_FORMAT(def) \
    DRI_CONF_OPT_B(custom_border_colors_without_format, def, \
