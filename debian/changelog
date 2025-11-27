@@ -1,6 +1,8 @@
 mesa (25.3.0-2) UNRELEASED; urgency=medium
 
   * control, rules: Migrate to llvm 21.
+  * control: Make mesa-va-drivers replace mesa-vdpau-drivers, as it's
+    functionally more or less the same.
 
  -- Timo Aaltonen <tjaalton@debian.org>  Thu, 27 Nov 2025 12:30:07 +0200
 
