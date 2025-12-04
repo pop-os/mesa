@@ -857,7 +857,7 @@ radv_physical_device_get_features(const struct radv_physical_device *pdev, struc
       .shaderFloat64 = true,
       .shaderInt64 = true,
       .shaderInt16 = true,
-      .sparseBinding = true,
+      .sparseBinding = pdev->info.has_sparse_vm_mappings,
       .sparseResidencyBuffer = pdev->info.family >= CHIP_POLARIS10,
       .sparseResidencyImage2D = pdev->info.family >= CHIP_POLARIS10,
       .sparseResidencyImage3D = pdev->info.family >= CHIP_POLARIS10,
@@ -1496,14 +1496,14 @@ radv_get_physical_device_properties(struct radv_physical_device *pdev)
       .maxImageDimension3D = (1 << 11),
       .maxImageDimensionCube = (1 << 14),
       .maxImageArrayLayers = (1 << 11),
-      .maxTexelBufferElements = UINT32_MAX,
+      .maxTexelBufferElements = 512 * 1024 * 1024,
       .maxUniformBufferRange = UINT32_MAX,
       .maxStorageBufferRange = UINT32_MAX,
       .maxPushConstantsSize = MAX_PUSH_CONSTANTS_SIZE,
       .maxMemoryAllocationCount = UINT32_MAX,
       .maxSamplerAllocationCount = 64 * 1024,
       .bufferImageGranularity = 1,
-      .sparseAddressSpaceSize = RADV_MAX_MEMORY_ALLOCATION_SIZE, /* buffer max size */
+      .sparseAddressSpaceSize = pdev->info.has_sparse_vm_mappings ? RADV_MAX_MEMORY_ALLOCATION_SIZE : 0, /* buffer max size */
       .maxBoundDescriptorSets = MAX_SETS,
       .maxPerStageDescriptorSamplers = max_descriptor_set_size,
       .maxPerStageDescriptorUniformBuffers = max_descriptor_set_size,
@@ -2211,10 +2211,7 @@ radv_physical_device_try_create(struct radv_instance *instance, drmDevicePtr drm
       result = VK_ERROR_OUT_OF_HOST_MEMORY;
 #else
    if (drm_device) {
-      bool reserve_vmid = instance->vk.trace_mode & RADV_TRACE_MODE_RGP;
-
-      result = radv_amdgpu_winsys_create(fd, instance->debug_flags, instance->perftest_flags, reserve_vmid, is_virtio,
-                                         &pdev->ws);
+      result = radv_amdgpu_winsys_create(fd, instance->debug_flags, instance->perftest_flags, is_virtio, &pdev->ws);
    } else {
       pdev->ws = radv_null_winsys_create();
       if (!pdev->ws)

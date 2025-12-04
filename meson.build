@@ -40,7 +40,7 @@ if get_option('layout') != 'mirror'
 endif
 
 with_llvm = get_option('llvm')
-amd_with_llvm = get_option('amd-use-llvm')
+amd_with_llvm = with_llvm.allowed() and get_option('amd-use-llvm')
 
 with_mesa_debug = get_option('buildtype') == 'debug'
 
@@ -1723,7 +1723,7 @@ if with_clc
   # but we don't know what LLVM version we are using yet
   llvm_optional_modules += ['all-targets', 'windowsdriver', 'frontendhlsl', 'frontenddriver']
 endif
-draw_with_llvm = get_option('draw-use-llvm')
+draw_with_llvm = with_llvm.allowed() and get_option('draw-use-llvm')
 if draw_with_llvm
   llvm_modules += 'native'
   # lto is needded with LLVM>=15, but we don't know what LLVM verrsion we are using yet
@@ -2170,7 +2170,7 @@ endif
 
 with_sysprof = get_option('sysprof')
 if with_sysprof
-  dep_sysprof = dependency('sysprof-capture-4', version: '>= 3.38.0')
+  dep_sysprof = dependency('sysprof-capture-4', version: '>= 49.0')
   pre_args += '-DHAVE_SYSPROF'
 endif
 

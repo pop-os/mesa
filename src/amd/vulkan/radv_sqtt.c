@@ -119,13 +119,14 @@ radv_emit_sqtt_userdata(const struct radv_cmd_buffer *cmd_buffer, const void *da
 {
    struct radv_device *device = radv_cmd_buffer_device(cmd_buffer);
    const struct radv_physical_device *pdev = radv_device_physical(device);
+   const bool is_gfx_or_ace = cmd_buffer->qf == RADV_QUEUE_GENERAL || cmd_buffer->qf == RADV_QUEUE_COMPUTE;
    const enum amd_gfx_level gfx_level = pdev->info.gfx_level;
    const enum amd_ip_type ring = radv_queue_family_to_ring(pdev, cmd_buffer->qf);
    struct radeon_cmdbuf *cs = cmd_buffer->cs;
    const uint32_t *dwords = (uint32_t *)data;
 
-   /* SQTT user data packets aren't supported on SDMA queues. */
-   if (cmd_buffer->qf == RADV_QUEUE_TRANSFER)
+   /* SQTT user data packets are only supported on GFX or ACE queues. */
+   if (!is_gfx_or_ace)
       return;
 
    while (num_dwords > 0) {
@@ -454,6 +455,11 @@ radv_sqtt_init(struct radv_device *device)
    device->sqtt.buffer_size = (uint32_t)debug_get_num_option("RADV_THREAD_TRACE_BUFFER_SIZE", 32 * 1024 * 1024);
    device->sqtt.instruction_timing_enabled = radv_is_instruction_timing_enabled();
 
+   if (device->ws->reserve_vmid && device->ws->reserve_vmid(device->ws) < 0) {
+      fprintf(stderr, "radv: Failed to reserve VMID for SQTT tracing.\n");
+      return false;
+   }
+
    if (!radv_sqtt_init_bo(device))
       return false;
 
@@ -489,6 +495,9 @@ radv_sqtt_finish(struct radv_device *device)
    radv_unregister_queues(device, sqtt);
 
    ac_sqtt_finish(sqtt);
+
+   if (device->ws && device->ws->unreserve_vmid)
+      device->ws->unreserve_vmid(device->ws);
 }
 
 static bool
