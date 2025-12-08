@@ -42,7 +42,7 @@ if get_option('layout') != 'mirror'
 endif
 
 with_llvm = get_option('llvm')
-amd_with_llvm = get_option('amd-use-llvm')
+amd_with_llvm = with_llvm.allowed() and get_option('amd-use-llvm')
 
 with_mesa_debug = get_option('buildtype') == 'debug'
 
@@ -218,10 +218,11 @@ with_gallium_ethosu = gallium_drivers.contains('ethosu')
 foreach gallium_driver : gallium_drivers
   pre_args += '-DHAVE_@0@'.format(gallium_driver.to_upper())
 endforeach
+draw_with_llvm = with_llvm.allowed() and get_option('draw-use-llvm')
 with_llvm = with_llvm \
   .enable_if(with_gallium_i915, error_message : 'i915 Gallium driver requires LLVM for vertex shaders') \
   .enable_if(with_gallium_llvmpipe, error_message : 'LLVMPipe Gallium driver requires LLVM') \
-  .enable_if(with_gallium_r300, error_message : 'R300 Gallium driver requires LLVM for vertex shaders') \
+  .enable_if(with_gallium_r300 and draw_with_llvm, error_message : 'R300 Gallium driver requires LLVM for vertex shaders on IGP parts') \
   .enable_if(with_gallium_r600 and amd_with_llvm, error_message : 'R600 Gallium driver configured to require LLVM') \
   .enable_if(with_gallium_radeonsi and amd_with_llvm, error_message : 'RadeonSI Gallium driver configured to require LLVM')
 
@@ -1744,7 +1745,6 @@ if with_clc
   # but we don't know what LLVM version we are using yet
   llvm_optional_modules += ['all-targets', 'windowsdriver', 'frontendhlsl', 'frontenddriver']
 endif
-draw_with_llvm = get_option('draw-use-llvm')
 if draw_with_llvm
   llvm_modules += 'native'
   # lto is needded with LLVM>=15, but we don't know what LLVM verrsion we are using yet
@@ -1788,8 +1788,12 @@ if dep_llvm.found()
     error('Lavapipe and llvmpipe require LLVM draw support.')
   endif
 
-  if (with_gallium_i915 or with_gallium_r300) and not draw_with_llvm
-    error('i915 and R300 require LLVM draw support for vertex shaders.')
+  if with_gallium_i915 and not draw_with_llvm
+    error('i915 requires LLVM draw support for vertex shaders.')
+  endif
+
+  if with_gallium_r300 and not draw_with_llvm and host_machine.cpu_family() == 'x86'
+    error('r300 requires LLVM draw support for vertex shaders.')
   endif
 
   if host_machine.system() != 'windows'
@@ -2191,7 +2195,7 @@ endif
 
 with_sysprof = get_option('sysprof')
 if with_sysprof
-  dep_sysprof = dependency('sysprof-capture-4', version: '>= 4.49.0')
+  dep_sysprof = dependency('sysprof-capture-4', version: '>= 49.0')
   pre_args += '-DHAVE_SYSPROF'
 endif
 

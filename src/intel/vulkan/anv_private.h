@@ -1173,6 +1173,9 @@ struct anv_pipeline_bind_map {
    BITSET_DECLARE(input_attachments, MAX_DESCRIPTOR_SET_INPUT_ATTACHMENTS + 1);
 
    struct anv_push_range                        push_ranges[4];
+
+   /* Number of dynamic descriptor in each set */
+   uint8_t                                      dynamic_descriptors[MAX_SETS];
 };
 
 struct anv_push_descriptor_info {
@@ -5454,18 +5457,6 @@ anv_is_compressed_format_emulated(const struct anv_physical_device *pdevice,
                                               format) != VK_FORMAT_UNDEFINED;
 }
 
-static inline bool
-anv_is_storage_format_atomics_emulated(const struct intel_device_info *devinfo,
-                                       VkFormat format)
-{
-   /* No emulation required on Xe2+ */
-   if (devinfo->ver >= 20)
-      return false;
-
-   return format == VK_FORMAT_R64_SINT ||
-          format == VK_FORMAT_R64_UINT;
-}
-
 static inline struct isl_swizzle
 anv_swizzle_for_render(struct isl_swizzle swizzle)
 {
@@ -6078,6 +6069,7 @@ anv_image_ccs_op(struct anv_cmd_buffer *cmd_buffer,
 isl_surf_usage_flags_t
 anv_image_choose_isl_surf_usage(struct anv_physical_device *device,
                                 VkFormat vk_format,
+                                const VkImageFormatListCreateInfo *format_list_info,
                                 VkImageCreateFlags vk_create_flags,
                                 VkImageUsageFlags vk_usage,
                                 isl_surf_usage_flags_t isl_extra_usage,
@@ -6124,7 +6116,8 @@ anv_cmd_buffer_ensure_rcs_companion(struct anv_cmd_buffer *cmd_buffer);
 void
 anv_cmd_buffer_set_rt_state(struct vk_command_buffer *vk_cmd_buffer,
                             VkDeviceSize scratch_size,
-                            uint32_t ray_queries);
+                            uint32_t ray_queries,
+                            const uint8_t *dynamic_descriptor_offsets);
 
 void
 anv_cmd_buffer_set_stack_size(struct vk_command_buffer *vk_cmd_buffer,
