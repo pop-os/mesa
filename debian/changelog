@@ -1,4 +1,4 @@
-mesa (25.3.1-1) UNRELEASED; urgency=medium
+mesa (25.3.1-1) experimental; urgency=medium
 
   * New upstream release.
   * control, rules: Migrate to llvm 21.
@@ -6,7 +6,7 @@ mesa (25.3.1-1) UNRELEASED; urgency=medium
     functionally more or less the same.
   * signing-key.asc: Updated to silence uscan.
 
- -- Timo Aaltonen <tjaalton@debian.org>  Thu, 27 Nov 2025 12:30:07 +0200
+ -- Timo Aaltonen <tjaalton@debian.org>  Mon, 08 Dec 2025 18:54:43 +0200
 
 mesa (25.3.0-1) experimental; urgency=medium
 
