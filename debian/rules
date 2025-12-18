@@ -69,6 +69,9 @@ else
   confflags_GBM = -Dgbm=enabled
   confflags_GALLIUM += -Dgallium-extra-hud=true
   confflags_GALLIUM += -Dlmsensors=enabled
+  confflags_GALLIUM += -Dgallium-va=enabled
+  confflags_GALLIUM += -Dvideo-codecs="all"
+
 
   # Freedreno requires arm in addition
   ifneq (,$(filter arm arm64,$(DEB_HOST_ARCH_CPU)))
@@ -148,11 +151,6 @@ else
 	endif
   else
 	confflags_GALLIUM += -Dllvm=disabled
-  endif
-
-  ifeq (,$(filter pkg.mesa.nolibva,$(DEB_BUILD_PROFILES)))
-	confflags_GALLIUM += -Dgallium-va=enabled
-	confflags_GALLIUM += -Dvideo-codecs="all"
   endif
 endif
 
@@ -250,12 +248,10 @@ override_dh_install:
 	   debian/libgl1-mesa-dri/usr/lib/${DEB_HOST_MULTIARCH}/dri/
 
   ifneq ($(DEB_HOST_ARCH_OS), hurd)
-    ifeq (,$(filter pkg.mesa.nolibva,$(DEB_BUILD_PROFILES)))
 	# Copy the hardlinked va drivers correctly.
-	install -m755 -d debian/mesa-va-drivers/usr/lib/${DEB_HOST_MULTIARCH}/dri/
+	install -m755 -d debian/mesa-libgallium/usr/lib/${DEB_HOST_MULTIARCH}/dri/
 	mv debian/tmp/usr/lib/${DEB_HOST_MULTIARCH}/dri/*_drv_video.so \
-	   debian/mesa-va-drivers/usr/lib/${DEB_HOST_MULTIARCH}/dri/
-    endif
+	   debian/mesa-libgallium/usr/lib/${DEB_HOST_MULTIARCH}/dri/
   endif
 
 	dh_install -a

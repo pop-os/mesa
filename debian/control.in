@@ -28,7 +28,7 @@ Build-Depends:
  librust-rustc-hash-2-dev [@NVK_ARCHS@],
  librust-syn-dev (>= 2.0.48) [@NVK_ARCHS@],
  libsensors-dev [!hurd-any],
- libva-dev (>= 1.6.0) [linux-any] <!pkg.mesa.nolibva>,
+ libva-dev (>= 1.6.0) [linux-any],
  libvulkan-dev [@LLVM_ARCHS@],
  libwayland-dev (>= 1.15.0) [linux-any],
  libwayland-egl-backend-dev (>= 1.15.0) [linux-any],
@@ -216,8 +216,16 @@ Section: libs
 Architecture: linux-any
 Depends: ${misc:Depends}, ${shlibs:Depends}
 Pre-Depends: ${misc:Pre-Depends}
-Provides: libglapi-mesa
 Multi-Arch: same
+Enhances:
+ libva2,
+Provides:
+ libglapi-mesa
+ mesa-va-drivers,
+ va-driver,
+Breaks: mesa-va-drivers (<< 25.2.8-3)
+Replaces: mesa-va-drivers (<< 25.2.8-3)
+Conflicts: mesa-vdpau-drivers, mesa-va-drivers
 Description: shared infrastructure for Mesa drivers
  This package contains libgallium, a private library shared between
  multiple Mesa drivers. This library is an implementation detail of Mesa
@@ -233,28 +241,6 @@ Description: Mesa TensorFlow Lite external delegate
  TensorFlow Lite delegate which can make use of NPUs to accelerate ML
  inference. It is implemented in the form of a external delegate, a shared
  library which the TensorFlow Lite runtime can load at startup.
-
-Package: mesa-va-drivers
-Section: libs
-Architecture: linux-any
-Build-Profiles: <!pkg.mesa.nolibva>
-Depends:
- mesa-libgallium (= ${binary:Version}),
- ${misc:Depends},
- ${shlibs:Depends}
-Enhances: libva2
-Provides: va-driver, mesa-vdpau-drivers
-Breaks: vdpau-va-driver (<< 0.7.4-5)
-Replaces: vdpau-va-driver (<< 0.7.4-5), mesa-vdpau-drivers
-Conflicts: mesa-vdpau-drivers
-Multi-Arch: same
-Pre-Depends: ${misc:Pre-Depends}
-Description: Mesa VA-API video acceleration drivers
- These libraries provide the Video Acceleration API (VA-API) for Unix.
- They provide accelerated video playback (incl. H.264) and video
- post-processing for the supported graphics cards.
- .
- This package enables support for VA-API for some gallium drivers.
 
 Package: mesa-vulkan-drivers
 Section: libs
