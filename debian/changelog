@@ -1,9 +1,14 @@
-mesa (25.3.2-1) UNRELEASED; urgency=medium
+mesa (25.3.2-1) unstable; urgency=medium
 
+  [ Timo Aaltonen ]
   * New upstream release.
   * control: Specify versioned build-depends for cbindgen and libx11.
 
- -- Timo Aaltonen <tjaalton@debian.org>  Fri, 12 Dec 2025 12:58:31 +0200
+  [ Mario Limonciello (AMD) ]
+  * Merge mesa-va-drivers and mesa-vdpau-drivers into mesa-libgallium (LP: #2135270)
+  * Drop conflicts on mesa-va-drivers and mesa-vdpau-drivers
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Thu, 18 Dec 2025 19:03:53 +0200
 
 mesa (25.3.1-1) experimental; urgency=medium
 
