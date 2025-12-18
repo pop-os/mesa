@@ -542,8 +542,9 @@ ac_nir_mem_vectorize_callback(unsigned align_mul, unsigned align_offset, unsigne
 
    /* Align the size to what the hw supports. */
    unsigned unaligned_new_size = num_components * bit_size;
-   unsigned aligned_new_size = align_load_store_size(config->gfx_level, unaligned_new_size,
-                                                     uses_smem, is_shared);
+   unsigned aligned_new_size = nir_round_up_components(num_components) * bit_size;
+   aligned_new_size = align_load_store_size(config->gfx_level, aligned_new_size,
+                                            uses_smem, is_shared);
 
    if (uses_smem) {
       /* Maximize SMEM vectorization except for LLVM, which suffers from SGPR and VGPR spilling.
@@ -572,8 +573,8 @@ ac_nir_mem_vectorize_callback(unsigned align_mul, unsigned align_offset, unsigne
                                    low->intrinsic == nir_intrinsic_load_global ? NIR_ALIGN_MUL_MAX : 4;
          uint32_t page_size = 4096;
          uint32_t mul = MIN3(align_mul, page_size, resource_align);
-         unsigned end = (align_offset + unaligned_new_size / 8u) & (mul - 1);
-         if ((aligned_new_size - unaligned_new_size) / 8u > (mul - end))
+         unsigned end = (align_offset + unaligned_new_size / 8u);
+         if ((aligned_new_size - unaligned_new_size) / 8u > (align(end, mul) - end))
             return false;
       }
 

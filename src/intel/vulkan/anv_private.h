@@ -1155,13 +1155,29 @@ struct anv_push_range {
    uint8_t length;
 };
 
+enum anv_pipeline_bind_mask {
+   ANV_PIPELINE_BIND_MASK_SET0               = BITFIELD_BIT(0),
+   ANV_PIPELINE_BIND_MASK_SET1               = BITFIELD_BIT(1),
+   ANV_PIPELINE_BIND_MASK_SET2               = BITFIELD_BIT(2),
+   ANV_PIPELINE_BIND_MASK_SET3               = BITFIELD_BIT(3),
+   ANV_PIPELINE_BIND_MASK_SET4               = BITFIELD_BIT(4),
+   ANV_PIPELINE_BIND_MASK_SET5               = BITFIELD_BIT(5),
+   ANV_PIPELINE_BIND_MASK_SET6               = BITFIELD_BIT(6),
+   ANV_PIPELINE_BIND_MASK_SET7               = BITFIELD_BIT(7),
+   ANV_PIPELINE_BIND_MASK_USES_NUM_WORKGROUP = BITFIELD_BIT(8),
+};
+
+#define ANV_PIPELINE_BIND_MASK_SET(i) (ANV_PIPELINE_BIND_MASK_SET0 << i)
+
 struct anv_pipeline_bind_map {
    unsigned char                                surface_sha1[20];
    unsigned char                                sampler_sha1[20];
    unsigned char                                push_sha1[20];
 
    /* enum anv_descriptor_set_layout_type */
-   uint32_t layout_type;
+   uint16_t layout_type;
+   /* enum anv_pipeline_bind_mask */
+   uint16_t binding_mask;
 
    uint32_t surface_count;
    uint32_t sampler_count;
@@ -1225,6 +1241,8 @@ struct anv_gfx_state_ptr {
 struct anv_shader {
    struct vk_shader vk;
 
+   void *code;
+
    struct anv_state kernel;
 
    const struct brw_stage_prog_data *prog_data;
@@ -1233,7 +1251,6 @@ struct anv_shader {
    uint32_t num_stats;
 
    char *nir_str;
-   char *asm_str;
 
    struct nir_xfb_info *xfb_info;
 

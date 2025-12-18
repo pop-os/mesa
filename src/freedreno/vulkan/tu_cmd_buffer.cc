@@ -1257,6 +1257,8 @@ tu6_emit_tile_select(struct tu_cmd_buffer *cmd,
    }
 
    unsigned views = tu_fdm_num_layers(cmd);
+   unsigned layers = MAX2(cmd->state.pass->num_views,
+                          cmd->state.framebuffer->layers);
    bool bin_is_scaled = false;
 
    if (fdm) {
@@ -1271,7 +1273,7 @@ tu6_emit_tile_select(struct tu_cmd_buffer *cmd,
 
    bool bin_scale_en =
       cmd->device->physical_device->info->a7xx.has_hw_bin_scaling &&
-      views <= MAX_HW_SCALED_VIEWS && !cmd->state.rp.shared_viewport &&
+      layers <= MAX_HW_SCALED_VIEWS && !cmd->state.rp.shared_viewport &&
       bin_is_scaled;
 
    /* We cannot support LRZ if we cannot use HW bin scaling and the bin is
@@ -1386,16 +1388,23 @@ tu6_emit_tile_select(struct tu_cmd_buffer *cmd,
          if (bin_scale_en) {
             VkExtent2D frag_areas[MAX_HW_SCALED_VIEWS];
             for (unsigned i = 0; i < MAX_HW_SCALED_VIEWS; i++) {
-               if (i >= views) {
+               if (i >= layers) {
                   /* Make sure unused views aren't garbage */
                   frag_areas[i] = (VkExtent2D) {1, 1};
                   frag_offsets[i] = (VkOffset2D) { 0, 0 };
                   continue;
                }
 
-               frag_areas[i] = tile->frag_areas[i];
-               frag_offsets[i].x = x1 - x1 / tile->frag_areas[i].width;
-               frag_offsets[i].y = y1 - y1 / tile->frag_areas[i].height;
+               /* The HW bin offset is always per-layer, whereas if there is
+                * more than 1 layer (i.e. layered rendering instead of
+                * multiview rendering) and FDM is not per-layer then all
+                * layers implicitly use the scale from FDM layer 0. We have to
+                * explicitly broadcast it here.
+                */
+               unsigned view = MIN2(i, views - 1);
+               frag_areas[i] = tile->frag_areas[view];
+               frag_offsets[i].x = x1 - x1 / tile->frag_areas[view].width;
+               frag_offsets[i].y = y1 - y1 / tile->frag_areas[view].height;
             }
 
             tu_cs_emit_regs(cs, A7XX_GRAS_BIN_FOVEAT(
@@ -5722,8 +5731,6 @@ template <chip CHIP>
 static void
 tu_emit_subpass_begin(struct tu_cmd_buffer *cmd)
 {
-   tu_fill_render_pass_state(&cmd->state.vk_rp, cmd->state.pass, cmd->state.subpass);
-
    struct tu_resolve_group resolve_group = {};
 
    tu_emit_subpass_begin_gmem<CHIP>(cmd, &resolve_group);
@@ -5822,6 +5829,7 @@ tu_CmdBeginRenderPass2(VkCommandBuffer commandBuffer,
 
    tu_lrz_begin_renderpass<CHIP>(cmd);
 
+   tu_fill_render_pass_state(&cmd->state.vk_rp, pass, cmd->state.subpass);
    tu_emit_renderpass_begin(cmd);
    tu_emit_subpass_begin<CHIP>(cmd);
 
@@ -5964,6 +5972,8 @@ tu_CmdBeginRendering(VkCommandBuffer commandBuffer,
       cmd->state.suspended_pass.clear_values = cmd->state.clear_values;
       cmd->state.suspended_pass.gmem_layout = cmd->state.gmem_layout;
    }
+
+   tu_fill_render_pass_state(&cmd->state.vk_rp, cmd->state.pass, cmd->state.subpass);
 
    if (!resuming) {
       tu_emit_renderpass_begin(cmd);
@@ -6146,6 +6156,7 @@ tu_CmdNextSubpass2(VkCommandBuffer commandBuffer,
          TU_CMD_FLAG_WAIT_FOR_IDLE;
    }
 
+   tu_fill_render_pass_state(&cmd->state.vk_rp, cmd->state.pass, new_subpass);
    tu_emit_subpass_begin<CHIP>(cmd);
 }
 TU_GENX(tu_CmdNextSubpass2);
@@ -6690,10 +6701,7 @@ fdm_apply_fs_params(struct tu_cmd_buffer *cmd,
        */
       VkExtent2D area = frag_areas[MIN2(i, views - 1)];
       VkRect2D bin = bins[MIN2(i, views - 1)];
-      VkOffset2D hw_viewport_offset = hw_viewport_offsets[MIN2(i, views - 1)];
       VkOffset2D offset = tu_fdm_per_bin_offset(area, bin, common_bin_offset);
-      offset.x -= hw_viewport_offset.x;
-      offset.y -= hw_viewport_offset.y;
 
       tu_cs_emit(cs, area.width);
       tu_cs_emit(cs, area.height);
