@@ -1,3 +1,10 @@
+mesa (25.3.2-2) unstable; urgency=medium
+
+  [ Mario Limonciello (AMD) ]
+  * Add missing comma for provides (Closes: #1123627)
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Fri, 19 Dec 2025 07:54:35 +0200
+
 mesa (25.3.2-1) unstable; urgency=medium
 
   [ Timo Aaltonen ]
