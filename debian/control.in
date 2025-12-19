@@ -220,7 +220,7 @@ Multi-Arch: same
 Enhances:
  libva2,
 Provides:
- libglapi-mesa
+ libglapi-mesa,
  mesa-va-drivers,
  va-driver,
 Breaks: mesa-va-drivers (<< 25.2.8-3), mesa-vdpau-drivers (<< 25.2.8-3)
