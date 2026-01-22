@@ -1,6 +1,7 @@
 mesa (26.0.0~rc1-1) UNRELEASED; urgency=medium
 
   * New upstream release candidate.
+  * patches: Drop upstreamed patches.
 
  -- Timo Aaltonen <tjaalton@debian.org>  Thu, 22 Jan 2026 13:10:27 +0200
 
