@@ -1,10 +1,10 @@
-mesa (26.0.0~rc3-1) UNRELEASED; urgency=medium
+mesa (26.0.0~rc3-1) experimental; urgency=medium
 
   * New upstream release candidate.
   * patches: Drop upstreamed patches.
   * control: Add libdisplay-info-dev to build-depends for llvm archs.
 
- -- Timo Aaltonen <tjaalton@debian.org>  Thu, 22 Jan 2026 13:10:27 +0200
+ -- Timo Aaltonen <tjaalton@debian.org>  Fri, 06 Feb 2026 10:56:13 +0200
 
 mesa (25.3.3-1) unstable; urgency=medium
 
