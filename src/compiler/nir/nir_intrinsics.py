@@ -2633,6 +2633,9 @@ system_value("fs_msaa_intel", 1)
 # Per primitive remapping table offset.
 system_value("per_primitive_remap_intel", 1)
 
+# The (linear) local invocation index provided in the payload of mesh/task shaders.
+system_value("local_invocation_index_intel", 1)
+
 # Intrinsics for Intel bindless thread dispatch
 # BASE=brw_topoloy_id
 system_value("topology_id_intel", 1, indices=[BASE])

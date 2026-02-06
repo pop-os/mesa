@@ -376,13 +376,15 @@ hk_bind_descriptor_sets(UNUSED struct hk_cmd_buffer *cmd,
     *
     * This means that, if some earlier set gets bound in such a way that
     * it changes set_dynamic_buffer_start[s], this binding is implicitly
-    * invalidated.  Therefore, we can always look at the current value
-    * of set_dynamic_buffer_start[s] as the base of our dynamic buffer
-    * range and it's only our responsibility to adjust all
-    * set_dynamic_buffer_start[p] for p > s as needed.
+    * invalidated.
     */
-   uint8_t dyn_buffer_start =
-      desc->root.set_dynamic_buffer_start[info->firstSet];
+   uint8_t dyn_buffer_start = 0u;
+   for (uint32_t i = 0u; i < info->firstSet; ++i) {
+      const struct hk_descriptor_set_layout *set_layout =
+         vk_to_hk_descriptor_set_layout(pipeline_layout->set_layouts[i]);
+      if (set_layout)
+         dyn_buffer_start += set_layout->dynamic_buffer_count;
+   }
 
    uint32_t next_dyn_offset = 0;
    for (uint32_t i = 0; i < info->descriptorSetCount; ++i) {
@@ -426,10 +428,6 @@ hk_bind_descriptor_sets(UNUSED struct hk_cmd_buffer *cmd,
    }
    assert(dyn_buffer_start <= HK_MAX_DYNAMIC_BUFFERS);
    assert(next_dyn_offset <= info->dynamicOffsetCount);
-
-   for (uint32_t s = info->firstSet + info->descriptorSetCount; s < HK_MAX_SETS;
-        s++)
-      desc->root.set_dynamic_buffer_start[s] = dyn_buffer_start;
 
    desc->root_dirty = true;
 }

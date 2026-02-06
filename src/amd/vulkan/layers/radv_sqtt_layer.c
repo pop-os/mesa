@@ -778,8 +778,11 @@ sqtt_QueueSubmit2(VkQueue _queue, uint32_t submitCount, const VkSubmitInfo2 *pSu
    if (queue->sqtt_present)
       return radv_sqtt_wsi_submit(_queue, submitCount, pSubmits, _fence);
 
-   if (instance->vk.trace_per_submit)
+   if (instance->vk.trace_per_submit) {
+      /* Make sure to lock in case of multithreaded submissions. */
+      simple_mtx_lock(&device->sqtt.lock);
       radv_sqtt_start_capturing(queue);
+   }
 
    for (uint32_t i = 0; i < submitCount; i++) {
       const VkSubmitInfo2 *pSubmit = &pSubmits[i];
@@ -863,12 +866,17 @@ sqtt_QueueSubmit2(VkQueue _queue, uint32_t submitCount, const VkSubmitInfo2 *pSu
                  "radv: Failed to capture RGP for this submit because the buffer is too small and auto-resizing "
                  "is disabled. See RADV_THREAD_TRACE_BUFFER_SIZE for increasing the size.\n");
       }
+      simple_mtx_unlock(&device->sqtt.lock);
    }
 
    return result;
 
 fail:
    FREE(new_cmdbufs);
+
+   if (instance->vk.trace_per_submit) {
+      simple_mtx_unlock(&device->sqtt.lock);
+   }
    return result;
 }
 

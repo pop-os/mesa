@@ -378,6 +378,8 @@ vn_AllocateMemory(VkDevice device,
                                                import_fd_info->fd);
    } else {
       result = vn_device_memory_alloc(dev, mem, pAllocateInfo);
+      if (result == VK_SUCCESS)
+         vn_wsi_memory_info_init(mem, pAllocateInfo);
    }
 
    vn_device_memory_emit_report(dev, mem, /* is_alloc */ true, result);

@@ -482,6 +482,9 @@ vk_accel_struct_cmd_begin_debug_marker(VkCommandBuffer commandBuffer,
    case VK_ACCELERATION_STRUCTURE_BUILD_STEP_PLOC_BUILD_INTERNAL:
       snprintf(name, sizeof(name), "ploc_build_internal");
       break;
+   case VK_ACCELERATION_STRUCTURE_BUILD_STEP_HPLOC_BUILD_INTERNAL:
+      snprintf(name, sizeof(name), "hploc_build_internal");
+      break;
    case VK_ACCELERATION_STRUCTURE_BUILD_STEP_ENCODE:
    case VK_ACCELERATION_STRUCTURE_BUILD_STEP_UPDATE: {
       const char *type = marker->step == VK_ACCELERATION_STRUCTURE_BUILD_STEP_ENCODE ? "encode" : "update";
@@ -958,7 +961,7 @@ lbvh_build_internal(VkCommandBuffer commandBuffer,
          .bvh = pInfos[i].scratchData.deviceAddress + bvh_states[i].vk.scratch.ir_offset,
          .src_ids = pInfos[i].scratchData.deviceAddress + src_scratch_offset,
          .node_info = pInfos[i].scratchData.deviceAddress + bvh_states[i].vk.scratch.lbvh_node_offset,
-         .id_count = bvh_states[i].vk.leaf_node_count,
+         .header = pInfos[i].scratchData.deviceAddress + bvh_states[i].vk.scratch.header_offset,
          .internal_node_base = bvh_states[i].vk.scratch.internal_node_offset - bvh_states[i].vk.scratch.ir_offset,
       };
 

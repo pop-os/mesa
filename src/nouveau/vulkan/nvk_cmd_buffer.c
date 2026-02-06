@@ -861,13 +861,16 @@ nvk_bind_descriptor_sets(struct nvk_cmd_buffer *cmd,
     *
     * This means that, if some earlier set gets bound in such a way that
     * it changes set_dynamic_buffer_start[s], this binding is implicitly
-    * invalidated.  Therefore, we can always look at the current value
-    * of set_dynamic_buffer_start[s] as the base of our dynamic buffer
-    * range and it's only our responsibility to adjust all
-    * set_dynamic_buffer_start[p] for p > s as needed.
+    * invalidated.
     */
-   const uint8_t dyn_buffer_start = set_dynamic_buffer_start[info->firstSet];
-   uint8_t dyn_buffer_end = dyn_buffer_start;
+   uint8_t dyn_buffer_end = 0u;
+   for (uint32_t i = 0u; i < info->firstSet; ++i) {
+      const struct nvk_descriptor_set_layout *set_layout =
+         vk_to_nvk_descriptor_set_layout(pipeline_layout->set_layouts[i]);
+      if (set_layout)
+         dyn_buffer_end += set_layout->dynamic_buffer_count;
+   }
+   const uint8_t dyn_buffer_start = dyn_buffer_end;
 
    uint32_t next_dyn_offset = 0;
    for (uint32_t i = 0; i < info->descriptorSetCount; ++i) {
@@ -926,14 +929,6 @@ nvk_bind_descriptor_sets(struct nvk_cmd_buffer *cmd,
    nvk_descriptor_state_set_root_array(cmd, desc, dynamic_buffers,
                                        dyn_buffer_start, dyn_buffer_end - dyn_buffer_start,
                                        &dynamic_buffers[dyn_buffer_start]);
-
-   /* We need to set everything above first_set because later calls to
-    * nvk_bind_descriptor_sets() depend on it for knowing where to start and
-    * they may not be called on the next consecutive set.
-    */
-   for (uint32_t s = info->firstSet + info->descriptorSetCount;
-        s < NVK_MAX_SETS; s++)
-      set_dynamic_buffer_start[s] = dyn_buffer_end;
 
    /* We need to at least sync everything from first_set to NVK_MAX_SETS.
     * However, we only save anything if firstSet >= 4 so we may as well sync

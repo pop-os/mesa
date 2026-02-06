@@ -15,6 +15,7 @@
 #include "ac_pm4.h"
 #include "ac_rgp.h"
 #include "amd_family.h"
+#include "util/simple_mtx.h"
 
 #define SQTT_BUFFER_ALIGN_SHIFT 12
 
@@ -61,6 +62,8 @@ struct ac_sqtt {
    struct rgp_clock_calibration rgp_clock_calibration;
 
    struct hash_table_u64 *pipeline_bos;
+
+   simple_mtx_t lock;
 };
 
 struct ac_sqtt_data_info {

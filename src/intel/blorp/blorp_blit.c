@@ -94,7 +94,8 @@ blorp_blit_get_frag_coords(nir_builder *b,
 static nir_def *
 blorp_blit_get_cs_dst_coords(nir_builder *b,
                              const struct blorp_blit_prog_key *key,
-                             struct blorp_blit_vars *v)
+                             struct blorp_blit_vars *v,
+                             const struct intel_device_info *devinfo)
 {
    nir_def *coord = nir_load_global_invocation_id(b, 32);
 
@@ -109,7 +110,7 @@ blorp_blit_get_cs_dst_coords(nir_builder *b,
    if (key->need_dst_offset)
       coord = nir_isub(b, coord, nir_load_var(b, v->v_dst_offset));
 
-   assert(!key->persample_msaa_dispatch);
+   assert(devinfo->ver >= 30 || !key->persample_msaa_dispatch);
    return nir_trim_vector(b, coord, key->dst_samples > 1 ? 3 : 2);
 }
 
@@ -1205,7 +1206,8 @@ blorp_build_nir_shader(struct blorp_context *blorp,
       /* It only makes sense to do persample dispatch if the render target is
        * configured as multisampled.
        */
-      assert(key->base.shader_pipeline == BLORP_SHADER_PIPELINE_RENDER);
+      assert(key->base.shader_pipeline == BLORP_SHADER_PIPELINE_RENDER ||
+             devinfo->ver >= 30);
       assert(key->rt_samples > 0);
    }
 
@@ -1230,7 +1232,7 @@ blorp_build_nir_shader(struct blorp_context *blorp,
    blorp_blit_vars_init(&b, &v);
 
    dst_pos = compute ?
-      blorp_blit_get_cs_dst_coords(&b, key, &v) :
+      blorp_blit_get_cs_dst_coords(&b, key, &v, devinfo) :
       blorp_blit_get_frag_coords(&b, key, &v);
 
    /* Render target and texture hardware don't support W tiling until Gfx8. */
@@ -2468,7 +2470,13 @@ blorp_blit_supports_compute(struct blorp_context *blorp,
    if (blorp->isl_dev->info->ver < 30 && dst_surf->samples > 1)
       return false;
 
-   if (blorp->isl_dev->info->ver >= 12) {
+   if (blorp->isl_dev->info->ver >= 30) {
+      return dst_aux_usage == ISL_AUX_USAGE_FCV_CCS_E ||
+             dst_aux_usage == ISL_AUX_USAGE_MCS_CCS ||
+             dst_aux_usage == ISL_AUX_USAGE_CCS_E ||
+             dst_aux_usage == ISL_AUX_USAGE_MCS ||
+             dst_aux_usage == ISL_AUX_USAGE_NONE;
+   } else if (blorp->isl_dev->info->ver >= 12) {
       return dst_aux_usage == ISL_AUX_USAGE_FCV_CCS_E ||
              dst_aux_usage == ISL_AUX_USAGE_CCS_E ||
              dst_aux_usage == ISL_AUX_USAGE_NONE;

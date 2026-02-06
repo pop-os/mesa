@@ -134,6 +134,11 @@ main(int argc, char **argv)
          .args = util_dynarray_begin(&clang_args),
          .num_args = util_dynarray_num_elements(&clang_args, char *),
          .c_compatible = true,
+         .features = {
+            .atomic_order_seq_cst = true,
+            .atomic_scope_device = true,
+            .generic_address_space = true,
+         },
       };
 
       /* Enable all features, we don't know the target here and it is the

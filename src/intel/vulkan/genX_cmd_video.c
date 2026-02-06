@@ -1380,7 +1380,9 @@ static void
 anv_av1_decode_video_tile(struct anv_cmd_buffer *cmd_buffer,
                           const VkVideoDecodeInfoKHR *frame_info,
                           const StdVideoAV1SequenceHeader *seq_hdr,
-                          int tile_idx)
+                          int tile_idx,
+                          uint16_t *tile_col_start_sb,
+                          uint16_t *tile_row_start_sb)
 {
    ANV_FROM_HANDLE(anv_buffer, src_buffer, frame_info->srcBuffer);
    struct anv_video_session *vid = cmd_buffer->video.vid;
@@ -2563,8 +2565,8 @@ anv_av1_decode_video_tile(struct anv_cmd_buffer *cmd_buffer,
       til.FrameTileID = tile_idx;
       til.TGTileNum = tile_idx;
       til.TileGroupID = 0;
-      til.TileColumnPositioninSBUnit = std_pic_info->pTileInfo->pMiColStarts[column];
-      til.TileRowPositioninSBUnit = std_pic_info->pTileInfo->pMiRowStarts[row];
+      til.TileColumnPositioninSBUnit = tile_col_start_sb[column];
+      til.TileRowPositioninSBUnit = tile_row_start_sb[row];
       til.TileWidthinSBMinus1 = std_pic_info->pTileInfo->pWidthInSbsMinus1[column];
       til.TileHeightinSBMinus1 = std_pic_info->pTileInfo->pHeightInSbsMinus1[row];
       til.IsLastTileofRowFlag = column == std_pic_info->pTileInfo->TileCols - 1;
@@ -2611,9 +2613,60 @@ anv_av1_decode_video_tile(struct anv_cmd_buffer *cmd_buffer,
 }
 
 static void
+anv_av1_tiles_info(const VkVideoDecodeInfoKHR *frame_info,
+                   const StdVideoAV1SequenceHeader *seq_hdr,
+                   uint16_t (*tile_col_start_sb)[64],
+                   uint16_t (*tile_row_start_sb)[64])
+{
+   const VkVideoDecodeAV1PictureInfoKHR *av1_pic_info =
+      vk_find_struct_const(frame_info->pNext, VIDEO_DECODE_AV1_PICTURE_INFO_KHR);
+   const StdVideoDecodeAV1PictureInfo *std_pic_info = av1_pic_info->pStdPictureInfo;
+   VkExtent2D frameExtent = frame_info->dstPictureResource.codedExtent;
+
+   int denom = std_pic_info->coded_denom + 9;
+   unsigned downscaled_width = (frameExtent.width * 8 + denom / 2) / denom;
+   unsigned frame_width = std_pic_info->flags.use_superres ? downscaled_width : frameExtent.width;
+
+   unsigned tile_cols = std_pic_info->pTileInfo->TileCols;
+   unsigned tile_rows = std_pic_info->pTileInfo->TileRows;
+   unsigned i = 0;
+
+   if (std_pic_info->pTileInfo->flags.uniform_tile_spacing_flag) {
+      const uint16_t sb_size = seq_hdr->flags.use_128x128_superblock ? 128 : 64;
+      const uint16_t sb_width = DIV_ROUND_UP(frame_width, sb_size);
+      const uint16_t sb_height = DIV_ROUND_UP(frameExtent.height, sb_size);
+      const uint16_t tile_width_sb = DIV_ROUND_UP(sb_width, tile_cols);
+      const uint16_t tile_height_sb = DIV_ROUND_UP(sb_height, tile_rows);
+
+      (*tile_col_start_sb)[0] = 0;
+      for (i = 1; i < tile_cols; ++i)
+         (*tile_col_start_sb)[i] = (*tile_col_start_sb)[i - 1] + tile_width_sb;
+      (*tile_col_start_sb)[i] = sb_width;
+
+      (*tile_row_start_sb)[0] = 0;
+      for (i = 1; i < tile_rows; ++i)
+         (*tile_row_start_sb)[i] = (*tile_row_start_sb)[i - 1] + tile_height_sb;
+      (*tile_row_start_sb)[i] = sb_height;
+   } else {
+      (*tile_col_start_sb)[0] = 0;
+      assert(std_pic_info->pTileInfo->pMiColStarts[0] == 0);
+      for (i = 0; i < tile_cols; ++i)
+         (*tile_col_start_sb)[i + 1] = (*tile_col_start_sb)[i] +
+                                       std_pic_info->pTileInfo->pWidthInSbsMinus1[i] + 1;
+
+      (*tile_row_start_sb)[0] = 0;
+      assert(std_pic_info->pTileInfo->pMiRowStarts[0] == 0);
+      for (i = 0; i < tile_rows; ++i)
+         (*tile_row_start_sb)[i + 1] = (*tile_row_start_sb)[i] +
+                                       std_pic_info->pTileInfo->pHeightInSbsMinus1[i] + 1;
+   }
+}
+
+static void
 anv_av1_calculate_xstep_qn(struct anv_cmd_buffer *cmd_buffer,
                            const VkVideoDecodeInfoKHR *frame_info,
-                           const StdVideoAV1SequenceHeader *seq_hdr)
+                           const StdVideoAV1SequenceHeader *seq_hdr,
+                           uint16_t *tile_col_start_sb)
 {
    const VkVideoDecodeAV1PictureInfoKHR *av1_pic_info =
       vk_find_struct_const(frame_info->pNext, VIDEO_DECODE_AV1_PICTURE_INFO_KHR);
@@ -2666,18 +2719,18 @@ anv_av1_calculate_xstep_qn(struct anv_cmd_buffer *cmd_buffer,
             chroma_x0_qn[j] = x0;
 
          if (!last_col) {
-            tile_col_end_sb = std_pic_info->pTileInfo->pMiColStarts[j + 1];
+            tile_col_end_sb = tile_col_start_sb[j + 1];
          } else {
-            tile_col_end_sb = std_pic_info->pTileInfo->pMiColStarts[tile_cols - 1] +
+            tile_col_end_sb = tile_col_start_sb[tile_cols - 1] +
                               std_pic_info->pTileInfo->pWidthInSbsMinus1[tile_cols - 1];
          }
 
 
-         int32_t mi_col_end = tile_col_end_sb >> mib_size_log2;
+         int32_t mi_col_end = tile_col_end_sb << mib_size_log2;
          mi_col_end = MIN2(mi_col_end, mi_cols);
 
          int32_t downscaled_x1 = mi_col_end << (av1_mi_size_log2 - ssx);
-         int32_t downscaled_x0 = std_pic_info->pTileInfo->pMiColStarts[j] << mib_size_log2 << (av1_mi_size_log2 - ssx);
+         int32_t downscaled_x0 = tile_col_start_sb[j] << mib_size_log2 << (av1_mi_size_log2 - ssx);
 
          int32_t src_w = downscaled_x1 - downscaled_x0;
          int32_t upscaled_x0 = (downscaled_x0 * denom) / 8;
@@ -2706,12 +2759,18 @@ anv_av1_decode_video(struct anv_cmd_buffer *cmd_buffer,
    struct vk_video_session_parameters *params = cmd_buffer->video.params;
    const StdVideoAV1SequenceHeader *seq_hdr;
 
+   uint16_t tile_col_start_sb[64] = { 0, };
+   uint16_t tile_row_start_sb[64] = { 0, };
+
    vk_video_get_av1_parameters(&vid->vk, params, frame_info, &seq_hdr);
 
-   anv_av1_calculate_xstep_qn(cmd_buffer, frame_info, seq_hdr);
+   anv_av1_tiles_info(frame_info, seq_hdr, &tile_col_start_sb, &tile_row_start_sb);
+   anv_av1_calculate_xstep_qn(cmd_buffer, frame_info, seq_hdr, tile_col_start_sb);
 
-   for (unsigned t = 0; t < av1_pic_info->tileCount; t++)
-      anv_av1_decode_video_tile(cmd_buffer, frame_info, seq_hdr, t);
+   for (unsigned t = 0; t < av1_pic_info->tileCount; t++) {
+      anv_av1_decode_video_tile(cmd_buffer, frame_info, seq_hdr, t,
+                                tile_col_start_sb, tile_row_start_sb);
+   }
 }
 #endif
 

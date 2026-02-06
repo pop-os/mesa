@@ -170,6 +170,7 @@ typedef struct wsi_display_connector {
    char                         *name;
    bool                         connected;
    bool                         active;
+   bool                         imported;
    int                          refcount; /* swapchains using this connector */
    struct list_head             display_modes;
    wsi_display_mode             *current_mode;
@@ -617,7 +618,8 @@ wsi_display_is_crtc_available(const struct wsi_display * const wsi,
 
 static struct wsi_display_connector *
 wsi_display_alloc_connector(struct wsi_display *wsi,
-                            uint32_t connector_id)
+                            uint32_t connector_id,
+                            bool imported)
 {
    struct wsi_display_connector *connector =
       vk_zalloc(wsi->alloc, sizeof (struct wsi_display_connector),
@@ -628,11 +630,23 @@ wsi_display_alloc_connector(struct wsi_display *wsi,
    connector->id = connector_id;
    connector->wsi = wsi;
    connector->active = false;
+   connector->imported = imported;
    /* XXX use EDID name */
    connector->name = "monitor";
    list_inithead(&connector->display_modes);
 
    return connector;
+}
+
+static void
+wsi_display_free_connector(struct wsi_display *wsi,
+                           struct wsi_display_connector *connector)
+{
+   wsi_for_each_display_mode(mode, connector) {
+      vk_free(wsi->alloc, mode);
+   }
+   vk_free(wsi->alloc, connector->formats);
+   vk_free(wsi->alloc, connector);
 }
 
 static struct wsi_display_connector *
@@ -664,7 +678,7 @@ wsi_display_get_connector(struct wsi_device *wsi_device,
       wsi_display_find_connector(wsi_device, connector_id);
 
    if (!connector) {
-      connector = wsi_display_alloc_connector(wsi, connector_id);
+      connector = wsi_display_alloc_connector(wsi, connector_id, drm_fd != wsi->fd);
       if (!connector) {
          drmModeFreeConnector(drm_connector);
          return NULL;
@@ -3279,13 +3293,8 @@ wsi_display_finish_wsi(struct wsi_device *wsi_device,
       (struct wsi_display *) wsi_device->wsi[VK_ICD_WSI_PLATFORM_DISPLAY];
 
    if (wsi) {
-      wsi_for_each_connector(connector, wsi) {
-         wsi_for_each_display_mode(mode, connector) {
-            vk_free(wsi->alloc, mode);
-         }
-         vk_free(wsi->alloc, connector->formats);
-         vk_free(wsi->alloc, connector);
-      }
+      wsi_for_each_connector(connector, wsi)
+         wsi_display_free_connector(wsi, connector);
 
       wsi_display_stop_wait_thread(wsi);
 
@@ -3321,11 +3330,19 @@ wsi_ReleaseDisplayEXT(VkPhysicalDevice physicalDevice,
       wsi->fd = -1;
    }
 
-   wsi_display_connector_from_handle(display)->active = false;
+   struct wsi_display_connector *connector =
+      wsi_display_connector_from_handle(display);
+
+   connector->active = false;
 
 #ifdef VK_USE_PLATFORM_XLIB_XRANDR_EXT
-   wsi_display_connector_from_handle(display)->output = None;
+   connector->output = None;
 #endif
+
+   if (connector->imported) {
+      list_del(&connector->list);
+      wsi_display_free_connector(wsi, connector);
+   }
 
    return VK_SUCCESS;
 }
@@ -3620,7 +3637,7 @@ wsi_display_get_output(struct wsi_device *wsi_device,
       connector = wsi_display_find_connector(wsi_device, connector_id);
 
       if (connector == NULL) {
-         connector = wsi_display_alloc_connector(wsi, connector_id);
+         connector = wsi_display_alloc_connector(wsi, connector_id, false);
          if (!connector) {
             return NULL;
          }

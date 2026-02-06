@@ -22,6 +22,7 @@ radv_entrypoints_gen_command += [
   '--device-prefix', 'rage2',
   '--device-prefix', 'quantic_dream',
   '--device-prefix', 'no_mans_sky',
+  '--device-prefix', 'strange_brigade',
 
   # Command buffer annotation layer entrypoints
   '--device-prefix', 'annotate',
@@ -42,6 +43,7 @@ libradv_files = files(
   'layers/radv_rage2.c',
   'layers/radv_quantic_dream.c',
   'layers/radv_no_mans_sky.c',
+  'layers/radv_strange_brigade.c',
   'layers/radv_rmv_layer.c',
   'layers/radv_rra_layer.c',
   'layers/radv_sqtt_layer.c',

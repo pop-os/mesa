@@ -940,9 +940,9 @@ pan_fix_frame_shader_mode(enum mali_pre_post_frame_shader_mode mode,
       return mode;
 }
 
-/* Regardless of clean_tile_write_enable, the hardware writes clean tiles if
- * the effective tile size differs from the superblock size of any enabled AFBC
- * render target. Check this condition. */
+/* Clean tiles must be written back for AFBC buffers (color, z/s) when either
+ * one of the effective tile size dimension is smaller than the superblock
+ * dimension. */
 
 static bool
 pan_force_clean_write_on(const struct pan_image *image, unsigned tile_size)
@@ -953,13 +953,15 @@ pan_force_clean_write_on(const struct pan_image *image, unsigned tile_size)
    if (!drm_is_afbc(image->props.modifier))
       return false;
 
-   struct pan_image_block_size renderblk_sz =
-      pan_afbc_renderblock_size(image->props.modifier);
-
-   assert(renderblk_sz.width >= 16 && renderblk_sz.height >= 16);
    assert(tile_size <= pan_max_effective_tile_size(PAN_ARCH));
 
-   return tile_size != renderblk_sz.width * renderblk_sz.height;
+   struct pan_image_block_size tileblk_sz =
+      pan_effective_tile_block_size(tile_size);
+   struct pan_image_block_size superblk_sz =
+      pan_afbc_superblock_size(image->props.modifier);
+
+   return tileblk_sz.width < superblk_sz.width ||
+      tileblk_sz.height < superblk_sz.height;
 }
 
 static bool

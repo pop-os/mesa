@@ -222,7 +222,6 @@ KHR-GLES3.framebuffer_blit.multisampled_to_singlesampled_blit_depth_config_test,
 
 # New fails in 1.4.3.3
 dEQP-VK.memory.concurrent_access.shader_and_host,Fail
-dEQP-VK.pipeline.monolithic.vertex_input.misc.unused_binding_dynamic,Crash
 dEQP-VK.transform_feedback.simple.draw_indirect_counter_offset_16,Fail
 dEQP-VK.transform_feedback.simple.draw_indirect_counter_offset_244,Fail
 dEQP-VK.transform_feedback.simple.draw_indirect_counter_offset_508,Fail

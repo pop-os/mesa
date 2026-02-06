@@ -597,6 +597,10 @@ anv_blorp_execute_on_companion(struct anv_cmd_buffer *cmd_buffer,
       /* Even on Xe3, no support for MSAA on BCS. */
       if (anv_cmd_buffer_is_blitter_queue(cmd_buffer))
          return true;
+
+      /* On Xe3 compute supports blits but not clear operations. */
+      if (!src_image)
+         return true;
    }
 
    if (anv_cmd_buffer_is_blitter_queue(cmd_buffer)) {

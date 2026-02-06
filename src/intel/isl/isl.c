@@ -2350,12 +2350,6 @@ isl_choose_miptail_start_level(const struct isl_device *dev,
    /* Account for the specified minimum */
    min_miptail_start = MAX(min_miptail_start, info->min_miptail_start_level);
 
-   struct isl_extent3d level0_extent_el = {
-      .w = isl_align_div_npot(info->width, fmtl->bw),
-      .h = isl_align_div_npot(info->height, fmtl->bh),
-      .d = isl_align_div_npot(info->depth, fmtl->bd),
-   };
-
    /* The first miptail slot takes up the entire right side of the tile. So,
     * the extent is just the distance from the offset of the first level to
     * the corner of the tile.
@@ -2375,9 +2369,14 @@ isl_choose_miptail_start_level(const struct isl_device *dev,
    /* Now find the first level that fits the maximum miptail size requirement.
     */
    for (uint32_t s = min_miptail_start; s < info->levels; s++) {
-      if (isl_minify(level0_extent_el.w, s) <= miptail_level0_extent_el.w &&
-          isl_minify(level0_extent_el.h, s) <= miptail_level0_extent_el.h &&
-          isl_minify(level0_extent_el.d, s) <= miptail_level0_extent_el.d)
+      struct isl_extent3d level_s_extent_el = {
+         .w = isl_align_div_npot(isl_minify(info->width, s), fmtl->bw),
+         .h = isl_align_div_npot(isl_minify(info->height, s), fmtl->bh),
+         .d = isl_align_div_npot(isl_minify(info->depth, s), fmtl->bd),
+      };
+      if (level_s_extent_el.w <= miptail_level0_extent_el.w &&
+          level_s_extent_el.h <= miptail_level0_extent_el.h &&
+          level_s_extent_el.d <= miptail_level0_extent_el.d)
          return s;
    }
 
@@ -3846,11 +3845,18 @@ isl_surf_get_mcs_surf(const struct isl_device *dev,
       UNREACHABLE("Invalid sample count");
    }
 
+   /* isl_genX(surf_fill_state_s) will assert on us if the QPitch is not
+    * aligned by the main surface's vertical alignment. Align the height of
+    * the image so that the QPitch follows.
+    */
+   const uint32_t aligned_height = isl_align(surf->logical_level0_px.height,
+                                             surf->image_alignment_el.height);
+
    return isl_surf_init(dev, mcs_surf,
                         .dim = ISL_SURF_DIM_2D,
                         .format = mcs_format,
                         .width = surf->logical_level0_px.width,
-                        .height = surf->logical_level0_px.height,
+                        .height = aligned_height,
                         .depth = 1,
                         .levels = 1,
                         .array_len = surf->logical_level0_px.array_len,

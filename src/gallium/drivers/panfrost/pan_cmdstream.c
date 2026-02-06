@@ -2011,16 +2011,22 @@ emit_texbuf_attribs(struct panfrost_context *ctx, mesa_shader_stage shader,
                     struct mali_attribute_packed *attribs,
                     unsigned first_texel_buf_index)
 {
-   unsigned i;
-   BITSET_FOREACH_SET(i, ctx->texture_buffer[shader].mask,
-                      PIPE_MAX_SHADER_SAMPLER_VIEWS) {
-      struct panfrost_sampler_view *view = ctx->sampler_views[shader][i];
-      assert(view);
-      enum pipe_format format = view->base.format;
-      pan_pack(attribs + i, ATTRIBUTE, cfg) {
-         cfg.buffer_index = first_texel_buf_index + i;
-         cfg.offset_enable = false;
-         cfg.format = GENX(pan_format_from_pipe_format)(format)->hw;
+   unsigned last_bit = BITSET_LAST_BIT(ctx->texture_buffer[shader].mask);
+
+   for (unsigned i = 0; i < last_bit; ++i) {
+      if (BITSET_TEST(ctx->texture_buffer[shader].mask, i)) {
+         struct panfrost_sampler_view *view = ctx->sampler_views[shader][i];
+         assert(view);
+
+         enum pipe_format format = view->base.format;
+         pan_pack(attribs + i, ATTRIBUTE, cfg) {
+            cfg.buffer_index = first_texel_buf_index + i;
+            cfg.offset_enable = false;
+            cfg.format = GENX(pan_format_from_pipe_format)(format)->hw;
+         }
+      } else {
+         pan_pack(attribs + i, ATTRIBUTE, cfg)
+            cfg.format = MALI_PACK_FMT(CONSTANT, 0000, L);
       }
    }
 }
@@ -2193,24 +2199,25 @@ panfrost_emit_image_texbuf_attribs(struct panfrost_batch *batch,
     * ensure the offset for texel buffers is correct. Therefore, we check the
     * mask here and ensure we emit attribs if the shader changes. */
    uint64_t image_mask = ctx->image_mask[type] & shader->info.images_used;
-   unsigned image_count = util_last_bit(image_mask);
-   unsigned attr_count =
-      image_count + BITSET_LAST_BIT(ctx->texture_buffer[type].mask);
+   unsigned texbuf_count = BITSET_LAST_BIT(ctx->texture_buffer[type].mask);
 #else
    uint64_t image_mask = ctx->image_mask[type];
-   unsigned image_count = util_last_bit(image_mask);
-   unsigned attr_count = image_count;
+   unsigned texbuf_count = 0;
 #endif
+   unsigned image_count = util_last_bit(image_mask);
    /* Images always need a MALI_ATTRIBUTE_BUFFER_CONTINUATION_3D, so we need to
-    * use two buffers per image (counted once in attr_count, then once again in
-    * image_count) */
-   unsigned buf_count = attr_count + image_count + (PAN_ARCH >= 6 ? 1 : 0);
+    * use two buffers per image. */
+   unsigned buf_count =
+      (image_count * 2) + texbuf_count + (PAN_ARCH >= 6 ? 1 : 0);
+   unsigned bound_attrib_count = image_count + texbuf_count;
+   unsigned attrib_array_size =
+      MAX2(shader->info.attribute_count, bound_attrib_count);
 
    struct pan_ptr bufs =
       pan_pool_alloc_desc_array(&batch->pool.base, buf_count, ATTRIBUTE_BUFFER);
 
-   struct pan_ptr attribs =
-      pan_pool_alloc_desc_array(&batch->pool.base, attr_count, ATTRIBUTE);
+   struct pan_ptr attribs = pan_pool_alloc_desc_array(
+      &batch->pool.base, attrib_array_size, ATTRIBUTE);
 
    emit_image_attribs(ctx, type, attribs.cpu, image_mask, 0);
    emit_image_bufs(batch, type, bufs.cpu, image_mask);
@@ -2225,6 +2232,13 @@ panfrost_emit_image_texbuf_attribs(struct panfrost_batch *batch,
    struct mali_attribute_buffer_packed *attrib_bufs = bufs.cpu;
    pan_pack(&attrib_bufs[buf_count - 1], ATTRIBUTE_BUFFER, cfg)
       ;
+
+   /* Ensure any shader read attributes that are not bound behave properly */
+   struct mali_attribute_packed *attr_array = attribs.cpu;
+   for (unsigned i = bound_attrib_count; i < attrib_array_size; ++i) {
+      pan_pack(&attr_array[i], ATTRIBUTE, cfg)
+         cfg.format = MALI_PACK_FMT(CONSTANT, 0000, L);
+   }
 #endif
 
    *buffers = bufs.gpu;
@@ -2254,24 +2268,26 @@ panfrost_emit_vertex_data(struct panfrost_batch *batch, uint64_t *buffers)
    unsigned nr_images = util_last_bit(image_mask);
 
    /* Worst case: everything is NPOT, which is only possible if instancing
-    * is enabled. Otherwise single record is gauranteed.
-    * Images always use two buffer descriptors. */
+    * is enabled. Otherwise single record is guaranteed. */
    unsigned attrib_bufs =
       instanced ? so->nr_bufs * 2 : ALIGN_POT(so->nr_bufs, 2);
+   /* Images always use two buffer descriptors. */
    unsigned nr_bufs =
       attrib_bufs + (nr_images * 2) + nr_texbuf + (PAN_ARCH >= 6 ? 1 : 0);
 
-   unsigned count = vs->info.attribute_count;
+   unsigned bound_attrib_count = so->num_elements + nr_images + nr_texbuf;
+   unsigned attrib_array_size =
+      MAX2(vs->info.attribute_count, bound_attrib_count);
 
    struct panfrost_compiled_shader *xfb =
       ctx->uncompiled[MESA_SHADER_VERTEX]->xfb;
 
    if (xfb)
-      count = MAX2(count, xfb->info.attribute_count);
+      attrib_array_size = MAX2(attrib_array_size, xfb->info.attribute_count);
 
 #if PAN_ARCH <= 5
    /* Midgard needs vertexid/instanceid handled specially */
-   bool special_vbufs = count >= PAN_VERTEX_ID;
+   bool special_vbufs = attrib_array_size >= PAN_VERTEX_ID;
 
    if (special_vbufs)
       nr_bufs += 2;
@@ -2284,8 +2300,8 @@ panfrost_emit_vertex_data(struct panfrost_batch *batch, uint64_t *buffers)
 
    struct pan_ptr S =
       pan_pool_alloc_desc_array(&batch->pool.base, nr_bufs, ATTRIBUTE_BUFFER);
-   struct pan_ptr T =
-      pan_pool_alloc_desc_array(&batch->pool.base, count, ATTRIBUTE);
+   struct pan_ptr T = pan_pool_alloc_desc_array(&batch->pool.base,
+                                                attrib_array_size, ATTRIBUTE);
 
    struct mali_attribute_buffer_packed *bufs =
       (struct mali_attribute_buffer_packed *)S.cpu;
@@ -2427,6 +2443,12 @@ panfrost_emit_vertex_data(struct panfrost_batch *batch, uint64_t *buffers)
    /* We need an empty attrib buf to stop the prefetching on Bifrost */
    pan_pack(&bufs[k], ATTRIBUTE_BUFFER, cfg)
       ;
+
+   /* Ensure any shader read attributes that are not bound behave properly */
+   for (unsigned i = bound_attrib_count; i < attrib_array_size; ++i) {
+      pan_pack(out + i, ATTRIBUTE, cfg)
+         cfg.format = MALI_PACK_FMT(CONSTANT, 0000, L);
+   }
 #endif
 
    /* Attribute addresses require 64-byte alignment, so let:

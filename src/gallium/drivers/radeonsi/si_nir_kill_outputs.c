@@ -35,7 +35,10 @@ bool si_nir_kill_outputs(nir_shader *nir, const union si_shader_key *key)
             continue;
 
          nir_intrinsic_instr *intr = nir_instr_as_intrinsic(instr);
-         if (intr->intrinsic != nir_intrinsic_store_output)
+         if (intr->intrinsic != nir_intrinsic_store_output &&
+             /* for mesh shader outputs */
+             intr->intrinsic != nir_intrinsic_store_per_vertex_output &&
+             intr->intrinsic != nir_intrinsic_store_per_primitive_output)
             continue;
 
          /* No indirect indexing allowed. */

@@ -1561,8 +1561,7 @@ anv_shader_lower_nir(struct anv_device *device,
       }
    }
 
-   if (mesa_shader_stage_is_compute(nir->info.stage) ||
-       mesa_shader_stage_is_mesh(nir->info.stage)) {
+   if (mesa_shader_stage_is_compute(nir->info.stage)) {
       NIR_PASS(_, nir, brw_nir_lower_cs_intrinsics, compiler->devinfo,
                &shader_data->prog_data.cs);
    }

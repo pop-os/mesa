@@ -62,6 +62,11 @@
 #include <string.h>
 #include "d3d12_interop_public.h"
 
+#ifndef _GAMING_XBOX
+#include <wrl/client.h>
+using Microsoft::WRL::ComPtr;
+#endif
+
 static void
 d3d12_context_destroy(struct pipe_context *pctx)
 {
@@ -475,6 +480,7 @@ d3d12_context_set_queue_priority_manager(struct pipe_context *ctx, struct d3d12_
    return 0;
 }
 
+#ifdef HAVE_GALLIUM_D3D12_VIDEO
 int
 d3d12_video_encoder_set_max_async_queue_depth(struct pipe_context *ctx, uint32_t max_async_depth)
 {
@@ -487,6 +493,7 @@ d3d12_video_encoder_set_max_async_queue_depth(struct pipe_context *ctx, uint32_t
    d3d12_ctx->max_video_encoding_async_depth = max_async_depth;
    return 0;
 }
+#endif // HAVE_GALLIUM_D3D12_VIDEO
 
 struct pipe_context *
 d3d12_context_create(struct pipe_screen *pscreen, void *priv, unsigned flags)

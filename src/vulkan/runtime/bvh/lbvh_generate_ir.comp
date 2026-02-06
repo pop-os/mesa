@@ -39,6 +39,10 @@ main(void)
 {
    uint32_t global_id = gl_GlobalInvocationID.x;
 
+   uint32_t internal_node_count = max(DEREF(args.header).active_leaf_count, 2) - 1;
+   if (global_id >= internal_node_count)
+      return;
+
    uint32_t idx = global_id;
 
    uint32_t previous_id = VK_BVH_INVALID_NODE;
@@ -63,8 +67,7 @@ main(void)
       /* We allocate nodes on demand with the atomic here to ensure children come before their
        * parents, which is a requirement of the encoder.
        */
-      uint32_t dst_idx =
-         atomicAdd(DEREF(REF(vk_ir_header)(args.header)).ir_internal_node_count, 1);
+      uint32_t dst_idx = atomicAdd(DEREF(args.header).ir_internal_node_count, 1);
 
       uint32_t current_offset = args.internal_node_base + dst_idx * SIZEOF(vk_ir_box_node);
       uint32_t current_id = pack_ir_node_id(current_offset, vk_ir_node_internal);

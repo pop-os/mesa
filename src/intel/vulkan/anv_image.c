@@ -554,10 +554,11 @@ anv_formats_ccs_e_compatible(const struct anv_physical_device *physical_device,
  *
  * The fast clear portion of the image is laid out in the following order:
  *
- *  * 1 or 4 dwords (depending on hardware generation) for the clear color
+ *  * 1 clear color per view format used with the image (format depending on
+ *    hardware generation).
  *  * 1 dword for the anv_fast_clear_type of the clear color
- *  * On gfx9+, 1 dword per level and layer of the image (3D levels count
- *    multiple layers) in level-major order for compression state.
+ *  * 1 dword per level and layer of the image (3D levels count multiple
+ *    layers) in level-major order for compression state.
  *
  * For the purpose of discoverability, the algorithm used to manage
  * compression and fast-clears is described here:
@@ -584,7 +585,7 @@ anv_formats_ccs_e_compatible(const struct anv_physical_device *physical_device,
  * See anv_layout_to_aux_usage and anv_layout_to_fast_clear_type functions for
  * details on exactly what is allowed in what layouts.
  *
- * On gfx7-9, we do not have a concept of indirect clear colors in hardware.
+ * On gfx9, we do not have a concept of indirect clear colors in hardware.
  * In order to deal with this, we have to do some clear color management.
  *
  *  * For LOAD_OP_LOAD at the top of a renderpass, we have to copy the clear
@@ -1841,6 +1842,10 @@ anv_image_init(struct anv_device *device, struct anv_image *image,
    image->from_wsi = wsi_info != NULL;
    image->wsi_blit_src = wsi_info && wsi_info->blit_src;
 
+   /* Non-intermediate WSI images are displayable. */
+   if (wsi_info && !wsi_info->blit_src)
+      isl_extra_usage_flags |= ISL_SURF_USAGE_DISPLAY_BIT;
+
    /* The Vulkan 1.2.165 glossary says:
     *
     *    A disjoint image consists of multiple disjoint planes, and is created
@@ -1900,10 +1905,6 @@ anv_image_init(struct anv_device *device, struct anv_image *image,
       anv_perf_warn(VK_LOG_OBJS(&image->vk.base), "Enable multi-LOD HiZ");
       isl_extra_usage_flags |= ISL_SURF_USAGE_DISABLE_AUX_BIT;
    }
-
-   /* Mark WSI images with the right surf usage. */
-   if (image->from_wsi)
-      isl_extra_usage_flags |= ISL_SURF_USAGE_DISPLAY_BIT;
 
    const VkImageFormatListCreateInfo *fmt_list =
       vk_find_struct_const(pCreateInfo->pNext,
@@ -3470,39 +3471,39 @@ anv_layout_to_aux_state(const struct intel_device_info * const devinfo,
    case VK_IMAGE_LAYOUT_PRESENT_SRC_KHR: {
       assert(image->vk.aspects == VK_IMAGE_ASPECT_COLOR_BIT);
 
-      /* Handle transition to present layout for non wsi images just like
-       * normal images. Some apps like gfx-reconstruct incorrectly use this
-       * layout on non-wsi image which is against spec. It's easy enough to
-       * deal with it here and potentially avoid unnecessary resolve
-       * operations.
+      /* If this is a WSI blit source, it will never be scanout directly to
+       * display but will be copied to a dma-buf that can be scanout.
+       *
+       * GFXReconstruct's Virtual Swapchain feature behaves in a similar
+       * manner. Although this is against spec, it's easy enough to deal with
+       * it here.
        */
-      if (!image->from_wsi)
-         break;
+      if (!image->from_wsi || image->wsi_blit_src) {
+         return anv_layout_to_aux_state(devinfo, image, aspect,
+                                        VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                                        queue_flags);
+      }
 
+      assert(image->vk.tiling == VK_IMAGE_TILING_DRM_FORMAT_MODIFIER_EXT);
       enum isl_aux_state aux_state =
          isl_drm_modifier_get_default_aux_state(image->vk.drm_format_mod);
 
       switch (aux_state) {
       case ISL_AUX_STATE_AUX_INVALID:
          /* The modifier does not support compression. But, if we arrived
-          * here, then we have enabled compression on it anyway. If this is a
-          * WSI blit source, keep compression as we can do a compressed to
-          * uncompressed copy.
-          */
-         if (image->wsi_blit_src)
-            return ISL_AUX_STATE_COMPRESSED_CLEAR;
-
-         /* If this is not a WSI blit source, we must resolve the aux surface
-          * before we release ownership to the presentation engine (because,
-          * having no modifier, the presentation engine will not be aware of
-          * the aux surface). The presentation engine will not access the aux
-          * surface (because it is unware of it), and so the aux surface will
-          * still be resolved when we re-acquire ownership.
+          * here, then we have enabled compression on it anyway, in which case
+          * we must resolve the aux surface before we release ownership to the
+          * presentation engine (because, having no modifier, the presentation
+          * engine will not be aware of the aux surface). The presentation
+          * engine will not access the aux surface (because it is unware of
+          * it), and so the aux surface will still be resolved when we
+          * re-acquire ownership.
           *
           * Therefore, at ownership transfers in either direction, there does
           * exist an aux surface despite the lack of modifier and its state is
           * pass-through.
           */
+         assert(devinfo->ver <= 11);
          return ISL_AUX_STATE_PASS_THROUGH;
       case ISL_AUX_STATE_COMPRESSED_CLEAR:
          return ISL_AUX_STATE_COMPRESSED_CLEAR;
@@ -3526,7 +3527,14 @@ anv_layout_to_aux_state(const struct intel_device_info * const devinfo,
       vk_image_layout_to_usage_flags(layout, aspect) & image_aspect_usage;
 
    bool aux_supported = true;
-   bool clear_supported = isl_aux_usage_has_fast_clears(aux_usage);
+
+   /* Whether or not a CLEAR state is supported. On Xe2+, HSD 14011946253 and
+    * the related documents explain that MCS continues to use the CLEAR state
+    * like prior platforms.
+    */
+   bool clear_supported = isl_aux_usage_has_fast_clears(aux_usage) &&
+                          (devinfo->ver < 20 ||
+                           isl_aux_usage_has_mcs(aux_usage));
 
    if ((usage & (VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT |
                  VK_IMAGE_USAGE_ATTACHMENT_FEEDBACK_LOOP_BIT_EXT)) &&
@@ -3590,9 +3598,10 @@ anv_layout_to_aux_state(const struct intel_device_info * const devinfo,
    case ISL_AUX_USAGE_HIZ:
    case ISL_AUX_USAGE_HIZ_CCS:
    case ISL_AUX_USAGE_HIZ_CCS_WT:
-      if (aux_supported) {
-         assert(clear_supported);
+      if (clear_supported) {
          return ISL_AUX_STATE_COMPRESSED_CLEAR;
+      } else if (aux_supported) {
+         return ISL_AUX_STATE_COMPRESSED_NO_CLEAR;
       } else if (read_only) {
          return ISL_AUX_STATE_RESOLVED;
       } else {
@@ -3612,13 +3621,6 @@ anv_layout_to_aux_state(const struct intel_device_info * const devinfo,
 
    case ISL_AUX_USAGE_CCS_E:
    case ISL_AUX_USAGE_FCV_CCS_E:
-      if (aux_supported) {
-         assert(clear_supported);
-         return ISL_AUX_STATE_COMPRESSED_CLEAR;
-      } else {
-         return ISL_AUX_STATE_PASS_THROUGH;
-      }
-
    case ISL_AUX_USAGE_MCS:
    case ISL_AUX_USAGE_MCS_CCS:
       assert(aux_supported);
@@ -3727,26 +3729,19 @@ anv_layout_to_fast_clear_type(const struct intel_device_info * const devinfo,
                               const VkImageLayout layout,
                               const VkQueueFlagBits queue_flags)
 {
-   if (INTEL_DEBUG(DEBUG_NO_FAST_CLEAR))
-      return ANV_FAST_CLEAR_NONE;
-
    const uint32_t plane = anv_image_aspect_to_plane(image, aspect);
+
+   /* Even without fast-clearing, some aux-usages may still end up with
+    * fast-cleared blocks.
+    */
+   if (INTEL_DEBUG(DEBUG_NO_FAST_CLEAR)) {
+      return image->planes[plane].aux_usage == ISL_AUX_USAGE_FCV_CCS_E ?
+             ANV_FAST_CLEAR_DEFAULT_VALUE : ANV_FAST_CLEAR_NONE;
+   }
 
    /* If there is no auxiliary surface allocated, there are no fast-clears */
    if (image->planes[plane].aux_usage == ISL_AUX_USAGE_NONE)
       return ANV_FAST_CLEAR_NONE;
-
-   /* Bspec 57340 (r68483) has no fast-clear rectangle for linear surfaces. */
-   if (image->planes[plane].primary_surface.isl.tiling == ISL_TILING_LINEAR) {
-      assert(devinfo->ver >= 20);
-      return ANV_FAST_CLEAR_NONE;
-   }
-
-   /* Xe2+ platforms don't have fast clear type and can always support
-    * arbitrary fast-clear values.
-    */
-   if (devinfo->ver >= 20)
-      return ANV_FAST_CLEAR_ANY;
 
    enum isl_aux_state aux_state =
       anv_layout_to_aux_state(devinfo, image, aspect, layout, queue_flags);
@@ -3765,15 +3760,15 @@ anv_layout_to_fast_clear_type(const struct intel_device_info * const devinfo,
    case ISL_AUX_STATE_PARTIAL_CLEAR:
    case ISL_AUX_STATE_COMPRESSED_CLEAR:
 
-      /* Generally, enabling non-zero fast-clears is dependent on knowing which
-       * formats will be used with the surface. So, disable them if we lack
-       * this knowledge.
+      /* On gfx12 and prior, enabling non-zero fast-clears is dependent on
+       * knowing which formats will be used with the surface. So, disable them
+       * if we lack this knowledge.
        *
        * For dmabufs with clear color modifiers, we already restrict
        * problematic accesses for the clear color during the negotiation
        * phase. So, don't restrict clear color support in this case.
        */
-      if (anv_image_view_formats_incomplete(image) &&
+      if (devinfo->ver <= 12 && anv_image_view_formats_incomplete(image) &&
           !(isl_mod_info && isl_mod_info->supports_clear_color)) {
          return ANV_FAST_CLEAR_DEFAULT_VALUE;
       }
@@ -3806,7 +3801,17 @@ anv_layout_to_fast_clear_type(const struct intel_device_info * const devinfo,
    case ISL_AUX_STATE_RESOLVED:
    case ISL_AUX_STATE_PASS_THROUGH:
    case ISL_AUX_STATE_AUX_INVALID:
-      return ANV_FAST_CLEAR_NONE;
+      if (devinfo->ver >= 20 &&
+          image->planes[plane].primary_surface.isl.tiling !=
+          ISL_TILING_LINEAR) {
+         /* Xe2+ can fast-clear without a CLEAR state. It just needs a
+          * supported tiling. Bspec 57340 (r68483) only has fast-clear
+          * rectangles for Tile4 and Tile64.
+          */
+         return ANV_FAST_CLEAR_ANY;
+      } else {
+         return ANV_FAST_CLEAR_NONE;
+      }
    }
 
    UNREACHABLE("Invalid isl_aux_state");

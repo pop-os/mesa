@@ -37,16 +37,6 @@ build_triangle(inout vk_aabb bounds, VOID_REF dst_ptr, vk_bvh_geometry_data geom
 
    triangle_vertices vertices = load_vertices(geom_data.data, indices, geom_data.vertex_format, geom_data.stride);
 
-   /* An inactive triangle is one for which the first (X) component of any vertex is NaN. If any
-    * other vertex component is NaN, and the first is not, the behavior is undefined. If the vertex
-    * format does not have a NaN representation, then all triangles are considered active.
-    */
-   if (isnan(vertices.vertex[0].x) || isnan(vertices.vertex[1].x) || isnan(vertices.vertex[2].x)) {
-      is_valid = false;
-      if (!VK_BUILD_FLAG(VK_BUILD_FLAG_ALWAYS_ACTIVE))
-         return false;
-   }
-
    if (geom_data.transform != NULL) {
       mat4 transform = mat4(1.0);
 
@@ -56,6 +46,21 @@ build_triangle(inout vk_aabb bounds, VOID_REF dst_ptr, vk_bvh_geometry_data geom
 
       for (uint32_t i = 0; i < 3; i++)
       vertices.vertex[i] = transform * vertices.vertex[i];
+   }
+
+   /* An inactive triangle is one for which the first (X) component of any vertex is NaN. If any
+    * other vertex component is NaN, and the first is not, the behavior is undefined. We treat those
+    * undefined cases as inactive to filter out NaNs. If the vertex format does not have a NaN
+    * representation, then all triangles are considered active.
+    */
+   if (any(isnan(vertices.vertex[0])) || any(isnan(vertices.vertex[1])) || any(isnan(vertices.vertex[2]))) {
+      if (!VK_BUILD_FLAG(VK_BUILD_FLAG_ALWAYS_ACTIVE))
+         return false;
+
+      is_valid = false;
+      vertices.vertex[0] = vec4(0);
+      vertices.vertex[1] = vec4(0);
+      vertices.vertex[2] = vec4(0);
    }
 
    REF(vk_ir_triangle_node) node = REF(vk_ir_triangle_node)(dst_ptr);
@@ -94,12 +99,16 @@ build_aabb(inout vk_aabb bounds, VOID_REF src_ptr, VOID_REF dst_ptr, uint32_t ge
    }
 
    /* An inactive AABB is one for which the minimum X coordinate is NaN. If any other component is
-    * NaN, and the first is not, the behavior is undefined.
+    * NaN, and the first is not, the behavior is undefined. We treat those undefined cases as inactive
+    * to filter out NaNs.
     */
-   if (isnan(bounds.min.x)) {
-      is_valid = false;
+   if (any(isnan(bounds.min)) || any(isnan(bounds.max))) {
       if (!VK_BUILD_FLAG(VK_BUILD_FLAG_ALWAYS_ACTIVE))
          return false;
+
+      is_valid = false;
+      bounds.min = vec3(0);
+      bounds.max = vec3(0);
    }
 
    DEREF(node).base.aabb = bounds;
@@ -147,9 +156,6 @@ build_instance(inout vk_aabb bounds, VOID_REF src_ptr, VOID_REF dst_ptr, uint32_
 
    vk_aabb blas_aabb = DEREF(REF(vk_aabb)(instance.accelerationStructureReference + BVH_BOUNDS_OFFSET));
 
-   if (any(isnan(blas_aabb.min)) || any(isnan(blas_aabb.max)))
-      return false;
-
    bounds = calculate_instance_node_bounds(blas_aabb, mat3x4(transform));
 
 #ifdef CALCULATE_FINE_INSTANCE_NODE_BOUNDS
@@ -168,6 +174,9 @@ build_instance(inout vk_aabb bounds, VOID_REF src_ptr, VOID_REF dst_ptr, uint32_
    if (bounds_volume > 1.4f * blas_aabb_volume)
       bounds = CALCULATE_FINE_INSTANCE_NODE_BOUNDS(instance.accelerationStructureReference, mat3x4(transform));
 #endif
+
+   if (any(isnan(bounds.min)) || any(isnan(bounds.max)))
+      return false;
 
    DEREF(node).base.aabb = bounds;
    DEREF(node).custom_instance_and_mask = instance.custom_instance_and_mask;
@@ -231,12 +240,8 @@ main(void)
       is_active = build_instance(bounds, src_ptr, dst_ptr, global_id);
    }
 
-   if (VK_BUILD_FLAG(VK_BUILD_FLAG_ALWAYS_ACTIVE) &&
-       !is_active && args.geom_data.geometry_type != VK_GEOMETRY_TYPE_INSTANCES_KHR) {
-      bounds.min = vec3(0.0);
-      bounds.max = vec3(0.0);
+   if (VK_BUILD_FLAG(VK_BUILD_FLAG_ALWAYS_ACTIVE))
       is_active = true;
-   }
 
    DEREF(id_ptr).id = is_active ? pack_ir_node_id(dst_offset, node_type) : VK_BVH_INVALID_NODE;
 

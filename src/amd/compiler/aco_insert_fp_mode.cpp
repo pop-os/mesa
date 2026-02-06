@@ -454,16 +454,16 @@ emit_set_mode_block(fp_mode_ctx* ctx, Block* block)
       for (uint32_t pred : block->linear_preds)
          max_pred = MAX2(max_pred, pred);
 
-      assert(max_pred != 0);
-
-      mode_mask to_set = 0;
-      /* Check if the any mode was changed during the loop. */
-      u_foreach_bit (i, fp_state.required) {
-         if (ctx->last_set[i] <= max_pred)
-            to_set |= BITFIELD_BIT(i);
+      if (max_pred >= block->index) {
+         mode_mask to_set = 0;
+         /* Check if the any mode was changed during the loop. */
+         u_foreach_bit (i, fp_state.required) {
+            if (ctx->last_set[i] <= max_pred)
+               to_set |= BITFIELD_BIT(i);
+         }
+         if (to_set)
+            set_mode(ctx, block, fp_state, 0, to_set);
       }
-      if (to_set)
-         set_mode(ctx, block, fp_state, 0, to_set);
    }
 
    ctx->block_states[block->index] = fp_state;

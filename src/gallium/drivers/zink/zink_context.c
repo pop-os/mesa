@@ -2986,7 +2986,7 @@ prep_fb_attachment(struct zink_context *ctx, struct zink_resource *res, unsigned
       if (!i)
          zink_update_fbfetch(ctx);
    }
-   if (ctx->blitting) {
+   if (ctx->blitting && !(res->base.b.bind & ZINK_BIND_TRANSIENT)) {
       zink_batch_resource_usage_set(ctx->bs, res, true, false);
       return true;
    }
@@ -3082,7 +3082,7 @@ begin_rendering(struct zink_context *ctx, bool check_attachment_shadow)
             else
                ctx->dynamic_fb.attachments[i].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
          }
-         if (!ctx->blitting && ctx->dynamic_fb.attachments[i].loadOp == VK_ATTACHMENT_LOAD_OP_LOAD)
+         if (ctx->dynamic_fb.attachments[i].loadOp == VK_ATTACHMENT_LOAD_OP_LOAD)
             attachment_shadow_mask |= BITFIELD_BIT(i);
          pformats[i] = ctx->fb_state.cbufs[i].format;
       }
@@ -3258,7 +3258,7 @@ begin_rendering(struct zink_context *ctx, bool check_attachment_shadow)
             /* swapchain acquire can change this surface */
             iv = zink_create_fb_surface(&ctx->base, &templ)->image_view;
          }
-         if (ctx->fb_state.cbufs[i].nr_samples && !has_msrtss && !ctx->blitting) {
+         if (ctx->fb_state.cbufs[i].nr_samples && !has_msrtss) {
             ctx->dynamic_fb.attachments[i].resolveMode = VK_RESOLVE_MODE_AVERAGE_BIT;
             ctx->dynamic_fb.attachments[i].resolveImageView = iv;
             ctx->dynamic_fb.attachments[i].resolveImageLayout = res->layout;
@@ -3303,7 +3303,7 @@ begin_rendering(struct zink_context *ctx, bool check_attachment_shadow)
       struct zink_resource *res = zink_resource(ctx->fb_state.zsbuf.texture);
       prep_fb_attachment(ctx, res, ctx->fb_state.nr_cbufs);
       VkImageView iv = zink_create_fb_surface(&ctx->base, &ctx->fb_state.zsbuf)->image_view;
-      if (ctx->fb_state.zsbuf.nr_samples && !has_msrtss && !ctx->blitting) {
+      if (ctx->fb_state.zsbuf.nr_samples && !has_msrtss) {
          ctx->dynamic_fb.attachments[PIPE_MAX_COLOR_BUFS].resolveImageView = iv;
          ctx->dynamic_fb.attachments[PIPE_MAX_COLOR_BUFS].resolveImageLayout = res->layout;
          ctx->dynamic_fb.attachments[PIPE_MAX_COLOR_BUFS+1].resolveImageView = iv;
@@ -3322,7 +3322,7 @@ begin_rendering(struct zink_context *ctx, bool check_attachment_shadow)
       ctx->dynamic_fb.attachments[PIPE_MAX_COLOR_BUFS+1].imageView = iv;
       ctx->dynamic_fb.attachments[PIPE_MAX_COLOR_BUFS+1].imageLayout = res->layout;
       assert(ctx->dynamic_fb.attachments[PIPE_MAX_COLOR_BUFS+1].imageLayout != VK_IMAGE_LAYOUT_UNDEFINED);
-      if (ctx->transient_attachments & BITFIELD_BIT(PIPE_MAX_COLOR_BUFS) && !ctx->blitting) {
+      if (ctx->transient_attachments & BITFIELD_BIT(PIPE_MAX_COLOR_BUFS)) {
          ctx->dynamic_fb.attachments[PIPE_MAX_COLOR_BUFS].resolveMode = VK_RESOLVE_MODE_SAMPLE_ZERO_BIT;
          ctx->dynamic_fb.attachments[PIPE_MAX_COLOR_BUFS + 1].resolveMode = VK_RESOLVE_MODE_SAMPLE_ZERO_BIT;
       } else {
@@ -3392,7 +3392,7 @@ begin_rendering(struct zink_context *ctx, bool check_attachment_shadow)
       VK_TRUE,
       ctx->gfx_pipeline_state.rast_samples + 1,
    };
-   ctx->dynamic_fb.info.pNext = ctx->transient_msrtss && !ctx->blitting && has_msrtss ? &msrtss : NULL;
+   ctx->dynamic_fb.info.pNext = ctx->transient_msrtss && has_msrtss ? &msrtss : NULL;
 
    VKCTX(CmdBeginRendering)(ctx->bs->cmdbuf, &ctx->dynamic_fb.info);
    ctx->in_rp = true;

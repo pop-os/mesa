@@ -22,6 +22,13 @@
 
 #include <assert.h>
 
+static inline void evergreen_switch_samplerview_shared_state(struct r600_samplerview_state *const view,
+							     const bool shared_state);
+static inline void evergreen_to_ls_mode(struct r600_context *const rctx,
+					struct r600_constbuf_state *const state);
+static inline void evergreen_to_vs_mode(struct r600_context *const rctx,
+					struct r600_constbuf_state *const state);
+
 static const unsigned neutral_swz[4] = { PIPE_SWIZZLE_X, PIPE_SWIZZLE_Y,
 					 PIPE_SWIZZLE_Z, PIPE_SWIZZLE_W };
 
@@ -2367,14 +2374,19 @@ static void evergreen_emit_constant_buffers(struct r600_context *rctx,
 /* VS constants can be in VS/ES (same space) or LS if tess is enabled */
 static void evergreen_emit_vs_constant_buffers(struct r600_context *rctx, struct r600_atom *atom)
 {
+	struct r600_constbuf_state *const state = &rctx->constbuf_state[MESA_SHADER_VERTEX];
 	if (rctx->vs_shader->current->shader.vs_as_ls) {
-		evergreen_emit_constant_buffers(rctx, &rctx->constbuf_state[MESA_SHADER_VERTEX],
+		if (unlikely(!state->shared_state))
+			evergreen_to_ls_mode(rctx, state);
+		evergreen_emit_constant_buffers(rctx, state,
 						EG_FETCH_CONSTANTS_OFFSET_LS,
 						R_028FC0_ALU_CONST_BUFFER_SIZE_LS_0,
 						R_028F40_ALU_CONST_CACHE_LS_0,
 						0 /* PKT3 flags */);
 	} else {
-		evergreen_emit_constant_buffers(rctx, &rctx->constbuf_state[MESA_SHADER_VERTEX],
+		if (unlikely(state->shared_state))
+			evergreen_to_vs_mode(rctx, state);
+		evergreen_emit_constant_buffers(rctx, state,
 						EG_FETCH_CONSTANTS_OFFSET_VS,
 						R_028180_ALU_CONST_BUFFER_SIZE_VS_0,
 						R_028980_ALU_CONST_CACHE_VS_0,
@@ -2491,11 +2503,14 @@ static void evergreen_emit_sampler_views(struct r600_context *rctx,
 
 static void evergreen_emit_vs_sampler_views(struct r600_context *rctx, struct r600_atom *atom)
 {
-	if (rctx->vs_shader->current->shader.vs_as_ls) {
-		evergreen_emit_sampler_views(rctx, &rctx->samplers[MESA_SHADER_VERTEX].views,
+	struct r600_samplerview_state *const state_vs_view = &rctx->samplers[MESA_SHADER_VERTEX].views;
+	const bool vs_as_ls = rctx->vs_shader->current->shader.vs_as_ls;
+	evergreen_switch_samplerview_shared_state(state_vs_view, vs_as_ls);
+	if (vs_as_ls) {
+		evergreen_emit_sampler_views(rctx, state_vs_view,
 					     EG_FETCH_CONSTANTS_OFFSET_LS + R600_MAX_CONST_BUFFERS, 0);
 	} else {
-		evergreen_emit_sampler_views(rctx, &rctx->samplers[MESA_SHADER_VERTEX].views,
+		evergreen_emit_sampler_views(rctx, state_vs_view,
 					     EG_FETCH_CONSTANTS_OFFSET_VS + R600_MAX_CONST_BUFFERS, 0);
 	}
 }
@@ -2858,13 +2873,25 @@ static void evergreen_emit_sampler_states(struct r600_context *rctx,
 	texinfo->states.dirty_mask = 0;
 }
 
+static inline void evergreen_switch_sampler_shared_state(struct r600_textures_info *const sampler,
+							 const bool shared_state)
+{
+	if (unlikely(shared_state != sampler->states.shared_state)) {
+		sampler->states.dirty_mask = sampler->states.enabled_mask;
+		sampler->states.shared_state = shared_state;
+	}
+}
+
 static void evergreen_emit_vs_sampler_states(struct r600_context *rctx, struct r600_atom *atom)
 {
-	if (rctx->vs_shader->current->shader.vs_as_ls) {
-		evergreen_emit_sampler_states(rctx, &rctx->samplers[MESA_SHADER_VERTEX], 72,
+	struct r600_textures_info *const vs_sampler = &rctx->samplers[MESA_SHADER_VERTEX];
+	const bool vs_as_ls = rctx->vs_shader->current->shader.vs_as_ls;
+	evergreen_switch_sampler_shared_state(vs_sampler, vs_as_ls);
+	if (vs_as_ls) {
+		evergreen_emit_sampler_states(rctx, vs_sampler, 72,
 					      R_00A450_TD_LS_SAMPLER0_BORDER_COLOR_INDEX, 0);
 	} else {
-		evergreen_emit_sampler_states(rctx, &rctx->samplers[MESA_SHADER_VERTEX], 18,
+		evergreen_emit_sampler_states(rctx, vs_sampler, 18,
 					      R_00A414_TD_VS_SAMPLER0_BORDER_INDEX, 0);
 	}
 }
@@ -5495,4 +5522,45 @@ void evergreen_emit_atomic_buffer_save(struct r600_context *rctx,
 	radeon_emit(cs, 0xa);
 	radeon_emit(cs, PKT3(PKT3_NOP, 0, 0));
 	radeon_emit(cs, reloc);
+}
+
+static inline void evergreen_switch_samplerview_shared_state(struct r600_samplerview_state *const view,
+							     const bool shared_state)
+{
+	if (unlikely(shared_state != view->shared_state)) {
+		view->dirty_mask = view->enabled_mask;
+		view->shared_state = shared_state;
+	}
+}
+
+static inline void evergreen_to_ls_mode(struct r600_context *const rctx,
+					struct r600_constbuf_state *const state)
+{
+	assert(!state->shared_state);
+
+	state->dirty_mask = state->enabled_mask;
+	state->shared_state = true;
+
+	struct r600_samplerview_state *const state_tes_view = &rctx->samplers[MESA_SHADER_TESS_EVAL].views;
+	evergreen_emit_sampler_views(rctx, state_tes_view,
+				     EG_FETCH_CONSTANTS_OFFSET_VS + R600_MAX_CONST_BUFFERS, 0);
+
+	struct r600_samplerview_state *const state_vs_view = &rctx->samplers[MESA_SHADER_VERTEX].views;
+	evergreen_switch_samplerview_shared_state(state_vs_view, true);
+	evergreen_emit_sampler_views(rctx, state_vs_view,
+				     EG_FETCH_CONSTANTS_OFFSET_LS + R600_MAX_CONST_BUFFERS, 0);
+}
+
+static inline void evergreen_to_vs_mode(struct r600_context *const rctx,
+					struct r600_constbuf_state *const state)
+{
+	assert(state->shared_state);
+
+	state->dirty_mask = state->enabled_mask;
+	state->shared_state = false;
+
+	struct r600_samplerview_state *const state_vs_view = &rctx->samplers[MESA_SHADER_VERTEX].views;
+	evergreen_switch_samplerview_shared_state(state_vs_view, false);
+	evergreen_emit_sampler_views(rctx, state_vs_view,
+				     EG_FETCH_CONSTANTS_OFFSET_VS + R600_MAX_CONST_BUFFERS, 0);
 }

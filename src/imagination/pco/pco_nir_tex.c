@@ -1067,8 +1067,8 @@ static nir_def *lower_image(nir_builder *b, nir_instr *instr, void *cb_data)
                                                    .binding = binding);
 
          nir_def *pck_info = nir_channel(b, tex_meta, PCO_IMAGE_META_PCK_INFO);
-         nir_def *pck_skip = nir_ieq_imm(b, pck_info, 0xffffffff);
          nir_def *pck_format = nir_ubitfield_extract_imm(b, pck_info, 0, 5);
+         nir_def *pck_skip = nir_ieq_imm(b, pck_format, 0b11111);
          nir_def *pck_split = nir_ubitfield_extract_imm(b, pck_info, 5, 1);
          pck_split = nir_ine_imm(b, pck_split, 0);
          nir_def *pck_scale = nir_ubitfield_extract_imm(b, pck_info, 6, 1);
@@ -1187,10 +1187,7 @@ static nir_def *lower_image(nir_builder *b, nir_instr *instr, void *cb_data)
          image_dim = GLSL_SAMPLER_DIM_2D;
          is_array = true;
       } else if (image_dim == GLSL_SAMPLER_DIM_BUF) {
-         image_dim = GLSL_SAMPLER_DIM_2D;
-         coords = nir_vec2(b,
-                           nir_umod_imm(b, coords, 8192),
-                           nir_udiv_imm(b, coords, 8192));
+         image_dim = GLSL_SAMPLER_DIM_1D;
       }
 
       nir_def *twiddled_offset = NULL;

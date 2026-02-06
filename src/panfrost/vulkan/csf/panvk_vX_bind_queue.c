@@ -371,7 +371,7 @@ panvk_bind_queue_submit_sparse_block_memory_bind(
       const struct pan_image_slice_layout *slayout = &plane->plane.layout.slices[in->level];
 
       VkSparseMemoryBind bind = {
-         .resourceOffset = resource_va +
+         .resourceOffset =
             in->layer * plane->plane.layout.array_stride_B +
             slayout->offset_B +
             y * slayout->tiled_or_linear.row_stride_B +

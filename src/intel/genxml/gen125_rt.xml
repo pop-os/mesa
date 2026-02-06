@@ -28,6 +28,7 @@
     <field name="Launch Height" dword="14" bits="31:0" type="uint" />
     <field name="Launch Depth" dword="15" bits="31:0" type="uint" />
     <field name="Callable Group Table" dword="16" bits="63:0" type="RT_SHADER_TABLE" />
+    <field name="Resume Shader Table" dword="18" bits="63:0" type="address" />
   </struct>
   <struct name="RT_GENERAL_SBT_HANDLE" length="8">
     <field name="General" dword="0" bits="63:0" type="BINDLESS_SHADER_RECORD" />

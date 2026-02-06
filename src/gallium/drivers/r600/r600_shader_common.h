@@ -99,7 +99,7 @@ struct r600_shader {
 	unsigned		max_arrays;
 	unsigned		num_arrays;
 	unsigned		vs_as_es;
-	unsigned		vs_as_ls;
+	bool			vs_as_ls;
 	unsigned		vs_as_gs_a;
 	unsigned                tes_as_es;
 	unsigned                tcs_prim_mode;

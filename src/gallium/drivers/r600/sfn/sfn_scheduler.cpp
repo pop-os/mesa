@@ -867,9 +867,26 @@ void BlockScheduler::maybe_split_alu_block(Shader::ShaderBlocks& out_blocks)
 void
 BlockScheduler::apply_pv_ps_to_group(AluGroup& group, AluGroup& prev_group)
 {
+   bool need_force_pvx = false;
+
+   if ((prev_group.free_slot_mask() & 0xf) == 0x0 &&
+       !prev_group[0]->has_alu_flag(alu_is_lds)) {
+      switch (prev_group[0]->opcode()) {
+      case op2_dot4:
+      case op2_dot4_ieee:
+      case op1_max4:
+         need_force_pvx = true;
+         break;
+      default:
+         break;
+      }
+   }
 
    for (int i = 0; i < 4; ++i)
-      apply_pv_ps_to_instr(group, prev_group[i], ALU_SRC_PV, i);
+      apply_pv_ps_to_instr(group,
+                           prev_group[i],
+                           ALU_SRC_PV,
+                           unlikely(need_force_pvx) ? 0 : i);
 
    if (prev_group.has_t())
       apply_pv_ps_to_instr(group, prev_group[4], ALU_SRC_PS, 0);

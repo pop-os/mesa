@@ -123,7 +123,7 @@ static void pvr_physical_device_get_supported_extensions(
 {
    *extensions = (struct vk_device_extension_table){
       .KHR_bind_memory2 = true,
-      .KHR_buffer_device_address = true,
+      .KHR_buffer_device_address = false,
       .KHR_copy_commands2 = true,
       .KHR_create_renderpass2 = true,
       .KHR_dedicated_allocation = true,
@@ -418,7 +418,7 @@ static void pvr_physical_device_get_supported_features(
       .texelBufferAlignment = true,
 
       /* Vulkan 1.2 / VK_KHR_buffer_device_address */
-      .bufferDeviceAddress = true,
+      .bufferDeviceAddress = false,
       .bufferDeviceAddressCaptureReplay = false,
       .bufferDeviceAddressMultiDevice = false,
 

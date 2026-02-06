@@ -22,7 +22,13 @@ enum aco_nir_function_attribs {
 };
 
 enum aco_nir_parameter_attribs {
-   /* Parameter value is not used by any callee and does not need to be preserved */
+   /* This parameter's value may not be preserved across a callee. Unlike return parameters, the
+    * parameter's value is undefined on return. Callers must back up values of discardable
+    * parameters separately.
+    * Mostly used for tail calls, where parameters to the tail callee have different values than
+    * for the caller. In that case, on function return, the parameters will have been overwritten
+    * with the tail callee parameter values.
+    */
    ACO_NIR_PARAM_ATTRIB_DISCARDABLE = 0x1,
 };
 

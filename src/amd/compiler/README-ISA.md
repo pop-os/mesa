@@ -216,6 +216,11 @@ the correct layout is:
 VOP2 `v_pk_fmac_f16`. But like all other packed math opcodes, DPP does not function in practice.
 RDNA1 and RDNA2 support `v_pk_fmac_f16_dpp`.
 
+## DPP with integer `subrev` and shifts
+
+No documentation mentions this, but DPP is seemingly applied to src1 instead of src0 for
+integer reverse subtract and shift opcodes.
+
 ## ds_swizzle_b32 rotate/fft modes
 
 These are first mentioned in the GFX9 (Vega) ISA doc, information from the LLVM bug tracker

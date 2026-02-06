@@ -1931,7 +1931,6 @@ dep_spirv_tools = dependency(
   'SPIRV-Tools',
   required : with_spirv_tools,
   version : '>= 2024.1',
-  static : host_machine.system() == 'darwin',
 )
 if dep_spirv_tools.found()
   pre_args += '-DHAVE_SPIRV_TOOLS'

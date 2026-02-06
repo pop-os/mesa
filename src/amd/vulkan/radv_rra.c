@@ -790,7 +790,7 @@ rra_map_accel_struct_data(struct rra_copy_context *ctx, uint32_t i)
    if (radv_GetEventStatus(ctx->device, data->build_event) != VK_EVENT_SET)
       return NULL;
 
-   if (data->buffer->memory) {
+   if (data->buffer && data->buffer->memory) {
       VkMemoryMapInfo memory_map_info = {
          .sType = VK_STRUCTURE_TYPE_MEMORY_MAP_INFO,
          .memory = data->buffer->memory,

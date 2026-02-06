@@ -1466,8 +1466,11 @@ static void r600_setup_buffer_constants(struct r600_context *rctx, int shader_ty
 			} else
 				constants[offset + 4] = 0;
 
-			constants[offset + 5] = samplers->views.views[i]->base.u.buf.size /
-				            util_format_get_blocksize(samplers->views.views[i]->base.format);
+			constants[offset + 5] = MIN2(util_format_get_blocksize(samplers->views.views[i]->base.format) *
+						     rctx->screen->b.b.caps.max_texel_buffer_elements,
+						     samplers->views.views[i]->base.u.buf.size) /
+				util_format_get_blocksize(samplers->views.views[i]->base.format);
+
 			constants[offset + 6] = samplers->views.views[i]->base.texture->array_size / 6;
 		}
 	}
@@ -1522,7 +1525,8 @@ void eg_setup_buffer_constants(struct r600_context *rctx, int shader_type)
 			int idx = i - sview_bits;
 			if (images->enabled_mask & (1 << idx)) {
 				uint32_t offset = (base_offset / 4) + i;
-				constants[offset] = images->views[idx].base.resource->array_size / 6;
+				constants[offset] = (G_038014_LAST_ARRAY(images->views[idx].resource_words[5]) -
+						     G_038014_BASE_ARRAY(images->views[idx].resource_words[5]) + 1) / 6;
 			}
 		}
 	}

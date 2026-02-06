@@ -950,8 +950,8 @@ radv_GetPhysicalDeviceVideoCapabilitiesKHR(VkPhysicalDevice physicalDevice, cons
       struct VkVideoDecodeH265CapabilitiesKHR *ext =
          vk_find_struct(pCapabilities->pNext, VIDEO_DECODE_H265_CAPABILITIES_KHR);
 
-      pCapabilities->maxDpbSlots = RADV_VIDEO_H264_MAX_DPB_SLOTS;
-      pCapabilities->maxActiveReferencePictures = RADV_VIDEO_H264_MAX_NUM_REF_FRAME;
+      pCapabilities->maxDpbSlots = RADV_VIDEO_H265_MAX_DPB_SLOTS;
+      pCapabilities->maxActiveReferencePictures = RADV_VIDEO_H265_MAX_NUM_REF_FRAME;
       /* for h265 on navi21+ separate dpb images should work */
       if (radv_enable_tier2(pdev))
          pCapabilities->flags |= VK_VIDEO_CAPABILITY_SEPARATE_REFERENCE_IMAGES_BIT_KHR;
@@ -2320,22 +2320,6 @@ get_av1_msg(struct radv_device *device, struct radv_video_session *vid, struct v
    result.tx_mode = pi->TxMode;
    result.reference_mode = (pi->flags.reference_select == 1) ? 2 : 0;
 
-   if (pi->pTileInfo) {
-      result.tile_cols = pi->pTileInfo->TileCols;
-      result.tile_rows = pi->pTileInfo->TileRows;
-      result.tile_size_bytes = pi->pTileInfo->tile_size_bytes_minus_1;
-      result.context_update_tile_id = pi->pTileInfo->context_update_tile_id;
-
-      for (i = 0; i < result.tile_cols; i++)
-         result.tile_col_start_sb[i] = pi->pTileInfo->pMiColStarts[i];
-      result.tile_col_start_sb[result.tile_cols] =
-         result.tile_col_start_sb[result.tile_cols - 1] + pi->pTileInfo->pWidthInSbsMinus1[result.tile_cols - 1] + 1;
-      for (i = 0; i < pi->pTileInfo->TileRows; i++)
-         result.tile_row_start_sb[i] = pi->pTileInfo->pMiRowStarts[i];
-      result.tile_row_start_sb[result.tile_rows] =
-         result.tile_row_start_sb[result.tile_rows - 1] + pi->pTileInfo->pHeightInSbsMinus1[result.tile_rows - 1] + 1;
-   }
-
    result.max_width = seq_hdr->max_frame_width_minus_1 + 1;
    result.max_height = seq_hdr->max_frame_height_minus_1 + 1;
    VkExtent2D frameExtent = frame_info->dstPictureResource.codedExtent;
@@ -2350,6 +2334,44 @@ get_av1_msg(struct radv_device *device, struct radv_video_session *vid, struct v
    result.height = frameExtent.height;
 
    result.superres_upscaled_width = frameExtent.width;
+
+   if (pi->pTileInfo) {
+      result.tile_cols = pi->pTileInfo->TileCols;
+      result.tile_rows = pi->pTileInfo->TileRows;
+      result.tile_size_bytes = pi->pTileInfo->tile_size_bytes_minus_1;
+      result.context_update_tile_id = pi->pTileInfo->context_update_tile_id;
+
+      /* pMi{Row,Col}Starts is unreliable, some apps send SB, some send MI, so use
+       * p{Width,Height}InSbsMinus1 instead. But for uniform_tile_spacing_flag,
+       * those are not defined by spec. */
+      if (pi->pTileInfo->flags.uniform_tile_spacing_flag) {
+         const unsigned sb_size = seq_hdr->flags.use_128x128_superblock ? 128 : 64;
+         const unsigned sb_width = DIV_ROUND_UP(result.width, sb_size);
+         const unsigned sb_height = DIV_ROUND_UP(result.height, sb_size);
+         const unsigned tile_width_sb = DIV_ROUND_UP(sb_width, result.tile_cols);
+         const unsigned tile_height_sb = DIV_ROUND_UP(sb_height, result.tile_rows);
+
+         result.tile_col_start_sb[0] = 0;
+         for (i = 1; i < result.tile_cols; ++i)
+            result.tile_col_start_sb[i] = result.tile_col_start_sb[i - 1] + tile_width_sb;
+         result.tile_col_start_sb[i] = sb_width;
+
+         result.tile_row_start_sb[0] = 0;
+         for (i = 1; i < result.tile_rows; ++i)
+            result.tile_row_start_sb[i] = result.tile_row_start_sb[i - 1] + tile_height_sb;
+         result.tile_row_start_sb[i] = sb_height;
+      } else {
+         result.tile_col_start_sb[0] = 0;
+         assert(pi->pTileInfo->pMiColStarts[0] == 0);
+         for (i = 0; i < result.tile_cols; ++i)
+            result.tile_col_start_sb[i + 1] = result.tile_col_start_sb[i] + pi->pTileInfo->pWidthInSbsMinus1[i] + 1;
+
+         result.tile_row_start_sb[0] = 0;
+         assert(pi->pTileInfo->pMiRowStarts[0] == 0);
+         for (i = 0; i < result.tile_rows; ++i)
+            result.tile_row_start_sb[i + 1] = result.tile_row_start_sb[i] + pi->pTileInfo->pHeightInSbsMinus1[i] + 1;
+      }
+   }
 
    result.order_hint_bits = seq_hdr->order_hint_bits_minus_1 + 1;
 

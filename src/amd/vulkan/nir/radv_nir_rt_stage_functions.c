@@ -39,7 +39,7 @@ radv_nir_init_traversal_params(nir_function *function, unsigned payload_size)
    function->params = rzalloc_array_size(function->shader, sizeof(nir_parameter), function->num_params);
    radv_nir_init_common_rt_params(function);
    radv_nir_param_from_type(function->params + TRAVERSAL_ARG_TRAVERSAL_ADDR, glsl_uint64_t_type(), true, 0);
-   radv_nir_param_from_type(function->params + TRAVERSAL_ARG_SHADER_RECORD_PTR, glsl_uint64_t_type(), false, 0);
+   radv_nir_param_from_type(function->params + TRAVERSAL_ARG_SHADER_RECORD_PTR, glsl_uint64_t_type(), false, ACO_NIR_PARAM_ATTRIB_DISCARDABLE);
    radv_nir_param_from_type(function->params + TRAVERSAL_ARG_ACCEL_STRUCT, glsl_uint64_t_type(), false, 0);
    radv_nir_param_from_type(function->params + TRAVERSAL_ARG_CULL_MASK_AND_FLAGS, glsl_uint_type(), false, 0);
    radv_nir_param_from_type(function->params + TRAVERSAL_ARG_SBT_OFFSET, glsl_uint_type(), false, 0);
@@ -49,12 +49,13 @@ radv_nir_init_traversal_params(nir_function *function, unsigned payload_size)
    radv_nir_param_from_type(function->params + TRAVERSAL_ARG_RAY_TMIN, glsl_float_type(), false, 0);
    radv_nir_param_from_type(function->params + TRAVERSAL_ARG_RAY_DIRECTION, glsl_vector_type(GLSL_TYPE_UINT, 3), false,
                             0);
-   radv_nir_param_from_type(function->params + TRAVERSAL_ARG_RAY_TMAX, glsl_float_type(), false, 0);
-   radv_nir_param_from_type(function->params + TRAVERSAL_ARG_PRIMITIVE_ADDR, glsl_uint64_t_type(), false, 0);
-   radv_nir_param_from_type(function->params + TRAVERSAL_ARG_PRIMITIVE_ID, glsl_uint_type(), false, 0);
-   radv_nir_param_from_type(function->params + TRAVERSAL_ARG_INSTANCE_ADDR, glsl_uint64_t_type(), false, 0);
-   radv_nir_param_from_type(function->params + TRAVERSAL_ARG_GEOMETRY_ID_AND_FLAGS, glsl_uint_type(), false, 0);
-   radv_nir_param_from_type(function->params + TRAVERSAL_ARG_HIT_KIND, glsl_uint_type(), false, 0);
+   radv_nir_param_from_type(function->params + TRAVERSAL_ARG_RAY_TMAX, glsl_float_type(), false,
+                            ACO_NIR_PARAM_ATTRIB_DISCARDABLE);
+   radv_nir_param_from_type(function->params + TRAVERSAL_ARG_PRIMITIVE_ADDR, glsl_uint64_t_type(), false, ACO_NIR_PARAM_ATTRIB_DISCARDABLE);
+   radv_nir_param_from_type(function->params + TRAVERSAL_ARG_PRIMITIVE_ID, glsl_uint_type(), false, ACO_NIR_PARAM_ATTRIB_DISCARDABLE);
+   radv_nir_param_from_type(function->params + TRAVERSAL_ARG_INSTANCE_ADDR, glsl_uint64_t_type(), false, ACO_NIR_PARAM_ATTRIB_DISCARDABLE);
+   radv_nir_param_from_type(function->params + TRAVERSAL_ARG_GEOMETRY_ID_AND_FLAGS, glsl_uint_type(), false,  ACO_NIR_PARAM_ATTRIB_DISCARDABLE);
+   radv_nir_param_from_type(function->params + TRAVERSAL_ARG_HIT_KIND, glsl_uint_type(), false, ACO_NIR_PARAM_ATTRIB_DISCARDABLE);
    for (unsigned i = 0; i < DIV_ROUND_UP(payload_size, 4); ++i) {
       radv_nir_return_param_from_type(function->params + TRAVERSAL_ARG_PAYLOAD_BASE + i, glsl_uint_type(), false, 0);
    }
@@ -128,15 +129,11 @@ radv_nir_init_rt_function_params(nir_function *function, mesa_shader_stage stage
       radv_nir_init_common_rt_params(function);
       radv_nir_param_from_type(function->params + CHIT_MISS_ARG_TRAVERSAL_ADDR, glsl_uint64_t_type(), true, 0);
       radv_nir_param_from_type(function->params + CHIT_MISS_ARG_SHADER_RECORD_PTR, glsl_uint64_t_type(), false, 0);
-      radv_nir_param_from_type(function->params + CHIT_MISS_ARG_ACCEL_STRUCT, glsl_uint64_t_type(), false,
-                               ACO_NIR_PARAM_ATTRIB_DISCARDABLE);
+      radv_nir_param_from_type(function->params + CHIT_MISS_ARG_ACCEL_STRUCT, glsl_uint64_t_type(), false, 0);
       radv_nir_param_from_type(function->params + CHIT_MISS_ARG_CULL_MASK_AND_FLAGS, glsl_uint_type(), false, 0);
-      radv_nir_param_from_type(function->params + CHIT_MISS_ARG_SBT_OFFSET, glsl_uint_type(), false,
-                               ACO_NIR_PARAM_ATTRIB_DISCARDABLE);
-      radv_nir_param_from_type(function->params + CHIT_MISS_ARG_SBT_STRIDE, glsl_uint_type(), false,
-                               ACO_NIR_PARAM_ATTRIB_DISCARDABLE);
-      radv_nir_param_from_type(function->params + CHIT_MISS_ARG_MISS_INDEX, glsl_uint_type(), false,
-                               ACO_NIR_PARAM_ATTRIB_DISCARDABLE);
+      radv_nir_param_from_type(function->params + CHIT_MISS_ARG_SBT_OFFSET, glsl_uint_type(), false, 0);
+      radv_nir_param_from_type(function->params + CHIT_MISS_ARG_SBT_STRIDE, glsl_uint_type(), false, 0);
+      radv_nir_param_from_type(function->params + CHIT_MISS_ARG_MISS_INDEX, glsl_uint_type(), false, 0);
       radv_nir_param_from_type(function->params + CHIT_MISS_ARG_RAY_ORIGIN, glsl_vector_type(GLSL_TYPE_UINT, 3), false,
                                0);
       radv_nir_param_from_type(function->params + CHIT_MISS_ARG_RAY_TMIN, glsl_float_type(), false, 0);

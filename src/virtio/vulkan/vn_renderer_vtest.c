@@ -1073,6 +1073,8 @@ vtest_init(struct vtest *vtest)
    vtest->base.bo_ops.create_from_dma_buf = NULL;
    vtest->base.bo_ops.destroy = vtest_bo_destroy;
    vtest->base.bo_ops.export_dma_buf = vtest_bo_export_dma_buf;
+   vtest->base.bo_ops.export_sync_file =
+      vn_renderer_bo_export_sync_file_internal;
    vtest->base.bo_ops.map = vtest_bo_map;
    vtest->base.bo_ops.flush = vtest_bo_flush;
    vtest->base.bo_ops.invalidate = vtest_bo_invalidate;

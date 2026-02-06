@@ -49,6 +49,8 @@ ac_sqtt_get_data_va(const struct radeon_info *rad_info, const struct ac_sqtt *da
 void
 ac_sqtt_init(struct ac_sqtt *data)
 {
+   simple_mtx_init(&data->lock, mtx_plain);
+
    list_inithead(&data->rgp_pso_correlation.record);
    simple_mtx_init(&data->rgp_pso_correlation.lock, mtx_plain);
 
@@ -71,6 +73,8 @@ ac_sqtt_init(struct ac_sqtt *data)
 void
 ac_sqtt_finish(struct ac_sqtt *data)
 {
+   simple_mtx_destroy(&data->lock);
+
    assert(data->rgp_pso_correlation.record_count == 0);
    simple_mtx_destroy(&data->rgp_pso_correlation.lock);
 

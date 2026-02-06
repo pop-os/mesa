@@ -92,12 +92,13 @@ rogue_get_isp_samples_per_tile_xy(const struct pvr_device_info *dev_info,
       if (samples_per_pixel == 2 || samples_per_pixel == 4)
          *x_out *= 2;
 
-      if (samples_per_pixel == 2)
+      if (samples_per_pixel == 4)
          *y_out *= 2;
 
       break;
    case 8:
-      *y_out *= 2;
+      if (samples_per_pixel == 2)
+         *y_out *= 2;
       break;
    default:
       assert(!"Unsupported number of samples");

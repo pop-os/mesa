@@ -1796,6 +1796,8 @@ virtgpu_init(struct virtgpu *gpu)
    gpu->base.bo_ops.create_from_dma_buf = virtgpu_bo_create_from_dma_buf;
    gpu->base.bo_ops.destroy = virtgpu_bo_destroy;
    gpu->base.bo_ops.export_dma_buf = virtgpu_bo_export_dma_buf;
+   gpu->base.bo_ops.export_sync_file =
+      vn_renderer_bo_export_sync_file_internal;
    gpu->base.bo_ops.map = virtgpu_bo_map;
    gpu->base.bo_ops.flush = virtgpu_bo_flush;
    gpu->base.bo_ops.invalidate = virtgpu_bo_invalidate;

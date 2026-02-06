@@ -714,8 +714,9 @@ vn_DestroyImage(VkDevice device,
    if (!img)
       return;
 
-   if (img->wsi.memory && img->wsi.memory_owned) {
-      VkDeviceMemory mem_handle = vn_device_memory_to_handle(img->wsi.memory);
+   if (img->wsi.anb_mem) {
+      VkDeviceMemory mem_handle =
+         vn_device_memory_to_handle(img->wsi.anb_mem);
       vn_FreeMemory(device, mem_handle, pAllocator);
    }
 

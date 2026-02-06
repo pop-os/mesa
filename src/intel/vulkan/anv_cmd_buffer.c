@@ -442,84 +442,58 @@ anv_cmd_buffer_set_rt_query_buffer(struct anv_cmd_buffer *cmd_buffer,
                                    uint32_t ray_queries,
                                    VkShaderStageFlags stages)
 {
-   if (ray_queries > cmd_buffer->state.num_ray_query_globals) {
-      struct anv_device *device = cmd_buffer->device;
-      uint8_t wa_idx = anv_get_ray_query_bo_index(cmd_buffer);
+   struct anv_device *device = cmd_buffer->device;
+   uint8_t idx = anv_get_ray_query_bo_index(cmd_buffer);
 
-      unsigned bucket = util_logbase2_ceil(ray_queries);
-      assert(bucket < ARRAY_SIZE(device->ray_query_bos[0]));
+   uint64_t ray_shadow_size =
+      align64(brw_rt_ray_queries_shadow_stacks_size(device->info, ray_queries),
+              4096);
+   if (ray_shadow_size > 0 &&
+       (!cmd_buffer->state.ray_query_shadow_bo ||
+        cmd_buffer->state.ray_query_shadow_bo->size < ray_shadow_size)) {
+      unsigned shadow_size_log2 = MAX2(util_logbase2_ceil(ray_shadow_size), 16);
+      unsigned bucket = shadow_size_log2 - 16;
+      assert(bucket < ARRAY_SIZE(device->ray_query_shadow_bos[0]));
 
-      uint64_t offset = brw_rt_ray_queries_stacks_offset(1 << bucket);
-      uint64_t stride = brw_rt_ray_queries_stacks_stride(device->info);
-
-      struct anv_bo *bo = p_atomic_read(&device->ray_query_bos[wa_idx][bucket]);
+      struct anv_bo *bo = p_atomic_read(&device->ray_query_shadow_bos[idx][bucket]);
       if (bo == NULL) {
          struct anv_bo *new_bo;
-         VkResult result =
-            anv_device_alloc_bo(device, "RT queries scratch",
-                                offset + (stride << bucket), /* size */
-                                ANV_BO_ALLOC_INTERNAL |
-                                ANV_BO_ALLOC_LOCAL_MEM_CPU_VISIBLE, /* alloc_flags */
-                                0, /* explicit_address */
-                                &new_bo);
-
+         VkResult result = anv_device_alloc_bo(device, "RT queries shadow",
+                                               1 << shadow_size_log2,
+                                               ANV_BO_ALLOC_INTERNAL, /* alloc_flags */
+                                               0, /* explicit_address */
+                                               &new_bo);
          ANV_DMR_BO_ALLOC(&cmd_buffer->vk.base, new_bo, result);
          if (result != VK_SUCCESS) {
             anv_batch_set_error(&cmd_buffer->batch, result);
             return;
          }
 
-         /* Map extra space we added at end of the buffer, we will write the
-          * array of RT_DISPATCH_GLOBALS into it so we can use only a single
-          * memory address in our shaders for all stacks and globals
-          */
-         void *map;
-         result = anv_device_map_bo(device, new_bo, stride << bucket,
-                                    offset, NULL, &map);
-
-         if (result != VK_SUCCESS) {
-            ANV_DMR_BO_FREE(&cmd_buffer->vk.base, new_bo);
-            anv_device_release_bo(device, new_bo);
-            anv_batch_set_error(&cmd_buffer->batch, result);
-            return;
-         }
-
-         anv_genX(device->info, setup_ray_query_globals)(device,
-                                                         new_bo,
-                                                         stride << bucket,
-                                                         map,
-                                                         1 << bucket);
-
-#ifdef SUPPORT_INTEL_INTEGRATED_GPUS
-         if (device->physical->memory.need_flush)
-            util_flush_inval_range(map, offset);
-#endif
-
-         anv_device_unmap_bo(device, new_bo, map, offset, false);
-
-         bo = p_atomic_cmpxchg(&device->ray_query_bos[wa_idx][bucket], NULL, new_bo);
+         bo = p_atomic_cmpxchg(&device->ray_query_shadow_bos[idx][bucket], NULL, new_bo);
          if (bo != NULL) {
-            ANV_DMR_BO_FREE(&cmd_buffer->vk.base, new_bo);
+            ANV_DMR_BO_FREE(&device->vk.base, new_bo);
             anv_device_release_bo(device, new_bo);
          } else {
             bo = new_bo;
          }
       }
+      cmd_buffer->state.ray_query_shadow_bo = bo;
 
-      /* Add the HW buffer to the list of BO used. */
-      anv_reloc_list_add_bo(cmd_buffer->batch.relocs, bo);
-
-      cmd_buffer->state.ray_query_globals = (struct anv_address) {
-         .bo = bo,
-         .offset = (int64_t) (stride << bucket),
-      };
-
-      cmd_buffer->state.num_ray_query_globals = 1 << bucket;
+      /* Add the ray query buffers to the batch list. */
+      anv_reloc_list_add_bo(cmd_buffer->batch.relocs,
+                            cmd_buffer->state.ray_query_shadow_bo);
    }
 
-   /* Update the push constants & mark them dirty. */
+   /* Add the HW buffer to the list of BO used. */
+   assert(device->ray_query_bo[idx]);
+   anv_reloc_list_add_bo(cmd_buffer->batch.relocs,
+                         device->ray_query_bo[idx]);
+
+   /* Fill the push constants & mark them dirty. */
+   struct anv_address ray_query_globals_addr =
+      anv_genX(device->info, cmd_buffer_ray_query_globals)(cmd_buffer);
    pipeline_state->push_constants.ray_query_globals =
-      anv_address_physical(cmd_buffer->state.ray_query_globals);
+      anv_address_physical(ray_query_globals_addr);
    cmd_buffer->state.push_constants_dirty |= stages;
    pipeline_state->push_constants_data_dirty = true;
 }

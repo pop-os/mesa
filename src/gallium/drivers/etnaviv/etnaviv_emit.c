@@ -255,6 +255,7 @@ etna_emit_state(struct etna_context *ctx)
 
    /* Pre-processing: see what caches we need to flush before making state changes. */
    uint32_t to_flush = 0, to_flush_separate = 0;
+   bool stall_before_flush = false;
    if (unlikely(dirty & (ETNA_DIRTY_BLEND)))
       to_flush |= VIVS_GL_FLUSH_CACHE_COLOR;
    if (unlikely(dirty & ETNA_DIRTY_ZSA))
@@ -262,6 +263,8 @@ etna_emit_state(struct etna_context *ctx)
    if (unlikely(dirty & (ETNA_DIRTY_TEXTURE_CACHES))) {
       to_flush |= VIVS_GL_FLUSH_CACHE_TEXTURE;
       to_flush_separate |= VIVS_GL_FLUSH_CACHE_TEXTUREVS;
+      if (screen->info->halti < 5)
+         stall_before_flush = true;
    }
    if (unlikely(dirty & ETNA_DIRTY_SHADER_CACHES))
       to_flush |= VIVS_GL_FLUSH_CACHE_SHADER_L1;
@@ -271,7 +274,12 @@ etna_emit_state(struct etna_context *ctx)
       to_flush |= VIVS_GL_FLUSH_CACHE_TEXTURE | VIVS_GL_FLUSH_CACHE_COLOR |
                   VIVS_GL_FLUSH_CACHE_DEPTH;
       to_flush_separate |= VIVS_GL_FLUSH_CACHE_TEXTUREVS;
+      if (screen->info->halti < 5)
+         stall_before_flush = true;
    }
+
+   if (stall_before_flush)
+      etna_stall(stream, SYNC_RECIPIENT_FE, SYNC_RECIPIENT_PE);
 
    if (to_flush) {
       etna_set_state(stream, VIVS_GL_FLUSH_CACHE, to_flush);

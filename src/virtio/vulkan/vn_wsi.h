@@ -30,6 +30,10 @@ vn_wsi_create_image(struct vn_device *dev,
                     const VkAllocationCallbacks *alloc,
                     struct vn_image **out_img);
 
+void
+vn_wsi_memory_info_init(struct vn_device_memory *mem,
+                        const VkMemoryAllocateInfo *alloc_info);
+
 bool
 vn_wsi_validate_image_format_info(
    struct vn_physical_device *physical_dev,
@@ -65,6 +69,12 @@ vn_wsi_create_image(struct vn_device *dev,
                     struct vn_image **out_img)
 {
    return VK_ERROR_OUT_OF_HOST_MEMORY;
+}
+
+static inline void
+vn_wsi_memory_info_init(struct vn_device_memory *mem,
+                        const VkMemoryAllocateInfo *alloc_info)
+{
 }
 
 static inline bool

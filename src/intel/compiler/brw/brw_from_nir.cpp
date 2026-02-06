@@ -4875,7 +4875,7 @@ brw_from_nir_emit_task_mesh_intrinsic(nir_to_brw_state &ntb,
       UNREACHABLE("local invocation id should have been lowered earlier");
       break;
 
-   case nir_intrinsic_load_local_invocation_index:
+   case nir_intrinsic_load_local_invocation_index_intel:
       dest = retype(dest, BRW_TYPE_UD);
       bld.MOV(dest, payload.local_index);
       break;

@@ -344,8 +344,7 @@ vn_android_image_from_anb_internal(struct vn_device *dev,
    }
 
    /* Android WSI image owns the memory */
-   img->wsi.memory = vn_device_memory_from_handle(mem_handle);
-   img->wsi.memory_owned = true;
+   img->wsi.anb_mem = vn_device_memory_from_handle(mem_handle);
    *out_img = img;
 
    return VK_SUCCESS;
@@ -372,7 +371,7 @@ vn_android_image_from_anb(struct vn_device *dev,
    const VkBindImageMemoryInfo bind_info = {
       .sType = VK_STRUCTURE_TYPE_BIND_IMAGE_MEMORY_INFO,
       .image = vn_image_to_handle(img),
-      .memory = vn_device_memory_to_handle(img->wsi.memory),
+      .memory = vn_device_memory_to_handle(img->wsi.anb_mem),
    };
    result = vn_BindImageMemory2(vn_device_to_handle(dev), 1, &bind_info);
    if (result != VK_SUCCESS) {
@@ -399,8 +398,7 @@ vn_android_get_wsi_memory_from_bind_info(
    if (result != VK_SUCCESS)
       return NULL;
 
-   assert(img->wsi.memory_owned);
-   return img->wsi.memory;
+   return img->wsi.anb_mem;
 }
 
 VkResult

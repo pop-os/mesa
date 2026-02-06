@@ -18,8 +18,6 @@ gmem-dEQP-VK.spirv_assembly.instruction.graphics.16bit_storage.uniform_32struct_
 
 # New fails in 1.4.3.3
 dEQP-VK.memory.concurrent_access.shader_and_host,Fail
-dEQP-VK.pipeline.fast_linked_library.vertex_input.misc.unused_binding_dynamic,Crash
-dEQP-VK.pipeline.monolithic.vertex_input.misc.unused_binding_dynamic,Crash
 dEQP-VK.transform_feedback.simple.draw_indirect_counter_offset_16,Fail
 dEQP-VK.transform_feedback.simple.draw_indirect_counter_offset_244,Fail
 dEQP-VK.transform_feedback.simple.draw_indirect_counter_offset_508,Fail
@@ -38,7 +36,6 @@ dEQP-VK.transform_feedback.simple_optimized_gpl.draw_indirect_counter_offset_508
 dEQP-VK.transform_feedback.simple_optimized_gpl.draw_indirect_multiview_counter_offset_16,Fail
 dEQP-VK.transform_feedback.simple_optimized_gpl.draw_indirect_multiview_counter_offset_244,Fail
 dEQP-VK.transform_feedback.simple_optimized_gpl.draw_indirect_multiview_counter_offset_508,Fail
-gmem-dEQP-VK.pipeline.fast_linked_library.vertex_input.misc.unused_binding_dynamic,Crash
 gmem-dEQP-VK.transform_feedback.simple.draw_indirect_multiview_counter_offset_16,Fail
 gmem-dEQP-VK.transform_feedback.simple.draw_indirect_multiview_counter_offset_244,Fail
 nobin-dEQP-VK.transform_feedback.simple.draw_indirect_multiview_counter_offset_16,Fail

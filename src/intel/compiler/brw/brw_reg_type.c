@@ -240,8 +240,25 @@ brw_type_encode_for_3src(const struct intel_device_info *devinfo,
       return INVALID_HW_REG_TYPE;
 
    if (devinfo->ver >= 12) {
-      /* size mask and SINT type bit match exactly */
-      return type & 0b111;
+      static const uint8_t map[] = {
+         [0 ... BRW_TYPE_LAST]  = INVALID_HW_REG_TYPE,
+         [BRW_TYPE_UB]  = 0b000,
+         [BRW_TYPE_UW]  = 0b001,
+         [BRW_TYPE_UD]  = 0b010,
+         [BRW_TYPE_UQ]  = 0b011,
+         [BRW_TYPE_B]   = 0b100,
+         [BRW_TYPE_W]   = 0b101,
+         [BRW_TYPE_D]   = 0b110,
+         [BRW_TYPE_Q]   = 0b111,
+         [BRW_TYPE_BF8] = 0b000,
+         [BRW_TYPE_HF]  = 0b001,
+         [BRW_TYPE_F]   = 0b010,
+         [BRW_TYPE_DF]  = 0b011,
+         [BRW_TYPE_HF8] = 0b100,
+         [BRW_TYPE_BF]  = 0b101,
+      };
+      assert(type < ARRAY_SIZE(map));
+      return map[type];
    } else if (devinfo->ver >= 11) {
       if (brw_type_is_float(type)) {
          /* HF: 0b000 | F: 0b001 | DF: 0b010; subtract 1 from our size mask */
@@ -282,14 +299,38 @@ brw_type_decode_for_3src(const struct intel_device_info *devinfo,
    assert(exec_type == 0 || exec_type == 1);
 
    if (devinfo->ver >= 12) {
-      unsigned size_field = hw_type & BRW_TYPE_SIZE_MASK;
-      unsigned base_field = hw_type & BRW_TYPE_BASE_MASK;
-      if (exec_type == BRW_ALIGN1_3SRC_EXEC_TYPE_FLOAT) {
-         base_field |= BRW_TYPE_BASE_FLOAT;
-         if (base_field == BRW_TYPE_BASE_BFLOAT && !devinfo->has_bfloat16)
-            return BRW_TYPE_INVALID;
-      }
-      return (enum brw_reg_type) (base_field | size_field);
+      static const uint8_t map[2][8] = {
+         [BRW_ALIGN1_3SRC_EXEC_TYPE_INT] = {
+            [0b000] = BRW_TYPE_UB,
+            [0b001] = BRW_TYPE_UW,
+            [0b010] = BRW_TYPE_UD,
+            [0b011] = BRW_TYPE_UQ,
+            [0b100] = BRW_TYPE_B,
+            [0b101] = BRW_TYPE_W,
+            [0b110] = BRW_TYPE_D,
+            [0b111] = BRW_TYPE_Q,
+         },
+         [BRW_ALIGN1_3SRC_EXEC_TYPE_FLOAT] = {
+            [0b000] = BRW_TYPE_BF8,
+            [0b001] = BRW_TYPE_HF,
+            [0b010] = BRW_TYPE_F,
+            [0b011] = BRW_TYPE_DF,
+            [0b100] = BRW_TYPE_HF8,
+            [0b101] = BRW_TYPE_BF,
+            [0b110] = BRW_TYPE_INVALID,
+            [0b111] = BRW_TYPE_INVALID,
+         },
+      };
+
+      assert(hw_type < 8);
+      enum brw_reg_type result = map[exec_type][hw_type];
+
+      if ((result == BRW_TYPE_HF8 || result == BRW_TYPE_BF8) && !devinfo->has_fp8)
+         return BRW_TYPE_INVALID;
+      if (result == BRW_TYPE_BF && !devinfo->has_bfloat16)
+         return BRW_TYPE_INVALID;
+
+      return result;
    } else if (devinfo->ver >= 11) {
       if (exec_type == BRW_ALIGN1_3SRC_EXEC_TYPE_FLOAT) {
          return hw_type > 1 ? BRW_TYPE_INVALID :

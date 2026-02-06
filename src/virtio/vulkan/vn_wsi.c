@@ -216,6 +216,41 @@ vn_wsi_create_image(struct vn_device *dev,
    return VK_SUCCESS;
 }
 
+void
+vn_wsi_memory_info_init(struct vn_device_memory *mem,
+                        const VkMemoryAllocateInfo *alloc_info)
+{
+   const VkMemoryDedicatedAllocateInfo *dedicated_info = NULL;
+   const struct wsi_memory_allocate_info *wsi_info = NULL;
+
+   vk_foreach_struct_const(pnext, alloc_info->pNext) {
+      switch ((uint32_t)pnext->sType) {
+      case VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO:
+         dedicated_info = (const void *)pnext;
+         break;
+      case VK_STRUCTURE_TYPE_WSI_MEMORY_ALLOCATE_INFO_MESA:
+         wsi_info = (const void *)pnext;
+         break;
+      default:
+         break;
+      }
+   }
+
+   /* wsi always uses dedicated allocation */
+   assert(dedicated_info || !wsi_info);
+
+   if (wsi_info && dedicated_info->buffer != VK_NULL_HANDLE) {
+      struct vn_buffer *buf = vn_buffer_from_handle(dedicated_info->buffer);
+      buf->wsi.mem = mem;
+   }
+
+   /* wsi_memory_allocate_info is not chained for prime blit src */
+   if (dedicated_info && dedicated_info->image != VK_NULL_HANDLE) {
+      struct vn_image *img = vn_image_from_handle(dedicated_info->image);
+      mem->dedicated_img = img;
+   }
+}
+
 static uint32_t
 vn_modifier_plane_count(struct vn_physical_device *physical_dev,
                         VkFormat format,
@@ -818,18 +853,61 @@ vn_AcquireNextImage2KHR(VkDevice device,
    if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
       return vn_error(dev->instance, result);
 
-   /* XXX this relies on renderer side doing implicit fencing */
+   int sync_fd = -1;
+   if (!dev->renderer->info.has_implicit_fencing) {
+      VkDeviceMemory mem_handle =
+         wsi_common_get_memory(pAcquireInfo->swapchain, *pImageIndex);
+      struct vn_device_memory *mem = vn_device_memory_from_handle(mem_handle);
+      struct vn_image *img = mem->dedicated_img;
+
+      if (img->wsi.is_prime_blit_src)
+         mem = img->wsi.blit_mem;
+
+      /* Only image buffer blit is tracked (both cpu and prime), so we use if
+       * condition below for potential new blit path supported on non-Linux
+       * platforms.
+       */
+      if (mem) {
+         sync_fd =
+            vn_renderer_bo_export_sync_file(dev->renderer, mem->base_bo);
+      }
+   }
+
+   int sem_fd = -1, fence_fd = -1;
+   if (sync_fd >= 0) {
+      if (pAcquireInfo->semaphore != VK_NULL_HANDLE &&
+          pAcquireInfo->fence != VK_NULL_HANDLE) {
+         sem_fd = sync_fd;
+         fence_fd = dup(sync_fd);
+         if (fence_fd < 0) {
+            result = errno == EMFILE ? VK_ERROR_TOO_MANY_OBJECTS
+                                     : VK_ERROR_OUT_OF_HOST_MEMORY;
+            close(sync_fd);
+            return vn_error(dev->instance, result);
+         }
+      } else if (pAcquireInfo->semaphore != VK_NULL_HANDLE) {
+         sem_fd = sync_fd;
+      } else {
+         assert(pAcquireInfo->fence != VK_NULL_HANDLE);
+         fence_fd = sync_fd;
+      }
+   }
+
    if (pAcquireInfo->semaphore != VK_NULL_HANDLE) {
       const VkImportSemaphoreFdInfoKHR info = {
          .sType = VK_STRUCTURE_TYPE_IMPORT_SEMAPHORE_FD_INFO_KHR,
          .semaphore = pAcquireInfo->semaphore,
          .flags = VK_SEMAPHORE_IMPORT_TEMPORARY_BIT,
          .handleType = VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_SYNC_FD_BIT,
-         .fd = -1,
+         .fd = sem_fd,
       };
       VkResult ret = vn_ImportSemaphoreFdKHR(device, &info);
-      if (ret != VK_SUCCESS)
-         return vn_error(dev->instance, ret);
+      if (ret == VK_SUCCESS) {
+         sem_fd = -1;
+      } else {
+         result = ret;
+         goto out;
+      }
    }
 
    if (pAcquireInfo->fence != VK_NULL_HANDLE) {
@@ -838,12 +916,22 @@ vn_AcquireNextImage2KHR(VkDevice device,
          .fence = pAcquireInfo->fence,
          .flags = VK_FENCE_IMPORT_TEMPORARY_BIT,
          .handleType = VK_EXTERNAL_FENCE_HANDLE_TYPE_SYNC_FD_BIT,
-         .fd = -1,
+         .fd = fence_fd,
       };
       VkResult ret = vn_ImportFenceFdKHR(device, &info);
-      if (ret != VK_SUCCESS)
-         return vn_error(dev->instance, ret);
+      if (ret == VK_SUCCESS) {
+         fence_fd = -1;
+      } else {
+         result = ret;
+         goto out;
+      }
    }
+
+out:
+   if (sem_fd >= 0)
+      close(sem_fd);
+   if (fence_fd >= 0)
+      close(fence_fd);
 
    return vn_result(dev->instance, result);
 }

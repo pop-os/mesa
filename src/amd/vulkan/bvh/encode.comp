@@ -145,7 +145,7 @@ main()
                                              ir_id_to_offset(children[i]))).aabb;
 
             float surface_area = aabb_surface_area(bounds);
-            if (surface_area > largest_surface_area) {
+            if (surface_area > largest_surface_area || collapsed_child_index == -1) {
                largest_surface_area = surface_area;
                collapsed_child_index = i;
             }

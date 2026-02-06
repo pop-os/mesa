@@ -33,7 +33,6 @@ struct lower_intrinsics_state {
 
    /* Per-block cached values. */
    bool computed;
-   nir_def *hw_index;
    nir_def *local_index;
    nir_def *local_id;
 };
@@ -42,7 +41,6 @@ static void
 compute_local_index_id(struct lower_intrinsics_state *state, nir_intrinsic_instr *current)
 {
    assert(!state->computed);
-   state->hw_index = NULL;
    state->local_index = NULL;
    state->local_id = NULL;
    state->computed = true;
@@ -86,13 +84,8 @@ compute_local_index_id(struct lower_intrinsics_state *state, nir_intrinsic_instr
    nir_def *linear;
 
    if (nir->info.stage == MESA_SHADER_MESH || nir->info.stage == MESA_SHADER_TASK) {
-      /* Thread payload provides a linear index, keep track of it
-       * so it doesn't get removed.
-       */
-      state->hw_index =
-         current->intrinsic == nir_intrinsic_load_local_invocation_index ?
-         &current->def : nir_load_local_invocation_index(b);
-      linear = state->hw_index;
+      /* Thread payload provides a linear index, just use that. */
+      linear = nir_load_local_invocation_index_intel(b);
    } else {
       nir_def *subgroup_id = nir_load_subgroup_id(b);
       nir_def *thread_local_id =
@@ -262,10 +255,6 @@ lower_cs_intrinsics_convert_block(struct lower_intrinsics_state *state,
       case nir_intrinsic_load_local_invocation_index: {
          if (!state->computed)
             compute_local_index_id(state, intrinsic);
-
-         /* Will be lowered later by the backend. */
-         if (&intrinsic->def == state->hw_index)
-            continue;
 
          assert(state->local_index);
          sysval = state->local_index;

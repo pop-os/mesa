@@ -147,8 +147,11 @@ get_device_extensions(const struct anv_physical_device *device,
                       struct vk_device_extension_table *ext)
 {
    const bool rt_enabled = ANV_SUPPORT_RT && device->info.has_ray_tracing;
+   const bool hw_video_encode_supported = device->info.verx10 < 125;
+   const bool video_encode_enabled = hw_video_encode_supported &&
+                                     (device->instance->debug & ANV_DEBUG_VIDEO_ENCODE);
    const bool video_decode_enabled = device->instance->debug & ANV_DEBUG_VIDEO_DECODE;
-   const bool video_encode_enabled = device->instance->debug & ANV_DEBUG_VIDEO_ENCODE;
+
 
    *ext = (struct vk_device_extension_table) {
       .KHR_8bit_storage                      = true,

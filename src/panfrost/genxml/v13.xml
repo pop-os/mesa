@@ -2316,7 +2316,8 @@
     <field name="MSAA" size="2" start="0:8" default="Single" type="MSAA"/>
 
     <field name="Reverse Issue Order" size="1" start="0:30" type="bool"/>
-    <!-- Note: Must be set if AFBC is enabled and effective_tile_size is not 16x16 -->
+    <!-- Must be set if either one of the effective tile size dimension is
+         smaller than the AFBC superblock dimension. -->
     <field name="Clean Pixel Write Enable" size="1" start="0:31" type="bool"/>
 
     <field name="Header" size="64" start="8:0" type="address"/>
@@ -2343,7 +2344,8 @@
     <field name="MSAA" size="2" start="0:24" default="Single" type="MSAA"/>
 
     <field name="Reverse Issue Order" size="1" start="0:30" type="bool"/>
-    <!-- Note: Must be set if AFBC is enabled and effective_tile_size is not 16x16 -->
+    <!-- Must be set if either one of the effective tile size dimension is
+         smaller than the AFBC superblock dimension. -->
     <field name="Clean Pixel Write Enable" size="1" start="0:31" type="bool"/>
 
     <field name="Header" size="64" start="12:0" type="address"/>
@@ -2443,6 +2445,8 @@
     <field name="sRGB" size="1" start="1:14" type="bool"/>
     <field name="Dithering Enable" size="1" start="1:15" type="bool"/>
     <field name="Swizzle" size="12" start="1:16" type="Component Swizzle"/>
+    <!-- Must be set if either one of the effective tile size dimension is
+         smaller than the AFBC superblock dimension. -->
     <field name="Clean Pixel Write Enable" size="1" start="1:31" type="bool"/>
     <field name="YUV Transform" size="1" start="2:0" type="bool"/>
     <field name="Split block" size="1" start="2:1" type="bool"/>

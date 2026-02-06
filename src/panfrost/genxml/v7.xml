@@ -1101,6 +1101,8 @@
     <field name="Write Format" size="4" start="3:0" type="ZS Format"/>
     <field name="Block Format" size="4" start="3:4" type="Block Format"/>
     <field name="MSAA" size="2" start="3:8" default="Single" type="MSAA"/>
+    <!-- Must be set if either one of the effective tile size dimension is
+         smaller than the AFBC superblock dimension. -->
     <field name="Clean Pixel Write Enable" size="1" start="3:10" type="bool"/>
     <field name="Header" size="64" start="4:0" type="address"/>
     <field name="Header Row Stride" size="13" start="6:0" type="uint"/>
@@ -1203,6 +1205,8 @@
     <field name="sRGB" size="1" start="1:14" type="bool"/>
     <field name="Dithering Enable" size="1" start="1:15" type="bool"/>
     <field name="Swizzle" size="12" start="1:16" type="Component Swizzle"/>
+    <!-- Must be set if either one of the effective tile size dimension is
+         smaller than the AFBC superblock dimension. -->
     <field name="Clean Pixel Write Enable" size="1" start="1:31" type="bool"/>
     <field name="Header" size="64" start="4:0" type="address"/>
     <field name="Row Stride" size="13" start="6:0" type="uint"/>

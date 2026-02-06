@@ -2392,7 +2392,7 @@ static void emit_reduce(struct lp_build_nir_soa_context *bld, LLVMValueRef src,
       case nir_op_umax: opname = "umax"; break;
       case nir_op_fmax: opname = "fmax"; break;
       default:
-         assert(0);
+	 UNREACHABLE("Unhandled reduction operation");
       };
       snprintf(intrinsic, sizeof intrinsic, "llvm.vector.reduce.%s.v%u%s%u",
                opname,

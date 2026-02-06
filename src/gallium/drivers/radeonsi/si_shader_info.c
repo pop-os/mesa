@@ -407,6 +407,7 @@ static void gather_instruction(const struct nir_shader *nir, struct si_shader_in
          break;
       case nir_intrinsic_load_input:
       case nir_intrinsic_load_per_vertex_input:
+      case nir_intrinsic_load_per_primitive_input:
       case nir_intrinsic_load_input_vertex:
       case nir_intrinsic_load_interpolated_input:
          gather_io_instrinsic(nir, info, intr, true);

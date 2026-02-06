@@ -484,10 +484,17 @@ process_instructions(exec_ctx& ctx, Block* block, std::vector<aco_ptr<Instructio
          Operand exit_cond = Operand(exec, bld.lm);
 
          if (state == Exact) {
-            assert(info.exec.size() == 1);
-            bld.sop2(Builder::s_andn2, Definition(exec, bld.lm), bld.def(s1, scc), info.exec[0].op,
-                     src);
-            info.exec[0].op = Operand(exec, bld.lm);
+            bld.sop2(Builder::s_andn2, Definition(exec, bld.lm), bld.def(s1, scc),
+                     info.exec.back().op, src);
+            info.exec.back().op = Operand(exec, bld.lm);
+
+            /* Although this is in uniform CF, it might be a loop without back-edge.
+             * Update the loop restore mask as well.
+             */
+            for (unsigned i = 0; i < info.exec.size() - 1; i++) {
+               assert(info.exec[i + 1].type & mask_type_loop);
+               info.exec[i].op = bld.copy(bld.def(bld.lm), Operand(exec, bld.lm));
+            }
          } else {
             Temp cond = bld.tmp(s1);
             info.exec[0].op = bld.sop2(Builder::s_andn2, bld.def(bld.lm), Definition(cond, scc),

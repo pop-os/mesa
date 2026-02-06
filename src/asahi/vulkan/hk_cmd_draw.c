@@ -3233,8 +3233,7 @@ hk_handle_passthrough_gs(struct hk_cmd_buffer *cmd, struct agx_draw draw)
    }
 
    /* Else, we need to bind a passthrough GS */
-   size_t key_size =
-      sizeof(struct hk_passthrough_gs_key) + nir_xfb_info_size(xfb_outputs);
+   size_t key_size = hk_passthrough_gs_key_size(xfb_outputs);
    struct hk_passthrough_gs_key *key = alloca(key_size);
 
    *key = (struct hk_passthrough_gs_key){

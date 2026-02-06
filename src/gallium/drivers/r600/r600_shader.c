@@ -338,6 +338,12 @@ void *r600_create_vertex_fetch_shader(struct pipe_context *ctx,
 	int i, j, r, fs_size;
 	uint32_t buffer_mask = 0;
 	struct r600_fetch_shader *shader;
+	unsigned post_fix_count = 0;
+	struct post_fix {
+		uint16_t gpr;
+		uint16_t swizzle3;
+		uint16_t num_format;
+	} post_fix[VERT_ATTRIB_MAX];
 
 	assert(count < 32);
 
@@ -434,33 +440,50 @@ void *r600_create_vertex_fetch_shader(struct pipe_context *ctx,
 
 		if (unlikely(rctx->b.family >= CHIP_PALM &&
 			     format == FMT_2_10_10_10 &&
-			     !num_format && format_comp &&
+			     (!num_format || num_format == 2) &&
+			     format_comp &&
 			     desc->swizzle[3] >= PIPE_SWIZZLE_X &&
 			     desc->swizzle[3] <= PIPE_SWIZZLE_W)) {
+			post_fix[post_fix_count].gpr = i + 1;
+			post_fix[post_fix_count].swizzle3 = desc->swizzle[3];
+			post_fix[post_fix_count].num_format = num_format;
+			post_fix_count++;
+		}
+	}
+
+	if (unlikely(post_fix_count)) {
+		bc.force_add_cf = 1;
+
+		for (i = 0; i < post_fix_count; i++) {
 			struct r600_bytecode_alu alu;
-			const unsigned sel_main = i + 1;
+			const uint16_t sel_main = post_fix[i].gpr;
+			const uint16_t swizzle3 = post_fix[i].swizzle3;
+			const uint16_t local_num_format = post_fix[i].num_format;
 
-			bc.force_add_cf = 1;
+			if (!local_num_format) {
+				memset(&alu, 0, sizeof(alu));
+				alu.op = ALU_OP1_MOV;
+				alu.src[0].sel = sel_main;
+				alu.src[0].chan = swizzle3;
+				alu.dst.chan = 1;
 
-			memset(&alu, 0, sizeof(alu));
-			alu.op = ALU_OP1_MOV;
-			alu.src[0].sel = sel_main;
-			alu.src[0].chan = desc->swizzle[3];
-			alu.dst.chan = 1;
-			alu.omod = 2;
-			alu.dst.clamp = 1;
+				alu.omod = 2;
+				alu.dst.clamp = 1;
 
-			if (unlikely(r = r600_bytecode_add_alu(&bc, &alu)))
-				goto fail;
+				if (unlikely(r = r600_bytecode_add_alu(&bc, &alu)))
+					goto fail;
+			}
 
 			memset(&alu, 0, sizeof(alu));
 			alu.op = ALU_OP2_SETGT;
 			alu.src[0].sel = sel_main;
-			alu.src[0].chan = desc->swizzle[3];
+			alu.src[0].chan = swizzle3;
 			alu.src[1].sel = V_SQ_ALU_SRC_LITERAL;
-			alu.src[1].value = 0x3f000000;
+			alu.src[1].value = !local_num_format ?
+				0x3f000000 :
+				0x3f800000;
 			alu.dst.chan = 3;
-			alu.omod = 1;
+			alu.omod = !local_num_format ? 1 : 2;
 			alu.last = 1;
 
 			if (unlikely(r = r600_bytecode_add_alu(&bc, &alu)))
@@ -468,13 +491,18 @@ void *r600_create_vertex_fetch_shader(struct pipe_context *ctx,
 
 			memset(&alu, 0, sizeof(alu));
 			alu.op = ALU_OP2_ADD;
-			alu.src[0].sel = V_SQ_ALU_SRC_PV;
-			alu.src[0].chan = 1;
+			if (!local_num_format) {
+				alu.src[0].sel = V_SQ_ALU_SRC_PV;
+				alu.src[0].chan = 1;
+			} else {
+				alu.src[0].sel = sel_main;
+				alu.src[0].chan = swizzle3;
+			}
 			alu.src[1].sel = V_SQ_ALU_SRC_PV;
 			alu.src[1].chan = 3;
 			alu.src[1].neg = 1;
 			alu.dst.sel = sel_main;
-			alu.dst.chan = desc->swizzle[3];
+			alu.dst.chan = swizzle3;
 			alu.dst.write = 1;
 			alu.last = 1;
 

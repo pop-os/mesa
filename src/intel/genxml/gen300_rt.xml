@@ -36,5 +36,6 @@
     <field name="Launch Depth" dword="15" bits="31:0" type="uint" />
     <field name="Callable Group Table" dword="16" bits="63:0" type="address" />
     <field name="Callable Group Stride" dword="18" bits="12:0" type="uint" />
+    <field name="Resume Shader Table" dword="19" bits="63:0" type="address" />
   </struct>
 </genxml>

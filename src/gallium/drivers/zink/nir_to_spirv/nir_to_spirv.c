@@ -2655,6 +2655,7 @@ create_builtin_var(struct ntv_context *ctx, SpvId var_type,
       switch (builtin) {
       case SpvBuiltInSampleId:
       case SpvBuiltInSubgroupLocalInvocationId:
+      case SpvBuiltInViewIndex:
          spirv_builder_emit_decoration(&ctx->builder, var, SpvDecorationFlat);
          break;
       default:
@@ -3605,6 +3606,9 @@ emit_intrinsic(struct ntv_context *ctx, nir_intrinsic_instr *intr)
       break;
 
    case nir_intrinsic_demote:
+      if (!ctx->have_spirv16)
+         spirv_builder_emit_extension(&ctx->builder, "SPV_EXT_demote_to_helper_invocation");
+      spirv_builder_emit_cap(&ctx->builder, SpvCapabilityDemoteToHelperInvocation);
       spirv_builder_emit_demote(&ctx->builder);
       break;
 
@@ -4807,19 +4811,6 @@ nir_to_spirv(struct nir_shader *s, const struct ntv_info *sinfo)
    case MESA_SHADER_FRAGMENT:
       if (s->info.fs.uses_sample_shading)
          spirv_builder_emit_cap(&ctx.builder, SpvCapabilitySampleRateShading);
-
-      if (s->info.fs.uses_discard && sinfo->has_demote_to_helper) {
-         if (!ctx.have_spirv16)
-            spirv_builder_emit_extension(&ctx.builder, "SPV_EXT_demote_to_helper_invocation");
-         spirv_builder_emit_cap(&ctx.builder, SpvCapabilityDemoteToHelperInvocation);
-      }
-
-      if (BITSET_TEST(s->info.system_values_read, SYSTEM_VALUE_HELPER_INVOCATION) &&
-          sinfo->has_demote_to_helper && !ctx.have_spirv16) {
-         spirv_builder_emit_extension(&ctx.builder, "SPV_EXT_demote_to_helper_invocation");
-         spirv_builder_emit_cap(&ctx.builder, SpvCapabilityDemoteToHelperInvocation);
-      }
-
       break;
 
    case MESA_SHADER_VERTEX:

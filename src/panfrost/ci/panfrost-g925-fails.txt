@@ -3,7 +3,6 @@ dEQP-VK.wsi.wayland.swapchain.create.image_extent,Crash
 
 dEQP-VK.wsi.wayland.swapchain.simulate_oom.image_extent,Crash
 
-angle-KHR-GLES3.framebuffer_blit.scissor_blit,Fail
 angle-KHR-GLES3.packed_depth_stencil.verify_read_pixels.depth24_stencil8,Fail
 angle-KHR-GLES3.packed_depth_stencil.verify_read_pixels.depth32f_stencil8,Fail
 angle-KHR-GLES31.core.shader_atomic_counters.advanced-usage-multi-stage,Fail

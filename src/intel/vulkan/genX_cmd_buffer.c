@@ -706,19 +706,20 @@ set_image_compressed_bit(struct anv_cmd_buffer *cmd_buffer,
                    mi_imm(compressed ? UINT32_MAX : 0));
    }
 
-   /* FCV_CCS_E images are automatically fast cleared to default value at
-    * render time. In order to account for this, anv should set the the
-    * appropriate fast clear state for level0/layer0.
-    *
-    * At the moment, tracking the fast clear state for higher levels/layers is
-    * neither supported, nor do we enter a situation where it is a concern.
-    */
-   if (image->planes[plane].aux_usage == ISL_AUX_USAGE_FCV_CCS_E &&
-       base_layer == 0 && level == 0) {
+   if (compressed &&
+       image->planes[plane].aux_usage == ISL_AUX_USAGE_FCV_CCS_E) {
+      /* FCV_CCS_E images may be automatically fast cleared at render time.
+       * If the write is compressed, the fast-clear type won't be dependent on
+       * the layout. So, just pick one we know supports compression.
+       */
+      VkImageLayout layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+      enum anv_fast_clear_type render_fast_clear =
+         anv_layout_to_fast_clear_type(device->info, image, aspect, layout,
+                                       cmd_buffer->queue_family->queueFlags);
+      assert(render_fast_clear != ANV_FAST_CLEAR_NONE);
       struct anv_address fc_type_addr =
          anv_image_get_fast_clear_type_addr(device, image, aspect);
-      mi_store(&b, mi_mem32(fc_type_addr),
-                   mi_imm(ANV_FAST_CLEAR_DEFAULT_VALUE));
+      mi_store(&b, mi_mem32(fc_type_addr), mi_imm(render_fast_clear));
    }
 }
 
@@ -1284,8 +1285,11 @@ transition_color_buffer(struct anv_cmd_buffer *cmd_buffer,
          /* Ensure the raw and converted clear colors are in sync. */
          const uint32_t zero_pixel[4] = {};
          set_image_clear_color(cmd_buffer, image, aspect, zero_pixel);
-      }
-      if (base_level == 0 && base_layer == 0) {
+      } else if (base_level == 0 && base_layer == 0) {
+         /* Set the initial clear type to NONE to avoid redundant resolves.
+          * Don't apply this optimization to FCV images as they may have other
+          * levels/layers with fast-cleared blocks.
+          */
          set_image_fast_clear_state(cmd_buffer, image, aspect,
                                     ANV_FAST_CLEAR_NONE);
       }

@@ -364,6 +364,7 @@ struct r600_samplerview_state {
 	uint32_t			compressed_depthtex_mask; /* which textures are depth */
 	uint32_t			compressed_colortex_mask;
 	bool				dirty_buffer_constants;
+	bool				shared_state;
 };
 
 struct r600_sampler_states {
@@ -372,6 +373,7 @@ struct r600_sampler_states {
 	uint32_t			enabled_mask;
 	uint32_t			dirty_mask;
 	uint32_t			has_bordercolor_mask; /* which states contain the border color */
+	bool				shared_state;
 };
 
 struct r600_textures_info {
@@ -397,6 +399,7 @@ struct r600_constbuf_state
 	struct pipe_constant_buffer	cb[PIPE_MAX_CONSTANT_BUFFERS];
 	uint32_t			enabled_mask;
 	uint32_t			dirty_mask;
+	bool				shared_state;
 };
 
 struct r600_vertexbuf_state

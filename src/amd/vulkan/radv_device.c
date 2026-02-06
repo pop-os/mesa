@@ -786,6 +786,8 @@ init_dispatch_tables(struct radv_device *device, struct radv_physical_device *pd
       add_entrypoints(&b, &quantic_dream_device_entrypoints, RADV_APP_DISPATCH_TABLE);
    } else if (!strcmp(instance->drirc.debug.app_layer, "no_mans_sky")) {
       add_entrypoints(&b, &no_mans_sky_device_entrypoints, RADV_APP_DISPATCH_TABLE);
+   } else if (!strcmp(instance->drirc.debug.app_layer, "strange_brigade")) {
+      add_entrypoints(&b, &strange_brigade_device_entrypoints, RADV_APP_DISPATCH_TABLE);
    }
 
    if (instance->vk.trace_mode & RADV_TRACE_MODE_RGP)
@@ -1239,7 +1241,13 @@ radv_CreateDevice(VkPhysicalDevice physicalDevice, const VkDeviceCreateInfo *pCr
 
    device->ws = pdev->ws;
    device->vk.sync = device->ws->get_sync_provider(device->ws);
-   device->vk.copy_sync_payloads = pdev->ws->copy_sync_payloads;
+
+   /* Disable unordered submits when SQTT queue events are enabled because queue present events
+    * might be missing otherwise.
+    */
+   device->vk.copy_sync_payloads = ((instance->vk.trace_mode & RADV_TRACE_MODE_RGP) && radv_sqtt_queue_events_enabled())
+                                      ? NULL
+                                      : pdev->ws->copy_sync_payloads;
 
    /* Enable the global BO list by default. */
    /* TODO: Remove the per cmdbuf BO list tracking after few Mesa releases if no blockers. */

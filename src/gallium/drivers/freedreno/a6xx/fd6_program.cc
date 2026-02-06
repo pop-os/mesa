@@ -1456,6 +1456,46 @@ emit_interp_state(fd_crb &crb, const struct fd6_program_state *state,
       crb.add(VPC_VARYING_REPLACE_MODE_MODE(CHIP, i, vpsrepl[i]));
 }
 
+static unsigned
+xs_immediate_size_dwords(const struct ir3_shader_variant *v)
+{
+   const struct ir3_const_state *const_state = ir3_const_state(v);
+   uint32_t base = const_state->allocs.max_const_offset_vec4;
+   const struct ir3_imm_const_state *imm_state = &v->imm_state;
+   int32_t size = DIV_ROUND_UP(imm_state->count, 4);
+
+   /* truncate size to avoid writing constants that shader
+    * does not use:
+    */
+   size = MIN2(size + base, v->constlen) - base;
+
+   return MAX2(size, 0) * 4;
+}
+
+static unsigned
+xs_size(const struct ir3_shader_variant *v)
+{
+   if (!v)
+      return 0;
+
+   const struct ir3_const_state *const_state = ir3_const_state(v);
+
+   unsigned size = 128;
+
+   size += 64 + (v->stream_output.num_outputs != 0 ? 256 : 0);
+
+   /* Variable number of UBO upload ranges. */
+   size += 4 * const_state->ubo_state.num_enabled;
+
+   /* Variable number of dwords for the primitive map */
+   size += v->input_size;
+
+   /* Immediates: */
+   size += xs_immediate_size_dwords(v);
+
+   return size * 4;
+}
+
 template <chip CHIP>
 static struct ir3_program_state *
 fd6_program_create(void *data, const struct ir3_shader_variant *bs,
@@ -1482,8 +1522,12 @@ fd6_program_create(void *data, const struct ir3_shader_variant *bs,
    state->ds = ds;
    state->gs = gs;
    state->fs = fs;
-   state->binning_stateobj = fd_ringbuffer_new_object(ctx->pipe, 0x1000);
-   state->stateobj = fd_ringbuffer_new_object(ctx->pipe, 0x1000);
+
+   unsigned stateobj_size = xs_size(vs) + xs_size(hs) +
+      xs_size(ds) + xs_size(gs) + xs_size(fs);
+
+   state->binning_stateobj = fd_ringbuffer_new_object(ctx->pipe, stateobj_size);
+   state->stateobj = fd_ringbuffer_new_object(ctx->pipe, stateobj_size);
 
    if (hs) {
       /* Allocate the fixed-size tess factor BO globally on the screen.  This

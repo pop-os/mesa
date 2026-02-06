@@ -247,6 +247,18 @@ pan_sample_pattern(unsigned samples)
    }
 }
 
+static inline struct pan_image_block_size
+pan_effective_tile_block_size(unsigned tile_size)
+{
+   /* Tile is either a square or a rect whose width is twice the height. */
+   unsigned shift_h = util_logbase2(tile_size);
+   unsigned shift_w = shift_h + 1;
+   unsigned h = 1 << (shift_h >> 1);
+   unsigned w = 1 << (shift_w >> 1);
+
+   return (struct pan_image_block_size){w, h};
+}
+
 void GENX(pan_select_tile_size)(struct pan_fb_info *fb);
 
 void GENX(pan_emit_tls)(const struct pan_tls_info *info,

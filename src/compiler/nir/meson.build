@@ -416,10 +416,9 @@ if with_tests
     nir_opt_algebraic_pattern_tests += static_library(
       'nir_opt_algebraic_pattern_test_@0@'.format(i),
       nir_opt_algebraic_pattern_test_cpp,
-      cpp_args : [cpp_msvc_compat_args, msvc_bigobj],
       override_options: [msvc_designated_initializer],
       gnu_symbol_visibility : 'hidden',
-      cpp_args : '-DSUBSET=@0@'.format(i),
+      cpp_args : [cpp_msvc_compat_args, msvc_bigobj, '-DSUBSET=@0@'.format(i)],
       include_directories : [inc_include, inc_src],
       dependencies : [dep_thread, idep_gtest, idep_nir, idep_mesautil],
     )

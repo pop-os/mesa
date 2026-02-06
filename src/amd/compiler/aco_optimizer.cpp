@@ -1190,7 +1190,7 @@ alu_opt_gather_info(opt_ctx& ctx, Instruction* instr, alu_opt_info& info)
       info.operands.push_back({instr->operands[0]});
       if (instr->definitions[0].regClass() == s1) {
          info.defs.push_back(instr->definitions[1]);
-         info.opcode = aco_opcode::v_lshl_b32;
+         info.opcode = aco_opcode::s_lshl_b32;
          info.format = Format::SOP2;
          std::swap(info.operands[0], info.operands[1]);
       } else {

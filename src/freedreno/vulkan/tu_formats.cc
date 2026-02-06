@@ -363,6 +363,37 @@ tu_GetPhysicalDeviceFormatProperties2(
          }
       }
    }
+
+   VkDrmFormatModifierPropertiesList2EXT *list2 =
+      vk_find_struct(pFormatProperties->pNext, DRM_FORMAT_MODIFIER_PROPERTIES_LIST_2_EXT);
+   if (list2) {
+      VK_OUTARRAY_MAKE_TYPED(VkDrmFormatModifierProperties2EXT, out,
+                             list2->pDrmFormatModifierProperties,
+                             &list2->drmFormatModifierCount);
+
+      if (props3->linearTilingFeatures) {
+         vk_outarray_append_typed(VkDrmFormatModifierProperties2EXT, &out, mod_props) {
+            mod_props->drmFormatModifier = DRM_FORMAT_MOD_LINEAR;
+            mod_props->drmFormatModifierPlaneCount = tu6_plane_count(format);
+            mod_props->drmFormatModifierTilingFeatures =
+               props3->linearTilingFeatures;
+         }
+      }
+
+      /* note: ubwc_possible() argument values to be ignored except for format */
+      if (props3->optimalTilingFeatures &&
+          tiling_possible(format) &&
+          ubwc_possible(NULL, format, VK_IMAGE_TYPE_2D, 0, 0, 0,
+                        physical_device->info, VK_SAMPLE_COUNT_1_BIT, 1,
+                        false)) {
+         vk_outarray_append_typed(VkDrmFormatModifierProperties2EXT, &out, mod_props) {
+            mod_props->drmFormatModifier = DRM_FORMAT_MOD_QCOM_COMPRESSED;
+            mod_props->drmFormatModifierPlaneCount = tu6_plane_count(format);
+            mod_props->drmFormatModifierTilingFeatures =
+               props3->optimalTilingFeatures;
+         }
+      }
+   }
 }
 
 static VkResult

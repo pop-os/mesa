@@ -165,6 +165,9 @@ struct vn_renderer_bo_ops {
    int (*export_dma_buf)(struct vn_renderer *renderer,
                          struct vn_renderer_bo *bo);
 
+   int (*export_sync_file)(struct vn_renderer *renderer,
+                           struct vn_renderer_bo *bo);
+
    /* map is not thread-safe */
    void *(*map)(struct vn_renderer *renderer,
                 struct vn_renderer_bo *bo,
@@ -373,6 +376,13 @@ vn_renderer_bo_export_dma_buf(struct vn_renderer *renderer,
                               struct vn_renderer_bo *bo)
 {
    return renderer->bo_ops.export_dma_buf(renderer, bo);
+}
+
+static inline int
+vn_renderer_bo_export_sync_file(struct vn_renderer *renderer,
+                                struct vn_renderer_bo *bo)
+{
+   return renderer->bo_ops.export_sync_file(renderer, bo);
 }
 
 static inline void *

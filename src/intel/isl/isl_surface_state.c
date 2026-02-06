@@ -888,8 +888,15 @@ isl_genX(surf_fill_state_s)(const struct isl_device *dev, void *state,
        * doesn't expect our definition of the compression, it expects qpitch
        * in units of samples on the main surface.
        */
-      s.AuxiliarySurfaceQPitch =
-         isl_surf_get_array_pitch_sa_rows(info->aux_surf) >> 2;
+      uint32_t aux_qpitch = isl_surf_get_array_pitch_sa_rows(info->aux_surf);
+
+      /* From RENDER_SURFACE_STATE::AuxiliarySurfaceQPitch on BDW+,
+       *
+       *    This field must be set to an integer multiple of the Surface
+       *    Vertical Alignment
+       */
+      assert(aux_qpitch % image_align.h == 0);
+      s.AuxiliarySurfaceQPitch = aux_qpitch >> 2;
 #endif
    }
 #endif
