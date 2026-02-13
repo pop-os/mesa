@@ -9550,9 +9550,9 @@ radv_handle_color_fbfetch_output(struct radv_cmd_buffer *cmd_buffer, uint32_t in
    radv_describe_barrier_start(cmd_buffer, RGP_BARRIER_UNKNOWN_REASON);
 
    /* Force a transition to FEEDBACK_LOOP_OPTIMAL to decompress DCC. */
-   radv_handle_image_transition(cmd_buffer, att->iview->image, att->layout,
-                                VK_IMAGE_LAYOUT_ATTACHMENT_FEEDBACK_LOOP_OPTIMAL_EXT, RADV_QUEUE_GENERAL,
-                                RADV_QUEUE_GENERAL, &range, NULL);
+   radv_handle_rendering_image_transition(
+      cmd_buffer, att->iview, render->layer_count, render->view_mask, att->layout, VK_IMAGE_LAYOUT_UNDEFINED,
+      VK_IMAGE_LAYOUT_ATTACHMENT_FEEDBACK_LOOP_OPTIMAL_EXT, VK_IMAGE_LAYOUT_UNDEFINED, NULL);
 
    radv_describe_barrier_end(cmd_buffer);
 
@@ -9597,9 +9597,10 @@ radv_handle_depth_fbfetch_output(struct radv_cmd_buffer *cmd_buffer)
    radv_describe_barrier_start(cmd_buffer, RGP_BARRIER_UNKNOWN_REASON);
 
    /* Force a transition to FEEDBACK_LOOP_OPTIMAL to decompress HTILE. */
-   radv_handle_image_transition(cmd_buffer, att->iview->image, att->layout,
-                                VK_IMAGE_LAYOUT_ATTACHMENT_FEEDBACK_LOOP_OPTIMAL_EXT, RADV_QUEUE_GENERAL,
-                                RADV_QUEUE_GENERAL, &range, NULL);
+   radv_handle_rendering_image_transition(cmd_buffer, att->iview, render->layer_count, render->view_mask, att->layout,
+                                          att->stencil_layout, VK_IMAGE_LAYOUT_ATTACHMENT_FEEDBACK_LOOP_OPTIMAL_EXT,
+                                          VK_IMAGE_LAYOUT_ATTACHMENT_FEEDBACK_LOOP_OPTIMAL_EXT,
+                                          render->sample_locations.count > 0 ? &render->sample_locations : NULL);
 
    radv_describe_barrier_end(cmd_buffer);
 

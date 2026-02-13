@@ -258,12 +258,6 @@ vn_android_image_from_anb_internal(struct vn_device *dev,
    struct vn_image *img = NULL;
    VkResult result;
 
-   assert(!(create_info->flags & VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT));
-   assert(!vk_find_struct_const(create_info->pNext,
-                                IMAGE_FORMAT_LIST_CREATE_INFO));
-   assert(!vk_find_struct_const(create_info->pNext,
-                                IMAGE_STENCIL_USAGE_CREATE_INFO));
-
    struct vn_android_image_builder builder;
    result = vn_android_get_image_builder(dev, create_info, anb_info->handle,
                                          &builder);

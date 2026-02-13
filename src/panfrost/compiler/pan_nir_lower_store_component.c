@@ -69,7 +69,7 @@ lower_store_component(nir_builder *b, nir_intrinsic_instr *intr, void *data)
    }
 
    _mesa_hash_table_u64_insert(slots, slot, intr);
-   return false;
+   return true;
 }
 
 bool

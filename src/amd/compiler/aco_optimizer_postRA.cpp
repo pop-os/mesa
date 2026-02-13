@@ -142,6 +142,10 @@ save_reg_writes(pr_opt_ctx& ctx, aco_ptr<Instruction>& instr)
       ctx.instr_idx_by_regs[ctx.current_block->index][instr->pseudo().scratch_sgpr] =
          overwritten_unknown_instr;
    }
+   if (instr->isCall()) {
+      std::fill(ctx.instr_idx_by_regs[ctx.current_block->index].begin(),
+                ctx.instr_idx_by_regs[ctx.current_block->index].end(), overwritten_unknown_instr);
+   }
 }
 
 Idx
@@ -862,6 +866,8 @@ instr_overwrites(Instruction* instr, PhysReg reg, unsigned size)
       if (scratch_reg >= reg && reg + size > scratch_reg)
          return true;
    }
+   if (instr->isCall())
+      return true;
    return false;
 }
 

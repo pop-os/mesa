@@ -263,7 +263,7 @@ libclc_add_generic_variants(nir_shader *shader)
       if (strstr(func->name, "async_work_group_strided_copy"))
          continue;
 
-      char *U3AS1 = strstr(func->name, "U3AS1");
+      const char *U3AS1 = strstr(func->name, "U3AS1");
       if (U3AS1 == NULL)
          continue;
 

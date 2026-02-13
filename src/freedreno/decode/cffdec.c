@@ -538,7 +538,7 @@ static int
 get_tex_count(const char *name)
 {
    char count_reg[strlen(name) + 5];
-   char *p;
+   const char *p;
 
    p = strstr(name, "CONST");
    if (!p)

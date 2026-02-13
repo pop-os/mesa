@@ -5849,6 +5849,7 @@ bi_optimize_nir(nir_shader *nir, unsigned gpu_id, nir_variable_mode robust2_mode
    while (late_algebraic) {
       late_algebraic = false;
       NIR_PASS(late_algebraic, nir, nir_opt_algebraic_late);
+      NIR_PASS(_, nir, nir_lower_alu_width, bi_vectorize_filter, &gpu_id);
       NIR_PASS(_, nir, nir_opt_constant_folding);
       NIR_PASS(_, nir, nir_opt_copy_prop);
       NIR_PASS(_, nir, nir_opt_dce);
@@ -5875,6 +5876,7 @@ bi_optimize_nir(nir_shader *nir, unsigned gpu_id, nir_variable_mode robust2_mode
    while (late_algebraic) {
       late_algebraic = false;
       NIR_PASS(late_algebraic, nir, nir_opt_algebraic_late);
+      NIR_PASS(_, nir, nir_lower_alu_width, bi_vectorize_filter, &gpu_id);
       NIR_PASS(_, nir, nir_opt_constant_folding);
       NIR_PASS(_, nir, nir_opt_copy_prop);
       NIR_PASS(_, nir, nir_opt_dce);

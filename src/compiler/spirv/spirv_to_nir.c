@@ -5248,6 +5248,12 @@ vtn_handle_entry_point(struct vtn_builder *b, const uint32_t *w,
    b->interface_ids = vtn_alloc_array(b, uint32_t, b->interface_ids_count);
    memcpy(b->interface_ids, &w[start], b->interface_ids_count * 4);
    qsort(b->interface_ids, b->interface_ids_count, 4, cmp_uint32_t);
+
+   if (stage == MESA_SHADER_KERNEL) {
+      b->fp_math_ctrl_fp16 |= nir_fp_preserve_sz_inf_nan;
+      b->fp_math_ctrl_fp32 |= nir_fp_preserve_sz_inf_nan;
+      b->fp_math_ctrl_fp64 |= nir_fp_preserve_sz_inf_nan;
+   }
 }
 
 static bool

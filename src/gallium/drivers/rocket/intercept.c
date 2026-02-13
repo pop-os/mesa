@@ -261,7 +261,7 @@ handle_mem_create(struct rknpu_mem_create *args)
    context.bos[context.next_handle_id].obj_addr = args->obj_addr;
    context.bos[context.next_handle_id].dma_addr = args->dma_addr;
 
-   fprintf(stderr, "%s: dma_addr %llx\n", __func__, args->dma_addr);
+   fprintf(stderr, "%s: dma_addr %llx\n", __func__, (long long)args->dma_addr);
    context.next_handle_id++;
 
    return ret;

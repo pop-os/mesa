@@ -298,7 +298,9 @@ eliminate_useless_exec_writes_in_block(branch_ctx& ctx, Block& block)
 
       /* blocks_incoming_exec_used is initialized to true, so this is correct even for loops. */
       if (instr->opcode == aco_opcode::s_cbranch_scc0 ||
-          instr->opcode == aco_opcode::s_cbranch_scc1) {
+          instr->opcode == aco_opcode::s_cbranch_scc1 ||
+          instr->opcode == aco_opcode::s_cbranch_vccz ||
+          instr->opcode == aco_opcode::s_cbranch_vccnz) {
          exec_write_used |= ctx.blocks_incoming_exec_used[instr->salu().imm];
       }
 

@@ -515,7 +515,6 @@ VkResult anv_CreateDevice(
 
    list_inithead(&device->memory_objects);
    list_inithead(&device->image_private_objects);
-   list_inithead(&device->bvh_dumps);
 
    if (pthread_mutex_init(&device->mutex, NULL) != 0) {
       result = vk_error(device, VK_ERROR_INITIALIZATION_FAILED);
@@ -1566,19 +1565,18 @@ VkResult anv_AllocateMemory(
                              NULL;
    mem->dedicated_image = image;
 
+   /* If there is a dedicated image with a modifier, use that to determine
+    * compression, otherwise use the memory type.
+    */
    if (device->info->ver >= 20 && image &&
-       image->vk.tiling == VK_IMAGE_TILING_DRM_FORMAT_MODIFIER_EXT &&
-       isl_drm_modifier_has_aux(image->vk.drm_format_mod)) {
-      /* ISL should skip compression modifiers when no_ccs is set. */
-      assert(!INTEL_DEBUG(DEBUG_NO_CCS));
-      /* Images created with the Xe2 modifiers should be allocated into
-       * compressed memory, but we won't get such info from the memory type,
-       * refer to anv_image_is_pat_compressible(). We have to check the
-       * modifiers and enable compression if we can here.
-       */
-      alloc_flags |= ANV_BO_ALLOC_COMPRESSED;
-   } else if (mem_type->compressed && !INTEL_DEBUG(DEBUG_NO_CCS)) {
-      alloc_flags |= ANV_BO_ALLOC_COMPRESSED;
+       image->vk.tiling == VK_IMAGE_TILING_DRM_FORMAT_MODIFIER_EXT) {
+      const bool needs_compression =
+         isl_drm_modifier_has_aux(image->vk.drm_format_mod);
+      assert(!needs_compression || !INTEL_DEBUG(DEBUG_NO_CCS));
+      alloc_flags |= needs_compression ? ANV_BO_ALLOC_COMPRESSED : 0;
+   } else {
+      alloc_flags |= (mem_type->compressed && !INTEL_DEBUG(DEBUG_NO_CCS)) ?
+                      ANV_BO_ALLOC_COMPRESSED : 0;
    }
 
    /* Anything imported or exported is EXTERNAL */

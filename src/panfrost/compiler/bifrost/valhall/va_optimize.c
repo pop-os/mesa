@@ -240,6 +240,8 @@ va_fuse_cmp(bi_context *ctx, bi_instr **lut, const BITSET_WORD *multiple,
 
    /* Ensure we really have a LSHIFT that we can remap (so without shift) */
    if (!va_remap_logical_to_logical_cmp(I->op, cmp_type) ||
+       I->src[0].swizzle != BI_SWIZZLE_H01 ||
+       I->src[1].swizzle != BI_SWIZZLE_H01 ||
        !bi_is_zero(I->src[2]))
       return false;
 

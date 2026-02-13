@@ -692,7 +692,7 @@ vc4_resource_from_handle(struct pipe_screen *pscreen,
         } else if (whandle->modifier != get_tiling.modifier) {
                 fprintf(stderr,
                         "Modifier 0x%llx vs. tiling (0x%llx) mismatch\n",
-                        (long long)whandle->modifier, get_tiling.modifier);
+                        (long long)whandle->modifier, (long long)get_tiling.modifier);
                 goto fail;
         }
 

@@ -243,6 +243,10 @@ impl PipeScreen {
         tmpl: &pipe_resource,
         mem: *mut c_void,
     ) -> Option<PipeResourceOwned> {
+        if !self.has_resource_from_user() {
+            return None;
+        }
+
         PipeResourceOwned::new(
             unsafe { self.screen().resource_from_user_memory?(self.pipe(), tmpl, mem) },
             true,
@@ -559,6 +563,10 @@ impl PipeScreen {
 
     pub fn has_semaphore_create(&self) -> bool {
         self.screen().semaphore_create.is_some()
+    }
+
+    pub fn has_resource_from_user(&self) -> bool {
+        self.caps().resource_from_user_memory || self.caps().resource_from_user_memory_compute_only
     }
 }
 

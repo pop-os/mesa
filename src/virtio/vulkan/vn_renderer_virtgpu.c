@@ -749,7 +749,7 @@ virtgpu_ioctl_map(struct virtgpu *gpu,
       vn_log(
          gpu->instance,
          "mmap failed: gpu_fd=%d, handle=%u, size=%zu, offset=%llu, err=%s",
-         gpu->fd, gem_handle, size, args.offset, strerror(errno));
+         gpu->fd, gem_handle, size, (long long)args.offset, strerror(errno));
       return NULL;
    }
 

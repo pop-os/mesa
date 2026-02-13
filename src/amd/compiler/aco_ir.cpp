@@ -914,7 +914,9 @@ needs_exec_mask(const Instruction* instr)
    if (instr->isSALU() || instr->isBranch() || instr->isSMEM() || instr->isBarrier())
       return instr->opcode == aco_opcode::s_cbranch_execz ||
              instr->opcode == aco_opcode::s_cbranch_execnz ||
-             instr->opcode == aco_opcode::s_setpc_b64 || instr->reads_exec();
+             instr->opcode == aco_opcode::s_setpc_b64 ||
+             instr->opcode == aco_opcode::s_swappc_b64 || instr->opcode == aco_opcode::s_call_b64 ||
+             instr->reads_exec();
 
    if (instr->isPseudo()) {
       switch (instr->opcode) {

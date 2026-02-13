@@ -1650,8 +1650,8 @@ static int amdgpu_cs_submit_ib_userq(struct amdgpu_userq *userq,
           * given queue, cross process/queue fence dependency can be analyzed.
           */
          mesa_logi("amdgpu: uq_log: %s:  num_wait_fences=%d  uq_va=%llx  job=%llx\n",
-                   amdgpu_userq_str[acs->queue_index], userq_wait_data.num_fences, fence_info[i].va,
-                   fence_info[i].value);
+                   amdgpu_userq_str[acs->queue_index], userq_wait_data.num_fences,
+                   (long long)fence_info[i].va, (long long)fence_info[i].value);
       }
    }
 
