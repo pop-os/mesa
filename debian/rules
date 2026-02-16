@@ -94,6 +94,10 @@ else
 	GALLIUM_DRIVERS += lima
   endif
 
+  ifneq (,$(filter $(DEB_HOST_ARCH), armhf arm64 riscv64))
+	VULKAN_DRIVERS += imagination
+  endif
+
   # Build intel drivers on archs where libdrm-intel is installed
   ifneq (,$(filter $(DEB_HOST_ARCH), amd64 i386 x32))
 	GALLIUM_DRIVERS += crocus i915 svga
