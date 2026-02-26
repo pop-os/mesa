@@ -86,12 +86,11 @@ cmd_get_push_desc_set(struct vk_command_buffer *vk_cmdbuf,
    } else {
       push_set = vk_zalloc(&pool->vk.alloc, sizeof(*push_set), 8,
                            VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
+      if (unlikely(!push_set)) {
+         vk_command_buffer_set_error(&cmdbuf->vk, VK_ERROR_OUT_OF_HOST_MEMORY);
+         return NULL;
+      }
       list_addtail(&push_set->base.node, &cmdbuf->push_sets);
-   }
-
-   if (unlikely(!push_set)) {
-      vk_command_buffer_set_error(&cmdbuf->vk, VK_ERROR_OUT_OF_HOST_MEMORY);
-      return NULL;
    }
 
    if (desc_state->push_sets[set_idx] == NULL) {

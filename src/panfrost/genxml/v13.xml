@@ -2247,9 +2247,9 @@
     <field name="Pre Frame 1" size="3" start="0:3" type="Pre Post Frame Shader Mode"/>
     <field name="Post Frame" size="3" start="0:6" type="Pre Post Frame Shader Mode"/>
     <field name="Downscale geometry" size="2" start="0:9" type="Downscale"/>
-    <field name="HSR Prepare Enable" size="1" start="0:11" type="bool"/>
-    <field name="HSR Prepare Interleaving Enable" size="1" start="0:12" type="bool"/>
-    <field name="HSR Prepare Filter Enable" size="1" start="0:13" type="bool"/>
+    <field name="HSR Prepass Enable" size="1" start="0:11" type="bool"/>
+    <field name="HSR Prepass Interleaving Enable" size="1" start="0:12" type="bool"/>
+    <field name="HSR Prepass Filter Enable" size="1" start="0:13" type="bool"/>
     <field name="HSR Hierarchical Optimizations Enable" size="1" start="0:14" type="bool"/>
     <field name="Internal layer index" size="8" start="0:24" type="uint"/>
     <field name="Frame argument" size="64" start="2:0" type="hex"/>

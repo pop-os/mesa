@@ -299,7 +299,7 @@ void PVR_PER_ARCH(DestroyFramebuffer)(VkDevice _device,
    if (!framebuffer)
       return;
 
-   pvr_render_state_cleanup(device, framebuffer->rstate);
+   pvr_render_state_cleanup(device, pAllocator, framebuffer->rstate);
    /* the render state is freed with the framebuffer */
 
    vk_object_base_finish(&framebuffer->base);

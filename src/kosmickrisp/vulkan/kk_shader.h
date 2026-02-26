@@ -11,6 +11,8 @@
 #include "kk_device_memory.h"
 #include "kk_private.h"
 
+#include "kosmickrisp/bridge/mtl_format.h"
+
 #include "vk_pipeline_cache.h"
 
 #include "vk_shader.h"
@@ -18,8 +20,39 @@
 struct kk_shader_info {
    mesa_shader_stage stage;
    union {
+      /* Vertex shader is the pipeline, store all relevant data here. */
       struct {
+         /* Required for serialization. */
+         char *frag_msl_code;
+         char *frag_entrypoint_name;
+
+         /* Data needed to start render pass and bind pipeline. */
          uint32_t attribs_read;
+         uint32_t sample_count;
+         enum mtl_primitive_type primitive_type;
+
+         /* Data needed for serialization. */
+         enum mtl_primitive_topology_class topology;
+         enum mtl_pixel_format rt_formats[MAX_DRAW_BUFFERS];
+         enum mtl_pixel_format d_format;
+         enum mtl_pixel_format s_format;
+         uint32_t view_mask;
+         VkCompareOp depth_compare_op;
+         struct {
+            uint8_t depth_fail;
+            uint8_t fail;
+            uint8_t pass;
+            uint8_t compare;
+            uint8_t compare_mask;
+            uint8_t write_mask;
+         } stencil_front, stencil_back;
+         uint8_t color_attachment_count;
+         bool has_ms;
+         bool has_alpha_to_coverage_enabled;
+         bool has_alpha_to_one_enabled;
+         bool has_ds;
+         bool has_depth_write;
+         bool has_stencil_test;
       } vs;
 
       struct {
@@ -28,25 +61,24 @@ struct kk_shader_info {
    };
 };
 
+/* Metal handles for binding. */
+struct kk_pipeline_handles {
+   union {
+      struct {
+         mtl_render_pipeline_state *handle;
+         mtl_depth_stencil_state *mtl_depth_stencil_state_handle;
+      } gfx;
+      mtl_compute_pipeline_state *cs;
+   };
+};
+
 struct kk_shader {
    struct vk_shader vk;
+
+   struct kk_pipeline_handles pipeline;
+   struct kk_shader_info info;
    const char *entrypoint_name;
    const char *msl_code;
-
-   struct kk_shader_info info;
-
-   /* Pipeline resources. Only stored in compute or vertex shaders */
-   struct {
-      union {
-         struct {
-            mtl_render_pipeline_state *handle;
-            mtl_depth_stencil_state *mtl_depth_stencil_state_handle;
-            enum mtl_primitive_type primitive_type;
-            uint32_t sample_count;
-         } gfx;
-         mtl_compute_pipeline_state *cs;
-      };
-   } pipeline;
 };
 
 VK_DEFINE_NONDISP_HANDLE_CASTS(kk_shader, vk.base, VkShaderEXT,

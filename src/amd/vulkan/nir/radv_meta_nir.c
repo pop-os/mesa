@@ -1395,19 +1395,21 @@ radv_meta_nir_build_depth_stencil_resolve_compute_shader(struct radv_device *dev
 
    nir_def *global_id = radv_meta_nir_get_global_ids(&b, 3);
 
-   nir_def *offset = nir_load_push_constant(&b, 2, 32, nir_imm_int(&b, 0), .range = 8);
+   nir_def *src_offset = nir_load_push_constant(&b, 2, 32, nir_imm_int(&b, 0), .range = 8);
+   nir_def *dst_offset = nir_load_push_constant(&b, 3, 32, nir_imm_int(&b, 8), .range = 20);
 
-   nir_def *resolve_coord = nir_iadd(&b, nir_trim_vector(&b, global_id, 2), offset);
+   nir_def *src_coord = nir_iadd(&b, nir_trim_vector(&b, global_id, 2), src_offset);
+   nir_def *dst_coord = nir_iadd(&b, global_id, dst_offset);
 
-   nir_def *img_coord =
-      nir_vec3(&b, nir_channel(&b, resolve_coord, 0), nir_channel(&b, resolve_coord, 1), nir_channel(&b, global_id, 2));
+   nir_def *src_img_coord =
+      nir_vec3(&b, nir_channel(&b, src_coord, 0), nir_channel(&b, src_coord, 1), nir_channel(&b, global_id, 2));
 
    nir_deref_instr *input_img_deref = nir_build_deref_var(&b, input_img);
-   nir_def *outval = nir_txf_ms(&b, img_coord, nir_imm_int(&b, 0), .texture_deref = input_img_deref);
+   nir_def *outval = nir_txf_ms(&b, src_img_coord, nir_imm_int(&b, 0), .texture_deref = input_img_deref);
 
    if (resolve_mode != VK_RESOLVE_MODE_SAMPLE_ZERO_BIT) {
       for (int i = 1; i < samples; i++) {
-         nir_def *si = nir_txf_ms(&b, img_coord, nir_imm_int(&b, i), .texture_deref = input_img_deref);
+         nir_def *si = nir_txf_ms(&b, src_img_coord, nir_imm_int(&b, i), .texture_deref = input_img_deref);
 
          switch (resolve_mode) {
          case VK_RESOLVE_MODE_AVERAGE_BIT:
@@ -1435,8 +1437,8 @@ radv_meta_nir_build_depth_stencil_resolve_compute_shader(struct radv_device *dev
          outval = nir_fdiv_imm(&b, outval, samples);
    }
 
-   nir_def *coord = nir_vec4(&b, nir_channel(&b, img_coord, 0), nir_channel(&b, img_coord, 1),
-                             nir_channel(&b, img_coord, 2), nir_undef(&b, 1, 32));
+   nir_def *coord = nir_vec4(&b, nir_channel(&b, dst_coord, 0), nir_channel(&b, dst_coord, 1),
+                             nir_channel(&b, dst_coord, 2), nir_undef(&b, 1, 32));
    nir_image_deref_store(&b, &nir_build_deref_var(&b, output_img)->def, coord, nir_undef(&b, 1, 32), outval,
                          nir_imm_int(&b, 0), .image_dim = GLSL_SAMPLER_DIM_2D, .image_array = true);
    return b.shader;
@@ -1495,10 +1497,11 @@ radv_meta_nir_build_depth_stencil_resolve_fragment_shader(struct radv_device *de
    fs_out->data.location = index == RADV_META_DEPTH_RESOLVE ? FRAG_RESULT_DEPTH : FRAG_RESULT_STENCIL;
 
    nir_def *pos_in = nir_trim_vector(&b, nir_load_frag_coord(&b), 2);
+   nir_def *src_offset = nir_load_push_constant(&b, 2, 32, nir_imm_int(&b, 0), .range = 8);
 
    nir_def *pos_int = nir_f2i32(&b, pos_in);
 
-   nir_def *img_coord = nir_trim_vector(&b, pos_int, 2);
+   nir_def *img_coord = nir_trim_vector(&b, nir_iadd(&b, pos_int, src_offset), 2);
 
    nir_deref_instr *input_img_deref = nir_build_deref_var(&b, input_img);
    nir_def *outval = nir_txf_ms(&b, img_coord, nir_imm_int(&b, 0), .texture_deref = input_img_deref);

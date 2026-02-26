@@ -942,6 +942,7 @@ a7xx_base = GPUProps(
         has_hw_multiview = True,
         has_fs_tex_prefetch = True,
         has_sampler_minmax = True,
+        has_astc_hdr = True,
 
         supports_double_threadsize = True,
 

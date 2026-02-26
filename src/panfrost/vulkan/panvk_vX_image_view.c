@@ -87,12 +87,8 @@ prepare_tex_descs(struct panvk_image_view *view)
    bool img_combined_ds =
       vk_format_aspects(image->vk.format) ==
       (VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT);
-   bool view_combined_ds = view->vk.aspects ==
-      (VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT);
-   bool can_preload_other_aspect =
-      (view->vk.usage & VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT) &&
-      (img_combined_ds &&
-       (view_combined_ds || panvk_image_is_interleaved_depth_stencil(image)));
+   bool can_preload_other_aspect = img_combined_ds &&
+      (view->vk.usage & VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
 
    if (util_format_is_depth_or_stencil(view->pview.format)) {
       /* Vulkan wants R001, where the depth/stencil is stored in the red
@@ -209,9 +205,20 @@ prepare_tex_descs(struct panvk_image_view *view)
           * already, so move on to the stencil. If it wasn't present, it's the
           * stencil texture we create first, and we need t handle the depth here.
           */
-         pview.format = (view->vk.aspects & VK_IMAGE_ASPECT_DEPTH_BIT)
-                           ? panvk_image_stencil_only_pfmt(image)
-                           : panvk_image_depth_only_pfmt(image);
+         const VkImageAspectFlagBits other_aspect =
+            (view->vk.aspects & VK_IMAGE_ASPECT_DEPTH_BIT)
+            ? VK_IMAGE_ASPECT_STENCIL_BIT : VK_IMAGE_ASPECT_DEPTH_BIT;
+         const uint8_t other_plane = panvk_plane_index(image, other_aspect);
+
+         pview.format = other_aspect == VK_IMAGE_ASPECT_DEPTH_BIT
+                           ? panvk_image_depth_only_pfmt(image)
+                           : panvk_image_stencil_only_pfmt(image);
+
+         memset(pview.planes, 0, sizeof(pview.planes));
+         pview.planes[0] = (struct pan_image_plane_ref) {
+            .image = &image->planes[other_plane].image,
+            .plane_idx = 0,
+         };
 
          ptr.cpu += tex_payload_size;
          ptr.gpu += tex_payload_size;

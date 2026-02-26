@@ -1713,6 +1713,46 @@ asahi_get_device_reset_status(struct pipe_context *pipe)
    return ctx->any_faults ? PIPE_GUILTY_CONTEXT_RESET : PIPE_NO_RESET;
 }
 
+static void
+asahi_clear_buffer(struct pipe_context *pipe, struct pipe_resource *resource,
+                   unsigned offset, unsigned size, const void *clear_value,
+                   int clear_value_size)
+{
+   assert(clear_value_size > 0);
+   if (clear_value_size <= 16 && util_is_power_of_two_nonzero(clear_value_size)) {
+      union pipe_color_union color;
+      bool aligned_16 = util_is_aligned(offset, 16) && util_is_aligned(size, 16);
+      bool aligned_4 = util_is_aligned(offset, 4) && util_is_aligned(size, 4);
+
+      /* Splat out to 128-bit */
+      uint8_t *bytes = (uint8_t *)color.ui;
+      memcpy(bytes, clear_value, clear_value_size);
+      for (unsigned i = clear_value_size; i < 16; ++i) {
+         bytes[i] = bytes[i % clear_value_size];
+      }
+
+      if (aligned_16) {
+         struct agx_batch *batch = agx_get_compute_batch(agx_context(pipe));
+         agx_batch_init_state(batch);
+         agx_batch_writes_range(batch, agx_resource(resource), offset, size);
+         libagx_fill_uint4(batch, agx_2d(size / 16, 1), AGX_BARRIER_ALL,
+                           agx_map_gpu(agx_resource(resource)) + offset, 16,
+                           color.ui[0], color.ui[1], color.ui[2], color.ui[3]);
+         return;
+      } else if (aligned_4 && clear_value_size <= 4) {
+         struct agx_batch *batch = agx_get_compute_batch(agx_context(pipe));
+         agx_batch_init_state(batch);
+         agx_batch_writes_range(batch, agx_resource(resource), offset, size);
+         libagx_fill(batch, agx_1d(size / 4), AGX_BARRIER_ALL,
+                     agx_map_gpu(agx_resource(resource)) + offset, color.ui[0]);
+         return;
+      }
+   }
+
+   u_default_clear_buffer(pipe, resource, offset, size, clear_value,
+                          clear_value_size);
+}
+
 static struct pipe_context *
 agx_create_context(struct pipe_screen *screen, void *priv, unsigned flags)
 {
@@ -1764,7 +1804,7 @@ agx_create_context(struct pipe_screen *screen, void *priv, unsigned flags)
    pctx->transfer_flush_region = u_transfer_helper_transfer_flush_region;
 
    pctx->buffer_subdata = u_default_buffer_subdata;
-   pctx->clear_buffer = u_default_clear_buffer;
+   pctx->clear_buffer = asahi_clear_buffer;
    pctx->texture_subdata = u_default_texture_subdata;
    pctx->set_debug_callback = u_default_set_debug_callback;
    pctx->get_sample_position = u_default_get_sample_position;

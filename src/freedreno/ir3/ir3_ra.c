@@ -2767,7 +2767,7 @@ ir3_ra_get_reg_file_limits(struct ir3_shader_variant *v)
     */
    if (v->shader_options.real_wavesize == IR3_DOUBLE_ONLY) {
       limit_pressure.full =
-         MAX2(limit_pressure.full, v->compiler->reg_size_vec4 / 2 * 16);
+         MIN2(limit_pressure.full, v->compiler->reg_size_vec4 / 2 * 16);
    }
 
    return limit_pressure;

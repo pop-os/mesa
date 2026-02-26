@@ -934,7 +934,7 @@ void PVR_PER_ARCH(destroy_device)(struct pvr_device *device,
                              rstate,
                              &device->render_states,
                              link) {
-      pvr_render_state_cleanup(device, rstate);
+      pvr_render_state_cleanup(device, pAllocator, rstate);
       list_del(&rstate->link);
 
       vk_free(&device->vk.alloc, rstate);

@@ -1717,6 +1717,7 @@ st_QueryInternalFormat(struct gl_context *ctx, GLenum target,
       params[0] = (GLint) num_rates;
       break;
    }
+   case GL_FRAMEBUFFER_RENDERABLE:
    case GL_FRAMEBUFFER_BLEND: {
       if (target == GL_RENDERBUFFER)
          target = GL_TEXTURE_2D;
@@ -1724,9 +1725,14 @@ st_QueryInternalFormat(struct gl_context *ctx, GLenum target,
       mesa_format format = st_ChooseTextureFormat(ctx, target, internalFormat, GL_NONE, GL_NONE);
       enum pipe_format pformat = st_mesa_format_to_pipe_format(st, format);
       struct pipe_screen *screen = st->screen;
+      bool is_depth = util_format_is_depth_or_stencil(pformat);
+
+      unsigned bind = is_depth ? PIPE_BIND_DEPTH_STENCIL : PIPE_BIND_RENDER_TARGET;
+      if (pname == GL_FRAMEBUFFER_BLEND)
+         bind |= PIPE_BIND_BLENDABLE;
       bool supported = pformat != PIPE_FORMAT_NONE &&
-                       screen->is_format_supported(screen, pformat, ptarget, 0, 0,
-                                                   PIPE_BIND_BLENDABLE | PIPE_BIND_RENDER_TARGET);
+                       screen->is_format_supported(screen, pformat, ptarget, 0, 0, bind);
+
       params[0] = supported ? GL_FULL_SUPPORT : GL_NONE;
       break;
    }

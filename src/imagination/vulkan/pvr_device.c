@@ -182,7 +182,7 @@ void pvr_rstate_entry_remove(struct pvr_device *device,
       if (entry != rstate)
          continue;
 
-      pvr_render_state_cleanup(device, rstate);
+      pvr_render_state_cleanup(device, &device->vk.alloc, rstate);
       list_del(&entry->link);
 
       vk_free(&device->vk.alloc, entry);
@@ -931,6 +931,7 @@ void pvr_render_targets_fini(struct pvr_render_target *render_targets,
 }
 
 void pvr_render_state_cleanup(struct pvr_device *device,
+                              const VkAllocationCallbacks *pAllocator,
                               const struct pvr_render_state *rstate)
 {
    if (!rstate)
@@ -947,7 +948,7 @@ void pvr_render_state_cleanup(struct pvr_device *device,
    pvr_render_targets_fini(rstate->render_targets,
                            rstate->render_targets_count);
    pvr_bo_suballoc_free(rstate->ppp_state_bo);
-   vk_free(&device->vk.alloc, rstate->render_targets);
+   vk_free2(&device->vk.alloc, pAllocator, rstate->render_targets);
 }
 
 void pvr_GetBufferMemoryRequirements2(

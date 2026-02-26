@@ -84,13 +84,15 @@ pan_pack_raw(uint32_t *packed, const union pipe_color_union *color,
    util_pack_color(color->f, format, &out);
 
    if (size == 1) {
-      unsigned s = out.ui[0] | (out.ui[0] << 8);
-      pan_pack_color_32(packed, s | (s << 16));
-   } else if (size == 2)
-      pan_pack_color_32(packed, out.ui[0] | (out.ui[0] << 16));
-   else if (size <= 4)
+      unsigned b = out.ui[0] & 0xff;
+      unsigned w = b | (b << 8);
+      pan_pack_color_32(packed, w | (w << 16));
+   } else if (size == 2) {
+      unsigned w = out.ui[0] & 0xffff;
+      pan_pack_color_32(packed, w | (w << 16));
+   } else if (size <= 4) {
       pan_pack_color_32(packed, out.ui[0]);
-   else if (size <= 8) {
+   } else if (size <= 8) {
       memcpy(packed + 0, out.ui, 8);
       memcpy(packed + 2, out.ui, 8);
    } else {

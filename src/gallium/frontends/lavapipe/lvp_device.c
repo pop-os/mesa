@@ -2425,13 +2425,15 @@ lvp_image_plane_bind(struct lvp_device *device,
                      struct lvp_image_plane *plane,
                      struct lvp_device_memory *mem,
                      VkDeviceSize memory_offset,
-                     VkDeviceSize *plane_offset)
+                     VkDeviceSize *min_plane_offset)
 {
+   VkDeviceSize plane_offset = MAX2(plane->plane_offset, *min_plane_offset);
+
    if (!device->pscreen->resource_bind_backing(device->pscreen,
                                                plane->bo,
                                                mem->pmem,
                                                0, 0,
-                                               memory_offset + *plane_offset)) {
+                                               memory_offset + plane_offset)) {
       /* This is probably caused by the texture being too large, so let's
        * report this as the *closest* allowed error-code. It's not ideal,
        * but it's unlikely that anyone will care too much.
@@ -2440,8 +2442,8 @@ lvp_image_plane_bind(struct lvp_device *device,
    }
    plane->pmem = mem->pmem;
    plane->memory_offset = memory_offset;
-   plane->plane_offset = *plane_offset;
-   *plane_offset += plane->size;
+   plane->plane_offset = plane_offset;
+   *min_plane_offset = plane_offset + plane->size;
    return VK_SUCCESS;
 }
 

@@ -37,6 +37,8 @@ struct pvr_eot_props {
    uint64_t tile_buffer_addrs[PVR_MAX_COLOR_ATTACHMENTS];
 };
 
+nir_shader *pvr_usc_fs_pfo_passthrough_nir (pco_ctx *ctx);
+
 pco_shader *pvr_usc_eot(pco_ctx *ctx,
                         struct pvr_eot_props *props,
                         const struct pvr_device_info *dev_info);

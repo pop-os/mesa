@@ -3936,7 +3936,7 @@ unbind_fb_surface(struct zink_context *ctx, const struct pipe_surface *surf, uns
    batch_ref_fb_surface(ctx, surf);
    /* this is called just before the resource loses a reference, so a refcount==1 means the resource will be destroyed */
    if (!res->fb_bind_count && res->base.b.reference.count > 1) {
-      if (ctx->track_renderpasses && !ctx->blitting) {
+      if (ctx->track_renderpasses && !ctx->blitting && res->obj->access & VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT) {
          pre_sync_transfer_barrier(ctx, res, false);
       }
       if (!general_layout && res->sampler_bind_count[0]) {

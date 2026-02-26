@@ -827,6 +827,8 @@ kk_enumerate_physical_devices(struct vk_instance *_instance)
    if (result != VK_SUCCESS)
       goto fail_mtl_dev;
 
+   kk_physical_device_init_pipeline_cache(pdev);
+
    uint64_t sysmem_size_B = kk_get_sysmem_heap_size();
    if (sysmem_size_B == 0) {
       result = vk_errorf(instance, VK_ERROR_INITIALIZATION_FAILED,

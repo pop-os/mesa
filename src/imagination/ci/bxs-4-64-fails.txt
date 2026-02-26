@@ -1,10 +1,3 @@
-dEQP-VK.api.info.format_properties.r8g8b8a8_sint,Fail
-dEQP-VK.api.info.format_properties.r8g8b8a8_snorm,Fail
-dEQP-VK.api.info.format_properties.r8g8b8a8_uint,Fail
-dEQP-VK.api.info.format_properties.r8g8b8a8_unorm,Fail
-dEQP-VK.api.object_management.alloc_callback_fail.framebuffer,Fail
-dEQP-VK.api.object_management.max_concurrent.graphics_pipeline,Timeout
-dEQP-VK.api.object_management.single_alloc_callbacks.framebuffer,Fail
 dEQP-VK.binding_model.unused_invalid_descriptor.copy.combined_image_sampler,Crash
 dEQP-VK.binding_model.unused_invalid_descriptor.copy.sampled_image,Crash
 dEQP-VK.binding_model.unused_invalid_descriptor.copy.storage_buffer,Crash
@@ -21,12 +14,6 @@ dEQP-VK.binding_model.unused_invalid_descriptor.write.unused.uniform_buffer,Cras
 dEQP-VK.graphicsfuzz.cov-two-nested-loops-switch-case-matrix-array-increment,Fail
 dEQP-VK.graphicsfuzz.stable-binarysearch-tree-false-if-discard-loop,Fail
 dEQP-VK.memory.concurrent_access.shader_and_host,Crash
-dEQP-VK.memory.mapping.dedicated_alloc.buffer.full.variable.implicit_unmap_map2,Timeout
-dEQP-VK.memory.mapping.dedicated_alloc.buffer.full.variable.implicit_unmap,Timeout
-dEQP-VK.memory.mapping.dedicated_alloc.image.full.variable.implicit_unmap_map2,Timeout
-dEQP-VK.memory.mapping.dedicated_alloc.image.full.variable.implicit_unmap,Timeout
-dEQP-VK.memory.mapping.suballocation.full.variable.implicit_unmap_map2,Timeout
-dEQP-VK.memory.mapping.suballocation.full.variable.implicit_unmap,Timeout
 dEQP-VK.multiview.input_attachments.no_queries.1_2_4_8_16_32,Fail
 dEQP-VK.multiview.input_attachments.no_queries.1_2_4_8,Fail
 dEQP-VK.multiview.input_attachments.no_queries.15_15_15_15,Fail
@@ -43,7 +30,6 @@ dEQP-VK.multiview.renderpass2.input_attachments.no_queries.5_10_5_10,Fail
 dEQP-VK.multiview.renderpass2.input_attachments.no_queries.8_1_1_8,Fail
 dEQP-VK.multiview.renderpass2.input_attachments.no_queries.8,Fail
 dEQP-VK.multiview.renderpass2.input_attachments.no_queries.max_multi_view_view_count,Fail
-dEQP-VK.pipeline.monolithic.empty_fs.masked_samples,Fail
 dEQP-VK.pipeline.monolithic.stencil.no_stencil_att.dynamic_rendering.dynamic_enable.d24_unorm_s8_uint,Fail
 dEQP-VK.pipeline.monolithic.stencil.no_stencil_att.dynamic_rendering.dynamic_enable.d32_sfloat_s8_uint,Fail
 dEQP-VK.pipeline.monolithic.stencil.no_stencil_att.dynamic_rendering.static_enable.d24_unorm_s8_uint,Fail
@@ -88,7 +74,6 @@ dEQP-VK.renderpasses.dynamic_rendering.primary_cmd_buff.random.seed23_multiview,
 dEQP-VK.renderpasses.dynamic_rendering.primary_cmd_buff.random.seed23,Fail
 dEQP-VK.renderpasses.dynamic_rendering.primary_cmd_buff.random.seed24_multiview,Fail
 dEQP-VK.renderpasses.dynamic_rendering.primary_cmd_buff.random.seed24,Fail
-dEQP-VK.renderpasses.dynamic_rendering.primary_cmd_buff.random.seed25_multiview,Timeout
 dEQP-VK.renderpasses.dynamic_rendering.primary_cmd_buff.random.seed25,Fail
 dEQP-VK.renderpasses.dynamic_rendering.primary_cmd_buff.random.seed26_multiview,Fail
 dEQP-VK.renderpasses.dynamic_rendering.primary_cmd_buff.random.seed26,Fail
@@ -253,8 +238,6 @@ dEQP-VK.renderpasses.dynamic_rendering.primary_cmd_buff.random.seed98,Fail
 dEQP-VK.renderpasses.dynamic_rendering.primary_cmd_buff.random.seed99_multiview,Fail
 dEQP-VK.renderpasses.dynamic_rendering.primary_cmd_buff.random.seed99,Fail
 dEQP-VK.renderpasses.dynamic_rendering.primary_cmd_buff.suballocation.attachment.4.568,Fail
-dEQP-VK.renderpasses.renderpass1.dedicated_allocation.attachment_allocation.input_output.71,Fail
-dEQP-VK.renderpasses.renderpass1.suballocation.attachment_allocation.input_output.71,Fail
 dEQP-VK.renderpasses.renderpass2.depth_stencil_resolve.image_2d_17_1.samples_2.d24_unorm_s8_uint_separate_layouts.depth_none_stencil_zero_testing_stencil,Fail
 dEQP-VK.renderpasses.renderpass2.depth_stencil_resolve.image_2d_17_1.samples_2.d24_unorm_s8_uint_separate_layouts.depth_zero_stencil_none_testing_depth,Fail
 dEQP-VK.renderpasses.renderpass2.depth_stencil_resolve.image_2d_17_1.samples_2.d24_unorm_s8_uint.depth_none_stencil_zero_testing_stencil,Fail

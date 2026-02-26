@@ -1601,8 +1601,12 @@ elk_postprocess_nir(nir_shader *nir, const struct elk_compiler *compiler,
       };
       OPT(nir_lower_subgroups, &subgroups_options);
 
-      if (OPT(nir_lower_int64))
+      if (OPT(nir_lower_int64)) {
          elk_nir_optimize(nir, is_scalar, devinfo);
+
+         /* elk_nir_optimize undoes late lowerings. */
+         OPT(nir_opt_algebraic_late);
+      }
    }
 
    /* Do this only after the last opt_gcm. GCM will undo this lowering. */

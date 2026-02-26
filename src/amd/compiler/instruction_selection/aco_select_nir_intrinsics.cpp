@@ -3392,7 +3392,10 @@ visit_store_scratch(isel_context* ctx, nir_intrinsic_instr* instr)
       offset = as_vgpr(ctx, offset);
       for (unsigned i = 0; i < write_count; i++) {
          aco_opcode op = get_buffer_store_op(write_datas[i].bytes());
-         Instruction* mubuf = bld.mubuf(op, rsrc, offset, ctx->program->scratch_offsets.back(),
+         Operand soffset = Operand::c32(0);
+         if (!ctx->program->scratch_offsets.empty())
+            soffset = Operand(ctx->program->scratch_offsets.back());
+         Instruction* mubuf = bld.mubuf(op, rsrc, offset, soffset,
                                         write_datas[i], offsets[i], true);
          mubuf->mubuf().sync = memory_sync_info(storage_scratch, semantic_private);
          enum ac_access_type type =

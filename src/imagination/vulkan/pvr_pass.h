@@ -51,7 +51,7 @@ struct pvr_render_pass_attachment {
    uint32_t index;
 };
 
-struct pvr_render_input_attachment {
+struct pvr_render_attachment {
    uint32_t attachment_idx;
    VkImageAspectFlags aspect_mask;
 };
@@ -69,7 +69,10 @@ struct pvr_render_subpass {
    uint32_t *resolve_attachments;
 
    uint32_t input_count;
-   struct pvr_render_input_attachment *input_attachments;
+   struct pvr_render_attachment *input_attachments;
+
+   uint32_t preserve_count;
+   struct pvr_render_attachment *preserve_attachments;
 
    uint32_t depth_stencil_attachment;
 

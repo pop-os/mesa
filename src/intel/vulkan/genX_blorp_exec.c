@@ -437,6 +437,8 @@ blorp_exec_on_render(struct blorp_batch *batch,
 
    cmd_buffer->state.gfx.vb_dirty = ~0;
    cmd_buffer->state.gfx.dirty |= dirty;
+   if (blorp_uses_bti_rt_writes(batch, params))
+      cmd_buffer->state.descriptors_dirty |= VK_SHADER_STAGE_ALL_GRAPHICS;
    cmd_buffer->state.push_constants_dirty |= VK_SHADER_STAGE_ALL_GRAPHICS;
 }
 

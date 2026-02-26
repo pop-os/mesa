@@ -1007,10 +1007,11 @@ isl_genX(buffer_fill_state_s)(const struct isl_device *dev, void *state,
        !info->is_scratch) {
       assert(info->stride_B == 1);
       uint64_t aligned_size = isl_align(buffer_size, 4);
-      buffer_size = aligned_size + (aligned_size - buffer_size);
+      buffer_size = MIN2(aligned_size + (aligned_size - buffer_size),
+                         dev->max_buffer_size);
    }
 
-   uint32_t num_elements = buffer_size / info->stride_B;
+   uint64_t num_elements = buffer_size / info->stride_B;
 
    assert(num_elements > 0);
    if (info->format == ISL_FORMAT_RAW) {
@@ -1038,7 +1039,7 @@ isl_genX(buffer_fill_state_s)(const struct isl_device *dev, void *state,
        * newer are enough to fit 32bit num_elements.
        */
       if (num_elements > (1 << 27)) {
-         mesa_logw("%s: num_elements is too big: %u (buffer size: %"PRIu64")\n",
+         mesa_logw("%s: num_elements is too big: %"PRIu64" (buffer size: %"PRIu64")\n",
                    __func__, num_elements, buffer_size);
       }
    }

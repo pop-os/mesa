@@ -31,6 +31,7 @@ struct radv_sdma_surf {
    uint8_t texel_scale;     /* Texel scale for 96-bit formats */
    bool is_linear;          /* Whether the image is linear. */
    bool is_3d;              /* Whether the image is 3-dimensional. */
+   bool is_stencil;         /* Whether the image is stencil only. */
 
    union {
       /* linear images only */

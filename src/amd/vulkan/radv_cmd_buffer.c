@@ -9643,16 +9643,19 @@ radv_CmdExecuteCommands(VkCommandBuffer commandBuffer, uint32_t commandBufferCou
    VK_FROM_HANDLE(radv_cmd_buffer, primary, commandBuffer);
    struct radv_device *device = radv_cmd_buffer_device(primary);
    const struct radv_physical_device *pdev = radv_device_physical(device);
+   const bool is_gfx_or_ace = primary->qf == RADV_QUEUE_GENERAL || primary->qf == RADV_QUEUE_COMPUTE;
 
    assert(commandBufferCount > 0);
 
-   radv_emit_mip_change_flush_default(primary);
+   if (is_gfx_or_ace) {
+      radv_emit_mip_change_flush_default(primary);
 
-   /* Emit pending flushes on primary prior to executing secondary */
-   radv_emit_cache_flush(primary);
+      /* Emit pending flushes on primary prior to executing secondary */
+      radv_emit_cache_flush(primary);
 
-   /* Make sure CP DMA is idle on primary prior to executing secondary. */
-   radv_cp_dma_wait_for_idle(primary);
+      /* Make sure CP DMA is idle on primary prior to executing secondary. */
+      radv_cp_dma_wait_for_idle(primary);
+   }
 
    for (uint32_t i = 0; i < commandBufferCount; i++) {
       VK_FROM_HANDLE(radv_cmd_buffer, secondary, pCmdBuffers[i]);

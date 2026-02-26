@@ -1946,25 +1946,25 @@ panvk_per_arch(CmdBeginRendering)(VkCommandBuffer commandBuffer,
 {
    VK_FROM_HANDLE(panvk_cmd_buffer, cmdbuf, commandBuffer);
    struct panvk_cmd_graphics_state *state = &cmdbuf->state.gfx;
-   bool resuming = cmdbuf->state.gfx.render.flags & VK_RENDERING_RESUMING_BIT;
+   bool resuming = pRenderingInfo->flags & VK_RENDERING_RESUMING_BIT;
 
    /* When resuming from a suspended pass, the state should be unchanged. */
-   if (resuming)
+   if (resuming && cmdbuf->cur_batch) {
       state->render.flags = pRenderingInfo->flags;
-   else
+   } else {
+      /* If we're not resuming, cur_batch should be NULL.  However, this
+       * currently isn't true because of how events are implemented.
+       *
+       * XXX: Rewrite events to not close and open batch and add an assert here.
+       */
+      if (cmdbuf->cur_batch)
+         panvk_per_arch(cmd_close_batch)(cmdbuf);
+
       panvk_per_arch(cmd_init_render_state)(cmdbuf, pRenderingInfo);
 
-   /* If we're not resuming, cur_batch should be NULL.
-    * However, this currently isn't true because of how events are implemented.
-    * XXX: Rewrite events to not close and open batch and add an assert here.
-    */
-   if (cmdbuf->cur_batch && !resuming)
-      panvk_per_arch(cmd_close_batch)(cmdbuf);
-
-   /* The opened batch might have been disrupted by a compute job.
-    * We need to preload in that case. */
-   if (resuming && !cmdbuf->cur_batch)
-      panvk_per_arch(cmd_preload_fb_after_batch_split)(cmdbuf);
+      if (resuming)
+         panvk_per_arch(cmd_preload_fb_after_batch_split)(cmdbuf);
+   }
 
    if (!cmdbuf->cur_batch)
       panvk_per_arch(cmd_open_batch)(cmdbuf);

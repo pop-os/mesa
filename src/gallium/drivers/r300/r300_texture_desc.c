@@ -138,6 +138,12 @@ static unsigned r300_texture_get_stride(struct r300_screen *screen,
                                               tex->b.bind & PIPE_BIND_SCANOUT);
         width = align(width, tile_width);
 
+        /* NPOT textures use stride addressing (TX_PITCH_EN). Keep macro-tiled
+         * strides at an even number of macro tiles in X to prevent flakes. */
+        if (tex->tex.macrotile[level] && tex->tex.uses_stride_addressing) {
+            width = align(width, tile_width * 2);
+        }
+
         stride = util_format_get_stride(tex->b.format, width);
         /* The alignment to 32 bytes is sort of implied by the layout... */
         return stride;

@@ -192,13 +192,18 @@ wsi_metal_surface_get_formats(VkIcdSurfaceBase *icd_surface,
                                  uint32_t* pSurfaceFormatCount,
                                  VkSurfaceFormatKHR* pSurfaceFormats)
 {
+   VK_FROM_HANDLE(vk_physical_device, pdev, wsi_device->pdevice);
    VK_OUTARRAY_MAKE_TYPED(VkSurfaceFormatKHR, out, pSurfaceFormats, pSurfaceFormatCount);
 
    VkFormat sorted_formats[ARRAY_SIZE(available_surface_formats)];
    get_sorted_vk_formats(wsi_device->force_bgra8_unorm_first, sorted_formats);
+   unsigned color_space_count =
+      pdev->instance->enabled_extensions.EXT_swapchain_colorspace
+         ? ARRAY_SIZE(available_surface_color_spaces)
+         : 1u;
 
    for (unsigned i = 0; i < ARRAY_SIZE(sorted_formats); i++) {
-      for (unsigned j = 0; j < ARRAY_SIZE(available_surface_color_spaces); j++) {
+      for (unsigned j = 0; j < color_space_count; j++) {
          vk_outarray_append_typed(VkSurfaceFormatKHR, &out, f) {
             f->format = sorted_formats[i];
             f->colorSpace = available_surface_color_spaces[j];
@@ -216,13 +221,18 @@ wsi_metal_surface_get_formats2(VkIcdSurfaceBase *icd_surface,
                                   uint32_t* pSurfaceFormatCount,
                                   VkSurfaceFormat2KHR* pSurfaceFormats)
 {
+   VK_FROM_HANDLE(vk_physical_device, pdev, wsi_device->pdevice);
    VK_OUTARRAY_MAKE_TYPED(VkSurfaceFormat2KHR, out, pSurfaceFormats, pSurfaceFormatCount);
 
    VkFormat sorted_formats[ARRAY_SIZE(available_surface_formats)];
    get_sorted_vk_formats(wsi_device->force_bgra8_unorm_first, sorted_formats);
+   unsigned color_space_count =
+      pdev->instance->enabled_extensions.EXT_swapchain_colorspace
+         ? ARRAY_SIZE(available_surface_color_spaces)
+         : 1u;
 
    for (unsigned i = 0; i < ARRAY_SIZE(sorted_formats); i++) {
-      for (unsigned j = 0; j < ARRAY_SIZE(available_surface_color_spaces); j++) {
+      for (unsigned j = 0; j < color_space_count; j++) {
          vk_outarray_append_typed(VkSurfaceFormat2KHR, &out, f) {
             assert(f->sType == VK_STRUCTURE_TYPE_SURFACE_FORMAT_2_KHR);
             f->surfaceFormat.format = sorted_formats[i];

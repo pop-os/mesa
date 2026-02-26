@@ -305,7 +305,7 @@ vk_cmd_enqueue_CmdDrawMultiEXT(VkCommandBuffer commandBuffer,
    }
    cmd->u.draw_multi_ext.instance_count = instanceCount;
    cmd->u.draw_multi_ext.first_instance = firstInstance;
-   cmd->u.draw_multi_ext.stride = stride;
+   cmd->u.draw_multi_ext.stride = sizeof(*cmd->u.draw_multi_ext.vertex_info);
 }
 
 VKAPI_ATTR void VKAPI_CALL
@@ -347,7 +347,7 @@ vk_cmd_enqueue_CmdDrawMultiIndexedEXT(VkCommandBuffer commandBuffer,
 
    cmd->u.draw_multi_indexed_ext.instance_count = instanceCount;
    cmd->u.draw_multi_indexed_ext.first_instance = firstInstance;
-   cmd->u.draw_multi_indexed_ext.stride = stride;
+   cmd->u.draw_multi_indexed_ext.stride = sizeof(*cmd->u.draw_multi_indexed_ext.index_info);
 
    if (pVertexOffset) {
       cmd->u.draw_multi_indexed_ext.vertex_offset =

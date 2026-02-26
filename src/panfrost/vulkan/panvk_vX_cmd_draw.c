@@ -23,7 +23,6 @@ att_set_clear_preload(const VkRenderingAttachmentInfo *att, bool *clear, bool *p
       *preload = true;
       break;
    case VK_ATTACHMENT_LOAD_OP_NONE:
-      break;
    case VK_ATTACHMENT_LOAD_OP_DONT_CARE:
       /* This is a very frustrating corner case. From the spec:
        *

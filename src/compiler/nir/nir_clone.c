@@ -484,6 +484,8 @@ clone_call(clone_state *state, const nir_call_instr *call)
 
    for (unsigned i = 0; i < ncall->num_params; i++)
       __clone_src(state, ncall, &ncall->params[i], &call->params[i]);
+   if (call->indirect_callee.ssa)
+      __clone_src(state, ncall, &ncall->indirect_callee, &call->indirect_callee);
 
    return ncall;
 }

@@ -1662,7 +1662,7 @@ radv_graphics_shaders_link_varyings(struct radv_shader_stage *stages, enum amd_g
 
       /* Scalarize all I/O, because nir_opt_varyings and nir_opt_vectorize_io expect all I/O to be scalarized. */
       nir_variable_mode sca_mode = nir_var_shader_in;
-      bool sca_progress;
+      bool sca_progress = false;
       if (s != MESA_SHADER_FRAGMENT)
          sca_mode |= nir_var_shader_out;
 

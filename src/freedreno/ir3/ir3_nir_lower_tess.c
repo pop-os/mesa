@@ -665,7 +665,13 @@ ir3_nir_lower_tess_ctrl(nir_shader *shader, struct ir3_shader_variant *v,
 
    build_primitive_map(shader, &state.map);
    memcpy(v->output_loc, state.map.loc, sizeof(v->output_loc));
-   v->output_size = state.map.stride;
+
+   /* Empirically, TCS outputs have to be aligned to 64 bytes,
+    * otherwise stale data may be read in rare cases. The exact
+    * reason is not clear, but tests and proprietary driver behavior
+    * strongly point at the need for 64 byte alignment.
+    */
+   v->output_size = ALIGN_POT(state.map.stride, 16);
 
    nir_function_impl *impl = nir_shader_get_entrypoint(shader);
    assert(impl);

@@ -753,7 +753,7 @@ lower_line_smooth_gs_store(nir_builder *b,
       gl_varying_slot location = var->data.location;
       unsigned location_frac = var->data.location_frac;
       if (location != VARYING_SLOT_POS) {
-         assert(state->varyings[location]);
+         assert(state->varyings[location][location_frac]);
          nir_store_var(b, state->varyings[location][location_frac],
                        intrin->src[1].ssa,
                        nir_intrinsic_write_mask(intrin));

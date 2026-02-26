@@ -47,7 +47,6 @@ lvp_image_create(VkDevice _device,
    assert(pCreateInfo->sType == VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO);
 
 #ifdef HAVE_LIBDRM
-   unsigned num_layouts = 1;
    enum pipe_format pipe_format = lvp_vk_format_to_pipe_format(pCreateInfo->format);
    const VkImageDrmFormatModifierExplicitCreateInfoEXT *modinfo = (void*)vk_find_struct_const(pCreateInfo->pNext,
                                                                   IMAGE_DRM_FORMAT_MODIFIER_EXPLICIT_CREATE_INFO_EXT);
@@ -55,15 +54,7 @@ lvp_image_create(VkDevice _device,
    if (modinfo && pCreateInfo->tiling == VK_IMAGE_TILING_DRM_FORMAT_MODIFIER_EXT) {
       assert(modinfo->drmFormatModifier == DRM_FORMAT_MOD_LINEAR);
       assert(modinfo->drmFormatModifierPlaneCount == util_format_get_num_planes(pipe_format));
-      num_layouts = modinfo->drmFormatModifierPlaneCount;
       layouts = modinfo->pPlaneLayouts;
-   }
-
-   /* planar not supported yet */
-   assert(num_layouts == 1);
-   if (num_layouts > 1) {
-      mesa_loge("lavapipe: planar drm formats are not supported");
-      return VK_ERROR_OUT_OF_DEVICE_MEMORY;
    }
 
    modifier = DRM_FORMAT_MOD_LINEAR;
@@ -174,7 +165,7 @@ lvp_image_create(VkDevice _device,
          whandle.stride = layouts[p].rowPitch;
          whandle.array_stride = layouts[p].arrayPitch;
          whandle.image_stride = layouts[p].depthPitch;
-         image->offset = layouts[p].offset;
+         image->planes[p].plane_offset = layouts[p].offset;
          whandle.format = pCreateInfo->format;
          whandle.modifier = modifier;
          image->planes[p].bo = device->pscreen->resource_from_handle(device->pscreen,

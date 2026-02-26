@@ -467,7 +467,9 @@ radv_meta_resolve_depth_stencil_cs(struct radv_cmd_buffer *cmd_buffer, struct ra
 
    radv_CmdBindPipeline(radv_cmd_buffer_to_handle(cmd_buffer), VK_PIPELINE_BIND_POINT_COMPUTE, pipeline);
 
-   const uint32_t push_constants[2] = {region->srcOffset.x, region->srcOffset.y};
+   const uint32_t push_constants[5] = {
+      region->srcOffset.x, region->srcOffset.y, region->dstOffset.x, region->dstOffset.y, region->dstOffset.z,
+   };
 
    const VkPushConstantsInfoKHR pc_info = {
       .sType = VK_STRUCTURE_TYPE_PUSH_CONSTANTS_INFO_KHR,

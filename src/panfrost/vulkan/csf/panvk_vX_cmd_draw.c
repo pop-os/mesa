@@ -1995,6 +1995,7 @@ prepare_dcd(struct panvk_cmd_buffer *cmdbuf,
                      /* line mode needs primitive topology */
                      dyn_gfx_state_dirty(cmdbuf, RS_LINE_MODE) ||
                      dyn_gfx_state_dirty(cmdbuf, IA_PRIMITIVE_TOPOLOGY) ||
+                     dyn_gfx_state_dirty(cmdbuf, COLOR_ATTACHMENT_MAP) ||
                      fs_user_dirty(cmdbuf) ||
                      gfx_state_dirty(cmdbuf, RENDER_STATE);
 

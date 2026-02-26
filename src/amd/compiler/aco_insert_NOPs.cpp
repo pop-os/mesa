@@ -1867,6 +1867,8 @@ resolve_all_gfx11(State& state, NOP_ctx_gfx11& ctx,
        ctx.vgpr_used_by_vmem_bvh.any()) {
       waitcnt_depctr &= 0xffe3;
       ctx.vgpr_used_by_vmem_load.reset();
+      ctx.vgpr_used_by_vmem_sample.reset();
+      ctx.vgpr_used_by_vmem_bvh.reset();
       ctx.vgpr_used_by_vmem_store.reset();
       ctx.vgpr_used_by_ds.reset();
    }
@@ -1912,7 +1914,9 @@ handle_block(Program* program, Ctx& ctx, Block& block)
       Handle(state, ctx, instr, block.instructions);
 
       /* Resolve all possible hazards (we don't know what s_setpc_b64 jumps to). */
-      if (instr->opcode == aco_opcode::s_setpc_b64) {
+      if (instr->opcode == aco_opcode::s_setpc_b64 || instr->opcode == aco_opcode::s_swappc_b64 ||
+          instr->opcode == aco_opcode::s_call_b64) {
+         found_end |= instr->opcode == aco_opcode::s_setpc_b64;
          block.instructions.emplace_back(std::move(instr));
 
          std::vector<aco_ptr<Instruction>> resolve_instrs;
@@ -1920,8 +1924,6 @@ handle_block(Program* program, Ctx& ctx, Block& block)
          block.instructions.insert(std::prev(block.instructions.end()),
                                    std::move_iterator(resolve_instrs.begin()),
                                    std::move_iterator(resolve_instrs.end()));
-
-         found_end = true;
          continue;
       }
 

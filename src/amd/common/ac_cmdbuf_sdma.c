@@ -222,10 +222,12 @@ static uint32_t
 ac_sdma_get_tiled_info_dword(const struct radeon_info *info,
                              const struct ac_sdma_surf_tiled *tiled)
 {
-   const uint32_t swizzle_mode = tiled->surf->has_stencil ? tiled->surf->u.gfx9.zs.stencil_swizzle_mode
-                                                          : tiled->surf->u.gfx9.swizzle_mode;
-   const uint16_t epitch = tiled->surf->has_stencil ? tiled->surf->u.gfx9.zs.stencil_epitch
-                                                    : tiled->surf->u.gfx9.epitch;
+   const uint32_t swizzle_mode =
+      tiled->is_stencil ? tiled->surf->u.gfx9.zs.stencil_swizzle_mode
+                        : tiled->surf->u.gfx9.swizzle_mode;
+   const uint16_t epitch =
+      tiled->is_stencil ? tiled->surf->u.gfx9.zs.stencil_epitch
+                        : tiled->surf->u.gfx9.epitch;
    const enum gfx9_resource_type dimension =
       ac_sdma_get_tiled_resource_dim(info->sdma_ip_version, tiled);
    const uint32_t mip_max = MAX2(tiled->num_levels, 1);

@@ -1164,6 +1164,11 @@ get_drm_format_modifier_properties_list(const struct anv_physical_device *physic
       if (!features)
          continue;
 
+      if (physical_device->info.ver >= 20 &&
+          physical_device->instance->disable_xe2_drm_ccs_modifiers &&
+          isl_mod_info->supports_render_compression)
+         continue;
+
       const uint32_t planes =
          isl_drm_modifier_get_plane_count(&physical_device->info,
                                           isl_mod_info->modifier,

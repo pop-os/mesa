@@ -61,6 +61,7 @@ struct ac_sdma_surf_tiled {
    uint64_t va;
    enum pipe_format format;
    uint32_t bpp;
+   bool is_stencil;
 
    struct {
       uint32_t x;

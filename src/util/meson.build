@@ -349,9 +349,15 @@ _libmesa_util = static_library(
   build_by_default : false
 )
 
+# Mesa leaves strict aliasing on in the compiler, and xxhash code likes to
+# dereference the passed in data as u32*, which means that the compiler is
+# free to move the u32 read before the write of the struct members being
+# hashed, and in practice it did in Freedreno and Intel drivers.
+# Forcing 2 flags below prevents it.
 idep_mesautil = declare_dependency(
   sources : [shader_stats_h],
   link_with : _libmesa_util,
+  compile_args : [ '-DXXH_FORCE_ALIGN_CHECK=0', '-DXXH_FORCE_MEMORY_ACCESS=0' ],
   include_directories : [inc_util],
   dependencies : deps_for_libmesa_util,
 )

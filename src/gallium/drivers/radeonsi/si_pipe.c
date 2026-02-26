@@ -209,6 +209,9 @@ static void si_destroy_context(struct pipe_context *context)
 {
    struct si_context *sctx = (struct si_context *)context;
 
+   util_queue_finish(&sctx->screen->shader_compiler_queue);
+   util_queue_finish(&sctx->screen->shader_compiler_queue_opt_variants);
+
    if (context->set_debug_callback)
       context->set_debug_callback(context, NULL);
 

@@ -117,6 +117,17 @@ cmod_propagate_cmp_to_add(const intel_device_info *devinfo, brw_inst *inst)
    }
 
    foreach_inst_in_block_reverse_starting_from(brw_inst, scan_inst, inst) {
+      /* If either of the sources of the CMP is modified, the optimization
+       * cannot occur. This is the case even if the instruction modifying the
+       * value is an ADD of the appropriate form.
+       */
+      if (regions_overlap(scan_inst->dst, scan_inst->size_written,
+                          inst->src[0], inst->size_read(devinfo, 0)) ||
+          regions_overlap(scan_inst->dst, scan_inst->size_written,
+                          inst->src[1], inst->size_read(devinfo, 1))) {
+         break;
+      }
+
       if (scan_inst->opcode == BRW_OPCODE_ADD &&
           !scan_inst->predicate &&
           scan_inst->dst.is_contiguous() &&

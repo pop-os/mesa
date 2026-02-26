@@ -197,6 +197,9 @@ following example::
 This will backport the commit to the 21.0 branch, as well as any more recent
 stable branch. Multiple ``Backport-to:`` lines are allowed, but only the
 lowest number mentioned actually matters, so for clarity, please only use one.
+You can also use the special ``Backport-to: *`` which will nominate the commit
+to be backported to every active stable branch, making it a synonym to the ``Cc:
+mesa-stable`` below.
 
 The last option is deprecated and mostly here for historical reasons
 dating back to when patch submission was done via emails: using a ``Cc:``

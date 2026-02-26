@@ -5158,12 +5158,6 @@ brw_from_nir_emit_intrinsic(nir_to_brw_state &ntb,
       if (opcode == BRW_OPCODE_NOP)
          break;
 
-      if (s.nir->info.shared_size > 0) {
-         assert(mesa_shader_stage_uses_workgroup(s.stage));
-      } else {
-         slm_fence = false;
-      }
-
       /* If the workgroup fits in a single HW thread, the messages for SLM are
        * processed in-order and the shader itself is already synchronized so
        * the memory fence is not necessary.

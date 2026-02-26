@@ -613,6 +613,39 @@ agx_resource_copy_region(struct pipe_context *pctx, struct pipe_resource *dst,
                          unsigned dstz, struct pipe_resource *src,
                          unsigned src_level, const struct pipe_box *src_box)
 {
+   if (dst->target == PIPE_BUFFER && src->target == PIPE_BUFFER) {
+      struct agx_batch *batch = agx_get_compute_batch(agx_context(pctx));
+      agx_batch_init_state(batch);
+      assert(dst->format == src->format);
+      unsigned bs = util_format_get_blocksize(dst->format);
+      unsigned size = bs * src_box->width;
+      uint64_t dst_addr = agx_map_gpu(agx_resource(dst)) + dstx * bs;
+      uint64_t src_addr = agx_map_gpu(agx_resource(src)) + src_box->x * bs;
+
+      agx_batch_reads(batch, agx_resource(src));
+      agx_batch_writes_range(batch, agx_resource(dst), dst_addr, size);
+      /* Use vectorized copies for as much of the buffer as possible. This requires
+       * that dst, src, and size are all properly aligned. Failing to check for
+       * alignment on the buffers causes subtle and hard-to-debug issues!
+       */
+      if (size >= 16 && (dst_addr & 0xf) == 0 && (src_addr & 0xf) == 0) {
+         unsigned uint4s = size / 16;
+         unsigned bytes = uint4s * 16;
+
+         libagx_copy_uint4(batch, agx_1d(uint4s), AGX_BARRIER_ALL, dst_addr, src_addr);
+
+         dst_addr += bytes;
+         src_addr += bytes;
+         size -= bytes;
+      }
+
+      if (size) {
+         libagx_copy_uchar(batch, agx_1d(size), AGX_BARRIER_ALL, dst_addr, src_addr);
+      }
+
+      return;
+   }
+
    if (try_copy_via_blit(pctx, dst, dst_level, dstx, dsty, dstz, src, src_level,
                          src_box))
       return;

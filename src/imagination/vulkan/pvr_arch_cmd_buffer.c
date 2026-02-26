@@ -4875,7 +4875,7 @@ void PVR_PER_ARCH(CmdBeginRendering)(VkCommandBuffer commandBuffer,
    return;
 
 err_cleanup_render_state:
-   pvr_render_state_cleanup(device, state->render_pass_info.rstate);
+   pvr_render_state_cleanup(device, &device->vk.alloc, state->render_pass_info.rstate);
 
 err_cleanup_tile_buffers:
    pvr_device_free_tile_buffer_state(device);
@@ -6548,6 +6548,21 @@ static void pvr_setup_output_select(struct pvr_cmd_buffer *const cmd_buffer)
    }
 }
 
+static bool
+pvr_needs_fs_passthrough(const struct vk_dynamic_graphics_state *dynamic_state)
+{
+   if (dynamic_state->rs.rasterizer_discard_enable)
+      return false;
+
+   uint32_t full_sample_mask =
+      BITFIELD_MASK(dynamic_state->ms.rasterization_samples);
+
+   bool partial_sample_mask =
+      (dynamic_state->ms.sample_mask & full_sample_mask) != full_sample_mask;
+
+   return partial_sample_mask;
+}
+
 static void
 pvr_setup_isp_faces_and_control(struct pvr_cmd_buffer *const cmd_buffer,
                                 struct ROGUE_TA_STATE_ISPA *const ispa_out)
@@ -6560,6 +6575,8 @@ pvr_setup_isp_faces_and_control(struct pvr_cmd_buffer *const cmd_buffer,
    struct vk_dynamic_graphics_state *dynamic_state =
       &cmd_buffer->vk.dynamic_graphics_state;
    struct pvr_ppp_state *const ppp_state = &cmd_buffer->state.ppp_state;
+   bool skip_fs = fragment_shader_state->is_passthrough &&
+                  !pvr_needs_fs_passthrough(dynamic_state);
 
    const bool rasterizer_discard = dynamic_state->rs.rasterizer_discard_enable;
    const uint32_t subpass_idx = pass_info->subpass_idx;
@@ -6634,6 +6651,9 @@ pvr_setup_isp_faces_and_control(struct pvr_cmd_buffer *const cmd_buffer,
       if (dynamic_state->cb.logic_op_enable &&
           fragment_shader_state->pass_type == ROGUE_TA_PASSTYPE_OPAQUE)
          ispa.passtype = ROGUE_TA_PASSTYPE_TRANSLUCENT;
+
+      if (skip_fs)
+         ispa.passtype = ROGUE_TA_PASSTYPE_OPAQUE;
 
       ispa.objtype = obj_type;
 
@@ -6749,7 +6769,7 @@ pvr_setup_isp_faces_and_control(struct pvr_cmd_buffer *const cmd_buffer,
 
       /* TODO: is shader_bo ever NULL? Figure out what to do. */
       ispctl.tagwritedisable = rasterizer_discard ||
-                               !fragment_shader_state->shader_bo;
+                               !fragment_shader_state->shader_bo || skip_fs;
 
       ispctl.two_sided = is_two_sided;
       ispctl.bpres = header->pres_ispctl_fb || header->pres_ispctl_bb;
@@ -7865,10 +7885,12 @@ pvr_emit_dirty_ppp_state(struct pvr_cmd_buffer *const cmd_buffer,
       pvr_setup_isp_faces_and_control(cmd_buffer, NULL);
    }
 
+   bool skip_fs = fragment_state->is_passthrough &&
+                  !pvr_needs_fs_passthrough(dynamic_state);
    if (!dynamic_state->rs.rasterizer_discard_enable &&
        state->dirty.fragment_descriptors &&
        state->gfx_pipeline->shader_state.fragment.shader_bo &&
-       !state->gfx_pipeline->fs_data.common.uses.empty) {
+       !state->gfx_pipeline->fs_data.common.uses.empty && !skip_fs) {
       result = pvr_setup_fragment_state_pointers(cmd_buffer, sub_cmd);
       if (result != VK_SUCCESS)
          return result;
@@ -7906,7 +7928,8 @@ pvr_emit_dirty_ppp_state(struct pvr_cmd_buffer *const cmd_buffer,
       return result;
 
    if (state->gfx_pipeline &&
-       fragment_state->pass_type == ROGUE_TA_PASSTYPE_DEPTH_FEEDBACK) {
+       fragment_state->pass_type == ROGUE_TA_PASSTYPE_DEPTH_FEEDBACK &&
+       !skip_fs) {
       assert(state->current_sub_cmd->type == PVR_SUB_CMD_TYPE_GRAPHICS);
       state->current_sub_cmd->gfx.has_depth_feedback = true;
    }
@@ -8235,7 +8258,12 @@ static VkResult pvr_validate_draw_state(struct pvr_cmd_buffer *cmd_buffer)
       state->dirty.fragment_descriptors = true;
    }
 
-   if (state->dirty.fragment_descriptors) {
+   const struct pvr_fragment_shader_state *const fragment_shader_state =
+      &gfx_pipeline->shader_state.fragment;
+   bool skip_fs = fragment_shader_state->is_passthrough &&
+                  !pvr_needs_fs_passthrough(dynamic_state);
+
+   if (state->dirty.fragment_descriptors && !skip_fs) {
       result = pvr_setup_descriptor_mappings(
          cmd_buffer,
          PVR_STAGE_ALLOCATION_FRAGMENT,
@@ -9333,7 +9361,7 @@ pvr_stencil_has_self_dependency(const struct pvr_cmd_buffer_state *const state)
 {
    const struct pvr_render_subpass *const current_subpass =
       pvr_get_current_subpass(state);
-   const struct pvr_render_input_attachment *const input_attachments =
+   const struct pvr_render_attachment *const input_attachments =
       current_subpass->input_attachments;
 
    if (current_subpass->depth_stencil_attachment == VK_ATTACHMENT_UNUSED)

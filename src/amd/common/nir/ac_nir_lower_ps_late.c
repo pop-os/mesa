@@ -443,10 +443,14 @@ emit_ps_color_export(nir_builder *b, lower_ps_state *s, unsigned output_index, u
    }
    }
 
-   s->exp[s->exp_num++] = nir_export_amd(b, nir_vec(b, outputs, 4),
-                                         .base = target,
-                                         .write_mask = write_mask,
-                                         .flags = flags);
+   nir_intrinsic_instr *exp = nir_export_amd(b, nir_vec(b, outputs, 4),
+                                             .base = target,
+                                             .flags = flags);
+
+   /* Set the writemask explicitly because write_mask=0 means full write mask. */
+   nir_intrinsic_set_write_mask(exp, write_mask);
+
+   s->exp[s->exp_num++] = exp;
    return true;
 }
 
@@ -483,7 +487,7 @@ emit_ps_dual_src_blend_swizzle(nir_builder *b, lower_ps_state *s, unsigned first
 
    uint32_t mrt0_write_mask = nir_intrinsic_write_mask(mrt0_exp);
    uint32_t mrt1_write_mask = nir_intrinsic_write_mask(mrt1_exp);
-   uint32_t write_mask = mrt0_write_mask & mrt1_write_mask;
+   uint32_t write_mask = mrt0_write_mask | mrt1_write_mask;
 
    nir_def *mrt0_arg = mrt0_exp->src[0].ssa;
    nir_def *mrt1_arg = mrt1_exp->src[0].ssa;

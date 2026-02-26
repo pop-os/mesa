@@ -98,6 +98,10 @@ vn_queue_init(struct vn_device *dev,
       .queueFamilyIndex = queue_info->queueFamilyIndex,
       .queueIndex = queue_index,
    };
+#if DETECT_CC_GCC && (DETECT_CC_GCC_VERSION >= 1501)
+   /* Workaround GCC-15 aggressive Dead Store Elimination (DSE). */
+   __asm__ volatile("" : : "g"(device_queue_info.pNext) : "memory");
+#endif
 
    VkQueue queue_handle = vn_queue_to_handle(queue);
    vn_async_vkGetDeviceQueue2(dev->primary_ring, vn_device_to_handle(dev),

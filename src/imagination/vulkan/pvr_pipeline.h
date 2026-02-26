@@ -84,6 +84,8 @@ struct pvr_fragment_shader_state {
 
    struct pvr_pds_kickusc_program pds_fragment_program;
    uint32_t *pds_fragment_program_buffer;
+
+   bool is_passthrough;
 };
 
 struct pvr_pipeline {

@@ -35,7 +35,8 @@ intel_perf_query_result_write_mdapi(void *data, uint32_t data_size,
                                     const struct intel_perf_query_result *result)
 {
    switch (devinfo->verx10) {
-   case 70: {
+   case 70:
+   case 75: {
       struct gfx7_mdapi_metrics *mdapi_data = (struct gfx7_mdapi_metrics *) data;
 
       if (data_size < sizeof(*mdapi_data))
@@ -315,7 +316,8 @@ intel_perf_register_mdapi_oa_query(struct intel_perf_config *perf,
       return;
 
    switch (devinfo->verx10) {
-   case 70: {
+   case 70:
+   case 75: {
       query = intel_perf_append_query_info(perf, 1 + 45 + 16 + 7);
 
       struct gfx7_mdapi_metrics metric_data;

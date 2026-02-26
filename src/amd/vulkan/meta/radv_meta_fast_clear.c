@@ -8,6 +8,7 @@
 #include <stdbool.h>
 
 #include "nir/radv_meta_nir.h"
+#include "radv_cs.h"
 #include "radv_meta.h"
 
 enum radv_color_op {
@@ -241,6 +242,7 @@ radv_process_color_image_layer(struct radv_cmd_buffer *cmd_buffer, struct radv_i
                                const VkImageSubresourceRange *range, int level, int layer, enum radv_color_op op)
 {
    struct radv_device *device = radv_cmd_buffer_device(cmd_buffer);
+   const struct radv_physical_device *pdev = radv_device_physical(device);
    struct radv_image_view iview;
    uint32_t width, height;
 
@@ -303,9 +305,23 @@ radv_process_color_image_layer(struct radv_cmd_buffer *cmd_buffer, struct radv_i
 
    radv_CmdDraw(radv_cmd_buffer_to_handle(cmd_buffer), 3, 1, 0, 0);
 
-   if (op == FMASK_DECOMPRESS || op == DCC_DECOMPRESS)
+   if (op == FMASK_DECOMPRESS || op == DCC_DECOMPRESS) {
+      /* On GFX6-8, the CB FMASK cache writes corrupted data if cache lines are flushed after their
+       * context has been retired. To avoid this, we must flush the CB metadata caches immediately
+       * after every FMASK decompress.
+       *
+       * PAL only applies this workaround on GFX6 but GFX7-8 are also affected and that matches
+       * RadeonSI.
+       */
+      if (pdev->info.gfx_level <= GFX8 && op == FMASK_DECOMPRESS) {
+         radeon_begin(cmd_buffer->cs);
+         radeon_event_write(V_028A90_FLUSH_AND_INV_CB_META);
+         radeon_end();
+      }
+
       cmd_buffer->state.flush_bits |= radv_src_access_flush(cmd_buffer, VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
                                                             VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT, 0, image, range);
+   }
 
    const VkRenderingEndInfoKHR end_info = {
       .sType = VK_STRUCTURE_TYPE_RENDERING_END_INFO_KHR,

@@ -115,7 +115,7 @@ st_nir_lookup_parameter_index(struct gl_program *prog, nir_variable *var)
 static void
 st_nir_assign_uniform_locations(struct st_context *st,
                                 struct gl_program *prog,
-                                nir_shader *nir, bool is_before_variants)
+                                nir_shader *nir)
 {
    struct gl_context *ctx = st->ctx;
    int shaderidx = 0;
@@ -135,10 +135,20 @@ st_nir_assign_uniform_locations(struct st_context *st,
             imageidx += type_size(uniform->type);
          }
       } else if (uniform->state_slots) {
-         if (st->allow_st_finalize_nir_twice && !is_before_variants)
-            continue;
-
          const gl_state_index16 *const stateTokens = uniform->state_slots[0].tokens;
+         if (st->allow_st_finalize_nir_twice) {
+            /* Make sure the variant has the correct locations set */
+            loc = _mesa_lookup_state_param_idx(prog->Parameters, stateTokens);
+            if (loc >= 0) {
+               if (ctx->Const.PackedDriverUniformStorage) {
+                  uniform->data.driver_location =
+                     prog->Parameters->Parameters[loc].ValueOffset;
+               } else
+                  uniform->data.driver_location = loc;
+            }
+
+            continue;
+         }
 
          unsigned comps;
          if (glsl_type_is_struct_or_ifc(type)) {
@@ -735,7 +745,7 @@ st_finalize_nir(struct st_context *st, struct gl_program *prog,
       NIR_PASS(_, nir, nir_lower_tex, &opts);
    }
 
-   st_nir_assign_uniform_locations(st, prog, nir, is_before_variants);
+   st_nir_assign_uniform_locations(st, prog, nir);
 
    /* Set num_uniforms in number of attribute slots (vec4s) */
    nir->num_uniforms = DIV_ROUND_UP(prog->Parameters->NumParameterValues, 4);

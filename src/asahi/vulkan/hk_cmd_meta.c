@@ -1493,7 +1493,12 @@ hk_CmdFillBuffer(VkCommandBuffer commandBuffer, VkBuffer dstBuffer,
    uint64_t addr =
       vk_meta_buffer_address(&dev->vk, dstBuffer, dstOffset, dstRange);
 
-   libagx_fill(cmd, agx_1d(range / 4), AGX_BARRIER_ALL, addr, data);
+   if (util_is_aligned(addr, 16) && util_is_aligned(range, 16)) {
+      libagx_fill_uint4(cmd, agx_2d(range / 16, 1), AGX_BARRIER_ALL,
+                        addr, 0, data, data, data, data);
+   } else {
+      libagx_fill(cmd, agx_1d(range / 4), AGX_BARRIER_ALL, addr, data);
+   }
 }
 
 VKAPI_ATTR void VKAPI_CALL

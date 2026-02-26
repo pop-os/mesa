@@ -569,14 +569,17 @@ kk_shader_destroy(struct vk_device *vk_dev, struct vk_shader *vk_shader,
    struct kk_device *dev = container_of(vk_dev, struct kk_device, vk);
    struct kk_shader *shader = container_of(vk_shader, struct kk_shader, vk);
 
-   if (shader->pipeline.cs) {
+   if (shader->info.stage == MESA_SHADER_COMPUTE) {
       mtl_release(shader->pipeline.cs);
-   } else if (shader->pipeline.gfx.handle) {
+   } else if (shader->info.stage == MESA_SHADER_VERTEX) {
       mtl_release(shader->pipeline.gfx.handle);
       if (shader->pipeline.gfx.mtl_depth_stencil_state_handle)
          mtl_release(shader->pipeline.gfx.mtl_depth_stencil_state_handle);
       shader->pipeline.gfx.handle = NULL;
       shader->pipeline.gfx.mtl_depth_stencil_state_handle = NULL;
+
+      ralloc_free((void *)shader->info.vs.frag_msl_code);
+      ralloc_free((void *)shader->info.vs.frag_entrypoint_name);
    }
 
    ralloc_free((void *)shader->msl_code);
@@ -832,54 +835,47 @@ has_static_depth_stencil_state(const struct vk_graphics_pipeline_state *state)
       BITSET_TEST(state->dynamic, MESA_VK_DYNAMIC_DS_STENCIL_WRITE_MASK));
 }
 
-mtl_depth_stencil_state *
-kk_compile_depth_stencil_state(struct kk_device *device,
-                               const struct vk_depth_stencil_state *ds,
-                               bool has_depth, bool has_stencil)
+static mtl_depth_stencil_state *
+kk_compile_ds_state(struct kk_device *device, struct kk_shader_info *info)
 {
    mtl_stencil_descriptor *front = NULL;
    mtl_stencil_descriptor *back = NULL;
    mtl_depth_stencil_descriptor *descriptor =
       mtl_new_depth_stencil_descriptor();
-   if (has_depth && ds->depth.test_enable) {
-      mtl_depth_stencil_descriptor_set_depth_write_enabled(
-         descriptor, ds->depth.write_enable);
-      mtl_depth_stencil_descriptor_set_depth_compare_function(
-         descriptor, ds->depth.compare_op);
-   } else {
-      /* Only way to disable is to always pass */
-      mtl_depth_stencil_descriptor_set_depth_write_enabled(descriptor, false);
-      mtl_depth_stencil_descriptor_set_depth_compare_function(
-         descriptor, VK_COMPARE_OP_ALWAYS);
-   }
+   mtl_depth_stencil_descriptor_set_depth_write_enabled(
+      descriptor, info->vs.has_depth_write);
+   mtl_depth_stencil_descriptor_set_depth_compare_function(
+      descriptor, info->vs.depth_compare_op);
 
-   if (has_stencil && ds->stencil.test_enable) {
+   if (info->vs.has_stencil_test) {
       back = mtl_new_stencil_descriptor();
       mtl_stencil_descriptor_set_depth_failure_operation(
-         back, ds->stencil.back.op.depth_fail);
+         back, info->vs.stencil_back.depth_fail);
       mtl_stencil_descriptor_set_stencil_failure_operation(
-         back, ds->stencil.back.op.fail);
+         back, info->vs.stencil_back.fail);
       mtl_stencil_descriptor_set_depth_stencil_pass_operation(
-         back, ds->stencil.back.op.pass);
+         back, info->vs.stencil_back.pass);
       mtl_stencil_descriptor_set_stencil_compare_function(
-         back, ds->stencil.back.op.compare);
-      mtl_stencil_descriptor_set_read_mask(back, ds->stencil.back.compare_mask);
-      mtl_stencil_descriptor_set_write_mask(back, ds->stencil.back.write_mask);
+         back, info->vs.stencil_back.compare);
+      mtl_stencil_descriptor_set_read_mask(back,
+                                           info->vs.stencil_back.compare_mask);
+      mtl_stencil_descriptor_set_write_mask(back,
+                                            info->vs.stencil_back.write_mask);
       mtl_depth_stencil_descriptor_set_back_face_stencil(descriptor, back);
 
       front = mtl_new_stencil_descriptor();
       mtl_stencil_descriptor_set_depth_failure_operation(
-         front, ds->stencil.front.op.depth_fail);
+         front, info->vs.stencil_front.depth_fail);
       mtl_stencil_descriptor_set_stencil_failure_operation(
-         front, ds->stencil.front.op.fail);
+         front, info->vs.stencil_front.fail);
       mtl_stencil_descriptor_set_depth_stencil_pass_operation(
-         front, ds->stencil.front.op.pass);
+         front, info->vs.stencil_front.pass);
       mtl_stencil_descriptor_set_stencil_compare_function(
-         front, ds->stencil.front.op.compare);
+         front, info->vs.stencil_front.compare);
       mtl_stencil_descriptor_set_read_mask(front,
-                                           ds->stencil.front.compare_mask);
+                                           info->vs.stencil_front.compare_mask);
       mtl_stencil_descriptor_set_write_mask(front,
-                                            ds->stencil.front.write_mask);
+                                            info->vs.stencil_front.write_mask);
       mtl_depth_stencil_descriptor_set_front_face_stencil(descriptor, front);
    }
 
@@ -895,101 +891,188 @@ kk_compile_depth_stencil_state(struct kk_device *device,
    return state;
 }
 
+static void
+kk_gather_ds_info(const struct vk_depth_stencil_state *ds, bool has_depth,
+                  bool has_stencil, struct kk_shader_info *info)
+{
+   /* Depth */
+   if (has_depth && ds->depth.test_enable) {
+      info->vs.has_depth_write = ds->depth.write_enable;
+      info->vs.depth_compare_op = ds->depth.compare_op;
+   } else {
+      info->vs.has_depth_write = false;
+      info->vs.depth_compare_op = VK_COMPARE_OP_ALWAYS;
+   }
+
+   /* Stencil */
+   info->vs.has_stencil_test = has_stencil && ds->stencil.test_enable;
+   if (info->vs.has_stencil_test) {
+      info->vs.stencil_back.depth_fail = ds->stencil.back.op.depth_fail;
+      info->vs.stencil_back.fail = ds->stencil.back.op.fail;
+      info->vs.stencil_back.pass = ds->stencil.back.op.pass;
+      info->vs.stencil_back.compare = ds->stencil.back.op.compare;
+      info->vs.stencil_back.compare_mask = ds->stencil.back.compare_mask;
+      info->vs.stencil_back.write_mask = ds->stencil.back.write_mask;
+
+      info->vs.stencil_front.depth_fail = ds->stencil.front.op.depth_fail;
+      info->vs.stencil_front.fail = ds->stencil.front.op.fail;
+      info->vs.stencil_front.pass = ds->stencil.front.op.pass;
+      info->vs.stencil_front.compare = ds->stencil.front.op.compare;
+      info->vs.stencil_front.compare_mask = ds->stencil.front.compare_mask;
+      info->vs.stencil_front.write_mask = ds->stencil.front.write_mask;
+   }
+}
+
+mtl_depth_stencil_state *
+kk_compile_depth_stencil_state(struct kk_device *device,
+                               const struct vk_depth_stencil_state *ds,
+                               bool has_depth, bool has_stencil)
+{
+   struct kk_shader_info info = {};
+   kk_gather_ds_info(ds, has_depth, has_stencil, &info);
+   return kk_compile_ds_state(device, &info);
+}
+
+static struct kk_shader_info
+gather_graphics_pipeline_create_info(
+   const struct vk_graphics_pipeline_state *state, uint32_t attribs_read,
+   struct kk_shader *fs)
+{
+   assert(state && fs && "state and fragment shader are a must");
+   struct kk_shader_info info = {.vs.attribs_read = attribs_read};
+
+   info.vs.topology = vk_primitive_topology_to_mtl_primitive_topology_class(
+      state->ia->primitive_topology);
+   info.vs.primitive_type = vk_primitive_topology_to_mtl_primitive_type(
+      state->ia->primitive_topology);
+
+   /* Render pass data */
+   const struct vk_render_pass_state *rp = state->rp;
+   bool has_depth = rp->depth_attachment_format != VK_FORMAT_UNDEFINED;
+   bool has_stencil = rp->stencil_attachment_format != VK_FORMAT_UNDEFINED;
+   {
+      info.vs.color_attachment_count = rp->color_attachment_count;
+      for (uint8_t i = 0u; i < info.vs.color_attachment_count; ++i) {
+         VkFormat format = rp->color_attachment_formats[i];
+         info.vs.rt_formats[i] = format == VK_FORMAT_UNDEFINED
+                                    ? MTL_PIXEL_FORMAT_INVALID
+                                    : vk_format_to_mtl_pixel_format(format);
+      }
+      info.vs.d_format =
+         has_depth ? vk_format_to_mtl_pixel_format(rp->depth_attachment_format)
+                   : MTL_PIXEL_FORMAT_INVALID;
+      info.vs.s_format =
+         has_stencil
+            ? vk_format_to_mtl_pixel_format(rp->stencil_attachment_format)
+            : MTL_PIXEL_FORMAT_INVALID;
+
+      info.vs.view_mask = rp->view_mask;
+   }
+
+   info.vs.has_ds = has_static_depth_stencil_state(state);
+   if (info.vs.has_ds)
+      kk_gather_ds_info(state->ds, has_depth, has_stencil, &info);
+
+   info.vs.has_ms = state->ms != NULL;
+   info.vs.sample_count = 1u;
+   if (info.vs.has_ms) {
+      const struct vk_multisample_state *ms = state->ms;
+      info.vs.sample_count = ms->rasterization_samples;
+      info.vs.has_alpha_to_coverage_enabled = ms->alpha_to_coverage_enable;
+      info.vs.has_alpha_to_one_enabled = ms->alpha_to_one_enable;
+   }
+
+   /* We need to store the fragment source in the vertex too otherwise we won't
+    * be able to create the whole pipeline correctly. */
+   {
+      uint32_t length = strlen(fs->msl_code);
+      info.vs.frag_msl_code = ralloc_size(NULL, length + 1u);
+      strcpy(info.vs.frag_msl_code, fs->msl_code);
+      info.vs.frag_msl_code[length] = '\0';
+
+      length = strlen(fs->entrypoint_name);
+      info.vs.frag_entrypoint_name = ralloc_size(NULL, length + 1u);
+      strcpy(info.vs.frag_entrypoint_name, fs->entrypoint_name);
+      info.vs.frag_entrypoint_name[length] = '\0';
+   }
+
+   return info;
+}
+
 /* TODO_KOSMICKRISP For now we just support vertex and fragment */
 static VkResult
-kk_compile_graphics_pipeline(struct kk_device *device,
-                             struct kk_shader *vertex_shader,
-                             struct kk_shader *fragment_shader,
-                             const struct vk_graphics_pipeline_state *state)
+kk_compile_graphics_pipeline(struct kk_device *device, const char *vs,
+                             const char *vs_entrypoint_name, const char *fs,
+                             const char *fs_entrypoint_name,
+                             struct kk_shader_info *info,
+                             struct kk_pipeline_handles *pipeline)
 {
    VkResult result = VK_SUCCESS;
 
-   assert(vertex_shader->info.stage == MESA_SHADER_VERTEX &&
-          fragment_shader->info.stage == MESA_SHADER_FRAGMENT);
-
-   mtl_library *vertex_library =
-      mtl_new_library(device->mtl_handle, vertex_shader->msl_code);
+   mtl_library *vertex_library = mtl_new_library(device->mtl_handle, vs);
    if (vertex_library == NULL)
       return VK_ERROR_INVALID_SHADER_NV;
 
-   mtl_function *vertex_function = mtl_new_function_with_name(
-      vertex_library, vertex_shader->entrypoint_name);
+   mtl_function *vertex_function =
+      mtl_new_function_with_name(vertex_library, vs_entrypoint_name);
 
-   mtl_library *fragment_library =
-      mtl_new_library(device->mtl_handle, fragment_shader->msl_code);
+   mtl_library *fragment_library = mtl_new_library(device->mtl_handle, fs);
    if (fragment_library == NULL) {
       result = VK_ERROR_INVALID_SHADER_NV;
       goto destroy_vertex;
    }
-   mtl_function *fragment_function = mtl_new_function_with_name(
-      fragment_library, fragment_shader->entrypoint_name);
+   mtl_function *fragment_function =
+      mtl_new_function_with_name(fragment_library, fs_entrypoint_name);
 
    mtl_render_pipeline_descriptor *pipeline_descriptor =
       mtl_new_render_pipeline_descriptor();
    mtl_render_pipeline_descriptor_set_vertex_shader(pipeline_descriptor,
                                                     vertex_function);
-   if (fragment_function)
-      mtl_render_pipeline_descriptor_set_fragment_shader(pipeline_descriptor,
-                                                         fragment_function);
+   mtl_render_pipeline_descriptor_set_fragment_shader(pipeline_descriptor,
+                                                      fragment_function);
+
    /* Layered rendering in Metal requires setting primitive topology class */
    mtl_render_pipeline_descriptor_set_input_primitive_topology(
-      pipeline_descriptor,
-      vk_primitive_topology_to_mtl_primitive_topology_class(
-         state->ia->primitive_topology));
+      pipeline_descriptor, info->vs.topology);
 
-   for (uint8_t i = 0; i < state->rp->color_attachment_count; ++i) {
-      if (state->rp->color_attachment_formats[i] != VK_FORMAT_UNDEFINED)
+   for (uint8_t i = 0; i < info->vs.color_attachment_count; ++i) {
+      if (info->vs.rt_formats[i] != MTL_PIXEL_FORMAT_INVALID)
          mtl_render_pipeline_descriptor_set_color_attachment_format(
-            pipeline_descriptor, i,
-            vk_format_to_mtl_pixel_format(
-               state->rp->color_attachment_formats[i]));
+            pipeline_descriptor, i, info->vs.rt_formats[i]);
    }
 
-   if (state->rp->depth_attachment_format != VK_FORMAT_UNDEFINED)
+   if (info->vs.d_format != MTL_PIXEL_FORMAT_INVALID)
       mtl_render_pipeline_descriptor_set_depth_attachment_format(
-         pipeline_descriptor,
-         vk_format_to_mtl_pixel_format(state->rp->depth_attachment_format));
+         pipeline_descriptor, info->vs.d_format);
 
-   if (state->rp->stencil_attachment_format != VK_FORMAT_UNDEFINED)
+   if (info->vs.s_format != MTL_PIXEL_FORMAT_INVALID)
       mtl_render_pipeline_descriptor_set_stencil_attachment_format(
-         pipeline_descriptor,
-         vk_format_to_mtl_pixel_format(state->rp->stencil_attachment_format));
+         pipeline_descriptor, info->vs.s_format);
 
-   if (has_static_depth_stencil_state(state)) {
-      bool has_depth =
-         state->rp->depth_attachment_format != VK_FORMAT_UNDEFINED;
-      bool has_stencil =
-         state->rp->stencil_attachment_format != VK_FORMAT_UNDEFINED;
-      vertex_shader->pipeline.gfx.mtl_depth_stencil_state_handle =
-         kk_compile_depth_stencil_state(device, state->ds, has_depth,
-                                        has_stencil);
+   if (info->vs.has_ds) {
+      pipeline->gfx.mtl_depth_stencil_state_handle =
+         kk_compile_ds_state(device, info);
    }
 
-   if (state->rp->view_mask) {
-      uint32_t max_amplification = util_bitcount(state->rp->view_mask);
+   if (info->vs.view_mask) {
+      uint32_t max_amplification = util_bitcount(info->vs.view_mask);
       mtl_render_pipeline_descriptor_set_max_vertex_amplification_count(
          pipeline_descriptor, max_amplification);
    }
 
-   vertex_shader->pipeline.gfx.sample_count = 1u;
-   if (state->ms) {
+   if (info->vs.has_ms) {
       mtl_render_pipeline_descriptor_set_raster_sample_count(
-         pipeline_descriptor, state->ms->rasterization_samples);
+         pipeline_descriptor, info->vs.sample_count);
       mtl_render_pipeline_descriptor_set_alpha_to_coverage(
-         pipeline_descriptor, state->ms->alpha_to_coverage_enable);
+         pipeline_descriptor, info->vs.has_alpha_to_coverage_enabled);
       mtl_render_pipeline_descriptor_set_alpha_to_one(
-         pipeline_descriptor, state->ms->alpha_to_one_enable);
-      vertex_shader->pipeline.gfx.sample_count =
-         state->ms->rasterization_samples;
+         pipeline_descriptor, info->vs.has_alpha_to_one_enabled);
    }
 
-   vertex_shader->pipeline.gfx.handle =
+   pipeline->gfx.handle =
       mtl_new_render_pipeline(device->mtl_handle, pipeline_descriptor);
-   if (vertex_shader->pipeline.gfx.handle == NULL)
+   if (pipeline->gfx.handle == NULL)
       result = VK_ERROR_INVALID_SHADER_NV;
-   vertex_shader->pipeline.gfx.primitive_type =
-      vk_primitive_topology_to_mtl_primitive_type(
-         state->ia->primitive_topology);
 
    mtl_release(pipeline_descriptor);
    mtl_release(fragment_function);
@@ -1103,7 +1186,11 @@ kk_compile_shaders(struct vk_device *device, uint32_t shader_count,
          fs = container_of(frag_shader, struct kk_shader, vk);
       }
 
-      result = kk_compile_graphics_pipeline(dev, vs, fs, state);
+      vs->info = gather_graphics_pipeline_create_info(
+         state, vs->info.vs.attribs_read, fs);
+      result = kk_compile_graphics_pipeline(
+         dev, vs->msl_code, vs->entrypoint_name, fs->msl_code,
+         fs->entrypoint_name, &vs->info, &vs->pipeline);
 
       if (null_fs)
          kk_shader_destroy(&dev->vk, &fs->vk, pAllocator);
@@ -1120,21 +1207,20 @@ kk_shader_serialize(struct vk_device *vk_dev, const struct vk_shader *vk_shader,
 
    blob_write_bytes(blob, &shader->info, sizeof(shader->info));
    uint32_t entrypoint_length = strlen(shader->entrypoint_name) + 1;
-   blob_write_bytes(blob, &entrypoint_length, sizeof(entrypoint_length));
    uint32_t code_length = strlen(shader->msl_code) + 1;
-   blob_write_bytes(blob, &code_length, sizeof(code_length));
+   blob_write_uint32(blob, entrypoint_length);
+   blob_write_uint32(blob, code_length);
    blob_write_bytes(blob, shader->entrypoint_name, entrypoint_length);
    blob_write_bytes(blob, shader->msl_code, code_length);
-   blob_write_bytes(blob, &shader->pipeline, sizeof(shader->pipeline));
 
-   /* We are building a new shader into the cache so we need to retain resources
-    */
-   if (shader->info.stage == MESA_SHADER_COMPUTE)
-      mtl_retain(shader->pipeline.cs);
-   else if (shader->info.stage == MESA_SHADER_VERTEX) {
-      mtl_retain(shader->pipeline.gfx.handle);
-      if (shader->pipeline.gfx.mtl_depth_stencil_state_handle)
-         mtl_retain(shader->pipeline.gfx.mtl_depth_stencil_state_handle);
+   if (shader->info.stage == MESA_SHADER_VERTEX) {
+      entrypoint_length = strlen(shader->info.vs.frag_entrypoint_name) + 1;
+      code_length = strlen(shader->info.vs.frag_msl_code) + 1;
+      blob_write_uint32(blob, entrypoint_length);
+      blob_write_uint32(blob, code_length);
+      blob_write_bytes(blob, shader->info.vs.frag_entrypoint_name,
+                       entrypoint_length);
+      blob_write_bytes(blob, shader->info.vs.frag_msl_code, code_length);
    }
 
    return !blob->out_of_memory;
@@ -1178,19 +1264,48 @@ kk_deserialize_shader(struct vk_device *vk_dev, struct blob_reader *blob,
 
    blob_copy_bytes(blob, (void *)shader->entrypoint_name, entrypoint_length);
    blob_copy_bytes(blob, (void *)shader->msl_code, code_length);
-   blob_copy_bytes(blob, &shader->pipeline, sizeof(shader->pipeline));
+
+   if (info.stage == MESA_SHADER_VERTEX) {
+      const uint32_t frag_entrypoint_length = blob_read_uint32(blob);
+      const uint32_t frag_code_length = blob_read_uint32(blob);
+      shader->info.vs.frag_entrypoint_name =
+         ralloc_array(NULL, char, frag_entrypoint_length);
+      if (shader->info.vs.frag_entrypoint_name == NULL) {
+         kk_shader_destroy(&dev->vk, &shader->vk, pAllocator);
+         return vk_error(dev, VK_ERROR_OUT_OF_HOST_MEMORY);
+      }
+
+      shader->info.vs.frag_msl_code =
+         ralloc_array(NULL, char, frag_code_length);
+      if (shader->info.vs.frag_msl_code == NULL) {
+         kk_shader_destroy(&dev->vk, &shader->vk, pAllocator);
+         return vk_error(dev, VK_ERROR_OUT_OF_HOST_MEMORY);
+      }
+
+      blob_copy_bytes(blob, (void *)shader->info.vs.frag_entrypoint_name,
+                      frag_entrypoint_length);
+      blob_copy_bytes(blob, (void *)shader->info.vs.frag_msl_code,
+                      frag_code_length);
+   }
+
    if (blob->overrun) {
       kk_shader_destroy(&dev->vk, &shader->vk, pAllocator);
       return vk_error(dev, VK_ERROR_INCOMPATIBLE_SHADER_BINARY_EXT);
    }
 
-   /* We are building a new shader so we need to retain resources */
+   VkResult result = VK_SUCCESS;
    if (info.stage == MESA_SHADER_COMPUTE)
-      mtl_retain(shader->pipeline.cs);
+      result = kk_compile_compute_pipeline(dev, shader);
    else if (info.stage == MESA_SHADER_VERTEX) {
-      mtl_retain(shader->pipeline.gfx.handle);
-      if (shader->pipeline.gfx.mtl_depth_stencil_state_handle)
-         mtl_retain(shader->pipeline.gfx.mtl_depth_stencil_state_handle);
+      result = kk_compile_graphics_pipeline(
+         dev, shader->msl_code, shader->entrypoint_name,
+         shader->info.vs.frag_msl_code, shader->info.vs.frag_entrypoint_name,
+         &shader->info, &shader->pipeline);
+   }
+
+   if (result != VK_SUCCESS) {
+      kk_shader_destroy(&dev->vk, &shader->vk, pAllocator);
+      return vk_error(dev, result);
    }
 
    *shader_out = &shader->vk;
@@ -1215,7 +1330,7 @@ kk_cmd_bind_graphics_shader(struct kk_cmd_buffer *cmd,
    if (stage != MESA_SHADER_VERTEX)
       return;
 
-   cmd->state.gfx.primitive_type = shader->pipeline.gfx.primitive_type;
+   cmd->state.gfx.primitive_type = shader->info.vs.primitive_type;
    cmd->state.gfx.pipeline_state = shader->pipeline.gfx.handle;
    cmd->state.gfx.vb.attribs_read = shader->info.vs.attribs_read;
 
@@ -1238,7 +1353,7 @@ kk_cmd_bind_graphics_shader(struct kk_cmd_buffer *cmd,
    cmd->state.gfx.dirty |= KK_DIRTY_PIPELINE;
    cmd->state.gfx.dirty |= KK_DIRTY_VB;
 
-   cmd->state.gfx.sample_count = shader->pipeline.gfx.sample_count;
+   cmd->state.gfx.sample_count = shader->info.vs.sample_count;
 }
 
 static void

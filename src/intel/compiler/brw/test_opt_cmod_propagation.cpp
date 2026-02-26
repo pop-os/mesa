@@ -693,6 +693,27 @@ TEST_F(cmod_propagation_test, subtract_delete_compare)
    EXPECT_SHADERS_MATCH(bld, exp);
 }
 
+TEST_F(cmod_propagation_test, subtract_no_delete_compare_write_between)
+{
+   brw_builder bld = make_shader();
+   brw_reg dest = vgrf(bld, BRW_TYPE_F);
+   brw_reg src0 = vgrf(bld, BRW_TYPE_F);
+
+   set_condmod(BRW_CONDITIONAL_L, bld.ADD(dest, src0, brw_imm_f(-1.0f)));
+   bld.MOV(src0, brw_imm_f(5.0));
+   bld.CMP(bld.null_reg_f(), src0, brw_imm_f(1.0f), BRW_CONDITIONAL_L);
+
+   /* = Before =
+    * 0: add.l.f0(8)     dest0:F src0:F  -1.0:F
+    * 1: mov(0)          src0:F  5.0:F
+    * 2: cmp.l.f0(8)     null:F  src0:F  1.0:F
+    *
+    * = After =
+    * No changes.
+    */
+   EXPECT_NO_PROGRESS(brw_opt_cmod_propagation, bld);
+}
+
 TEST_F(cmod_propagation_test, subtract_delete_compare_other_flag)
 {
    /* This test is the same as subtract_delete_compare but it explicitly used
