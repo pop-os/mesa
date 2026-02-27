@@ -1,4 +1,4 @@
-mesa (26.0.1-1) UNRELEASED; urgency=medium
+mesa (26.0.1-1) unstable; urgency=medium
 
   * rules: Enable imagination vulkan driver on arm/riscv. (LP: #2141905)
   * control, rules: Drop armel and mips64el.
@@ -8,7 +8,7 @@ mesa (26.0.1-1) UNRELEASED; urgency=medium
   * New upstream release. (Closes: #1129015)
   * control: Add mesa-vdpau-drivers to mesa-libgallium Provides.
 
- -- Timo Aaltonen <tjaalton@debian.org>  Mon, 16 Feb 2026 10:19:43 +0200
+ -- Timo Aaltonen <tjaalton@debian.org>  Fri, 27 Feb 2026 13:48:06 +0200
 
 mesa (26.0.0-1) unstable; urgency=medium
 
