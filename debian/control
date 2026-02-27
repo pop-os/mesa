@@ -225,8 +225,8 @@ Provides:
  mesa-va-drivers,
  mesa-vdpau-drivers,
  va-driver,
-Breaks: mesa-va-drivers, mesa-vdpau-drivers
-Replaces: mesa-va-drivers, mesa-vdpau-drivers
+Breaks: mesa-va-drivers (<< 25.2.8-3), mesa-vdpau-drivers (<< 25.2.8-3)
+Replaces: mesa-va-drivers (<< 25.2.8-3), mesa-vdpau-drivers (<< 25.2.8-3)
 Description: shared infrastructure for Mesa drivers
  This package contains libgallium, a private library shared between
  multiple Mesa drivers. This library is an implementation detail of Mesa
