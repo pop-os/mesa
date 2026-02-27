@@ -6,6 +6,7 @@ mesa (26.0.1-1) UNRELEASED; urgency=medium
   * control: Add riscv64 to mesa-drm-shim archs.
   * control: Drop versions from mesa-va/vdpau-drivers Breaks/Replaces.
   * New upstream release. (Closes: #1129015)
+  * control: Add mesa-vdpau-drivers to mesa-libgallium Provides.
 
  -- Timo Aaltonen <tjaalton@debian.org>  Mon, 16 Feb 2026 10:19:43 +0200
 

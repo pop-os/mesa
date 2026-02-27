@@ -223,6 +223,7 @@ Enhances:
 Provides:
  libglapi-mesa,
  mesa-va-drivers,
+ mesa-vdpau-drivers,
  va-driver,
 Breaks: mesa-va-drivers, mesa-vdpau-drivers
 Replaces: mesa-va-drivers, mesa-vdpau-drivers
