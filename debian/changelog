@@ -1,9 +1,13 @@
-mesa (26.0.1-2) UNRELEASED; urgency=medium
+mesa (26.0.1-2) unstable; urgency=medium
 
   [ Christopher Obbard ]
   * Add Lintian override for Teflon delegate plugin location
 
- -- Timo Aaltonen <tjaalton@debian.org>  Fri, 27 Feb 2026 13:50:18 +0200
+  [ Simon McVittie ]
+  * Revert "control: Drop versions from mesa-va/vdpau-drivers Breaks/Replaces."
+    (Closes: #1129207, #1129226)
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Sat, 28 Feb 2026 10:32:30 +0200
 
 mesa (26.0.1-1) unstable; urgency=medium
 
