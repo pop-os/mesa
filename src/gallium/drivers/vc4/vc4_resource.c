@@ -108,6 +108,13 @@ vc4_map_usage_prep(struct pipe_context *pctx,
         MESA_TRACE_FUNC();
 
         if (usage & PIPE_MAP_DISCARD_WHOLE_RESOURCE) {
+                /* Flush any pending write jobs before replacing the BO.
+                 * The RCL reads rsc->bo at job submit time, so if we
+                 * replace the BO first, a later flush of the pending
+                 * job would resolve the new BO instead of the old one,
+                 * corrupting the new data with a stale store.
+                 */
+                vc4_flush_jobs_writing_resource(vc4, prsc);
                 if (vc4_resource_bo_alloc(rsc)) {
                         /* If it might be bound as one of our vertex buffers,
                          * make sure we re-emit vertex buffer state.

@@ -7667,6 +7667,7 @@ ast_process_struct_or_iface_block_members(ir_exec_list *instructions,
        * embedded structures in 1.10 only.
        */
       if (state->language_version != 110 &&
+          !state->allow_glsl_embedded_structure_declarations &&
           decl_list->type->specifier->structure != NULL)
          _mesa_glsl_error(&loc, state,
                           "embedded structure declarations are not allowed");

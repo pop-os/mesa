@@ -255,8 +255,8 @@ setup_render_state(struct gl_context *ctx,
       pipe->set_sampler_views(pipe, MESA_SHADER_FRAGMENT, 0, num_views, 0,
                               sampler_views);
       st->state.num_sampler_views[MESA_SHADER_FRAGMENT] = num_views;
-
-      for (unsigned i = 0; i < num_views; i++)
+      /* only free YUV samplerviews */
+      u_foreach_bit(i, extra_sampler_views)
          pipe->sampler_view_release(pipe, sampler_views[i]);
    }
 

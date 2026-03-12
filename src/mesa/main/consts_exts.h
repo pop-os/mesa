@@ -542,6 +542,12 @@ struct gl_constants
    GLboolean AllowGLSL120SubsetIn110;
 
    /**
+    * Allow a embedded structure declarations which were allowed in GLSL 1.10
+    * but are no longer allowed in GLSL 1.20+
+    */
+   GLboolean AllowGLSLEmbeddedStructureDeclarations;
+
+   /**
     * Allow builtins as part of constant expressions. This was not allowed
     * until GLSL 1.20 this allows it everywhere.
     */

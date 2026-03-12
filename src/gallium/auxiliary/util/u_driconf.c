@@ -50,6 +50,7 @@ u_driconf_fill_st_options(struct st_config_options *options,
    query_bool_option(allow_extra_pp_tokens);
    query_bool_option(allow_glsl_extension_directive_midshader);
    query_bool_option(allow_glsl_120_subset_in_110);
+   query_bool_option(allow_glsl_embedded_structure_declarations);
    query_bool_option(allow_glsl_builtin_const_expression);
    query_bool_option(allow_glsl_relaxed_es);
    query_bool_option(allow_glsl_builtin_variable_redeclaration);

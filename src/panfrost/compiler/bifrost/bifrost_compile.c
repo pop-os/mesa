@@ -7086,7 +7086,7 @@ find_all_predecessors(const bi_context *ctx, bi_block *b, BITSET_WORD *out)
    assert(out);
    assert(b);
 
-   BITSET_CLEAR_RANGE(out, 0, ctx->num_blocks);
+   BITSET_CLEAR_COUNT(out, 0, ctx->num_blocks);
 
    /* If the CFG was one long chain, we would require |blocks|-1 iters to
     * propagate the in_loop info all the way through.

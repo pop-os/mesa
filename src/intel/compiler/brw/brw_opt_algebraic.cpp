@@ -553,39 +553,6 @@ brw_opt_algebraic(brw_shader &s)
             inst->predicate_inverse = false;
             inst->conditional_mod = BRW_CONDITIONAL_NONE;
             progress = true;
-         } else if (inst->saturate && inst->src[1].file == IMM) {
-            switch (inst->conditional_mod) {
-            case BRW_CONDITIONAL_LE:
-            case BRW_CONDITIONAL_L:
-               switch (inst->src[1].type) {
-               case BRW_TYPE_F:
-                  if (inst->src[1].f >= 1.0f) {
-                     inst = brw_transform_inst(s, inst, BRW_OPCODE_MOV);
-                     inst->conditional_mod = BRW_CONDITIONAL_NONE;
-                     progress = true;
-                  }
-                  break;
-               default:
-                  break;
-               }
-               break;
-            case BRW_CONDITIONAL_GE:
-            case BRW_CONDITIONAL_G:
-               switch (inst->src[1].type) {
-               case BRW_TYPE_F:
-                  if (inst->src[1].f <= 0.0f) {
-                     inst = brw_transform_inst(s, inst, BRW_OPCODE_MOV);
-                     inst->conditional_mod = BRW_CONDITIONAL_NONE;
-                     progress = true;
-                  }
-                  break;
-               default:
-                  break;
-               }
-               break;
-            default:
-               break;
-            }
          }
          break;
       case BRW_OPCODE_CSEL:

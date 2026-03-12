@@ -159,6 +159,7 @@ if with_tests
     executable(
       'intel_compiler_brw_tests',
       files(
+        'test_def_analysis.cpp',
         'test_eu_compact.cpp',
         'test_eu_validate.cpp',
         'test_helpers.cpp',

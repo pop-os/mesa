@@ -980,8 +980,8 @@ nir_alu_type vtn_convert_op_dst_type(SpvOp opcode);
 
 nir_op vtn_nir_alu_op_for_spirv_opcode(struct vtn_builder *b,
                                        SpvOp opcode, bool *swap, bool *exact,
-                                       const glsl_type *src_type,
-                                       const glsl_type *dst_type);
+                                       unsigned conv_src_bit_size,
+                                       unsigned conv_dst_bit_size);
 
 void vtn_handle_alu(struct vtn_builder *b, SpvOp opcode,
                     const uint32_t *w, unsigned count);

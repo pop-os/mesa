@@ -448,7 +448,7 @@ static void pco_nir_opt(pco_ctx *ctx, nir_shader *nir, bool algebraic)
    do {
       progress = false;
 
-      if (count > 1000) {
+      if (count++ > 1000) {
          printf("WARNING! Infinite opt loop!\n");
          break;
       }
