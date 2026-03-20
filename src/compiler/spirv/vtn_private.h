@@ -1065,7 +1065,8 @@ nir_def *
 vtn_mediump_downconvert(struct vtn_builder *b, enum glsl_base_type base_type, nir_def *def);
 struct vtn_ssa_value *
 vtn_mediump_downconvert_value(struct vtn_builder *b, struct vtn_ssa_value *src);
-void vtn_mediump_upconvert_value(struct vtn_builder *b, struct vtn_ssa_value *value);
+struct vtn_ssa_value *
+vtn_mediump_upconvert_value(struct vtn_builder *b, struct vtn_ssa_value *value);
 
 static inline int
 cmp_uint32_t(const void *pa, const void *pb)

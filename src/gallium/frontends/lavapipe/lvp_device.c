@@ -1260,7 +1260,8 @@ lvp_get_properties(const struct lvp_physical_device *device, struct vk_propertie
       .maxMeshOutputComponents = 128, /* 32x vec4 min required */
       .maxMeshOutputVertices = 256,
       .maxMeshOutputPrimitives = 256,
-      .maxMeshOutputLayers = 8,
+      .maxMeshOutputLayers = 9,
+      .maxMeshMultiviewViewCount = 1, /* 1 means unsupported */
       .meshOutputPerVertexGranularity = 1,
       .meshOutputPerPrimitiveGranularity = 1,
       .maxPreferredTaskWorkGroupInvocations = 64,
