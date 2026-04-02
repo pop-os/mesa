@@ -1345,7 +1345,6 @@ element_sz(struct brw_reg reg)
 int brw_float_to_vf(float f);
 float brw_vf_to_float(unsigned char vf);
 
-bool brw_reg_saturate_immediate(brw_reg *reg);
 bool brw_reg_negate_immediate(brw_reg *reg);
 bool brw_reg_abs_immediate(brw_reg *reg);
 

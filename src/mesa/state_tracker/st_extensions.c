@@ -1341,6 +1341,7 @@ void st_init_extensions(struct pipe_screen *screen,
 
    consts->ForceIntegerTexNearest = options->force_integer_tex_nearest;
 
+   consts->ForceExplicitUniformLocZero = options->force_explicit_uniform_loc_zero;
    consts->VendorOverride = options->force_gl_vendor;
    consts->RendererOverride = options->force_gl_renderer;
 

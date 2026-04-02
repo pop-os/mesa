@@ -96,4 +96,53 @@ TEST_F(algebraic_test, mad_with_all_immediates)
    EXPECT_SHADERS_MATCH(bld, exp);
 }
 
+TEST_F(algebraic_test, mov_sat_neg_constant_type_d_conversion)
+{
+   brw_builder bld = make_shader(MESA_SHADER_FRAGMENT, 16);
+   brw_builder exp = make_shader(MESA_SHADER_FRAGMENT, 16);
 
+   brw_reg dst0 = vgrf(bld, exp, BRW_TYPE_F);
+
+   bld.MOV(dst0, brw_imm_d(-5))
+      ->saturate = true;
+
+   EXPECT_PROGRESS(brw_opt_algebraic, bld);
+
+   exp.MOV(dst0, brw_imm_f(0.0));
+
+   EXPECT_SHADERS_MATCH(bld, exp);
+}
+
+TEST_F(algebraic_test, mov_sat_neg_constant_type_ud_conversion)
+{
+   brw_builder bld = make_shader(MESA_SHADER_FRAGMENT, 16);
+   brw_builder exp = make_shader(MESA_SHADER_FRAGMENT, 16);
+
+   brw_reg dst0 = vgrf(bld, exp, BRW_TYPE_F);
+
+   bld.MOV(dst0, brw_imm_ud(-5))
+      ->saturate = true;
+
+   EXPECT_PROGRESS(brw_opt_algebraic, bld);
+
+   exp.MOV(dst0, brw_imm_f(1.0));
+
+   EXPECT_SHADERS_MATCH(bld, exp);
+}
+
+TEST_F(algebraic_test, mov_sat_pos_constant_type_conversion)
+{
+   brw_builder bld = make_shader(MESA_SHADER_FRAGMENT, 16);
+   brw_builder exp = make_shader(MESA_SHADER_FRAGMENT, 16);
+
+   brw_reg dst0 = vgrf(bld, exp, BRW_TYPE_F);
+
+   bld.MOV(dst0, brw_imm_ud(37))
+      ->saturate = true;
+
+   EXPECT_PROGRESS(brw_opt_algebraic, bld);
+
+   exp.MOV(dst0, brw_imm_f(1.0));
+
+   EXPECT_SHADERS_MATCH(bld, exp);
+}

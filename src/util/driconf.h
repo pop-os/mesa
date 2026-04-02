@@ -259,6 +259,9 @@
    DRI_CONF_OPT_B(glthread_nop_check_framebuffer_status, def, \
                   "glthread always returns GL_FRAMEBUFFER_COMPLETE to prevent synchronization.")
 
+#define DRI_CONF_FORCE_EXPLICIT_UNIFORM_LOC_ZERO() \
+   DRI_CONF_OPT_S_NODEF(force_explicit_uniform_loc_zero, "Forces an explicit uniform location of zero for the uniform.")
+
 #define DRI_CONF_FORCE_GL_VENDOR() \
    DRI_CONF_OPT_S_NODEF(force_gl_vendor, "Override GPU vendor string.")
 
@@ -936,6 +939,14 @@
 #define DRI_CONF_ANV_DISABLE_DRM_AUX_MODIFIERS(def) \
    DRI_CONF_OPT_B(anv_disable_drm_ccs_modifiers, def, \
                   "Disable DRM CCS modifier usage")
+
+#define DRI_CONF_ANV_BARRIER_POST_UNTYPED_CLEAR_SHADER(def) \
+   DRI_CONF_OPT_B(anv_barrier_post_untyped_clear_shader, def, \
+                  "Insert pipeline barriers post clearing shader on untyped data")
+
+#define DRI_CONF_ANV_BARRIER_POST_TYPED_CLEAR_SHADER(def) \
+   DRI_CONF_OPT_B(anv_barrier_post_typed_clear_shader, def, \
+                  "Insert pipeline barriers post clearing shader on typed data")
 
 /**
  * \brief HASVK specific configuration options

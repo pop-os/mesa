@@ -203,6 +203,7 @@ struct st_config_options
    bool transcode_etc;
    bool transcode_astc;
    bool allow_compressed_fallback;
+   char *force_explicit_uniform_loc_zero;
    char *force_gl_vendor;
    char *force_gl_renderer;
    char *mesa_extension_override;
