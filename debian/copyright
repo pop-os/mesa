@@ -103,6 +103,7 @@ Copyright:
 	2015 Zoltan Gilian
 	2018-2021 Igalia S.L.
 	2017 Dylan Baker
+	2022 Yonggang Luo
 License: MIT
 
 Files: include/drm-uapi/etnaviv_drm.h
@@ -116,10 +117,6 @@ License: GPL-2 or MIT
 Files: include/drm-uapi/sync_file.h
 Copyright: 2012 Google, Inc.
 License: GPL-1+
-
-Files: include/EGL/eglextchromium.h
-Copyright: 2013 The Chromium Authors
-License: BSD-3-google
 
 Files: include/GL/glcorearb.h
        include/GL/glext.h
@@ -137,8 +134,13 @@ Copyright: 2015-2018 The Khronos Group Inc.
 	   2015-2016 Valve Corporation
 License: Apache-2.0
 
-Files: include/c11/*
+Files: src/c11/impl/threads_posix.c src/c11/impl/threads_win32.c
 Copyright: 2012 yohhoy
+License: BSL
+
+Files: src/c11/threads.h src/c11/impl/time.c
+Copyright: 2012 yohhoy
+           2022 Yonggang Luo
 License: BSL
 
 Files: src/gallium/auxiliary/postprocess/pp_mlaa*
@@ -164,7 +166,6 @@ Files: src/glx/clientattrib.c
        src/glx/render2.c
        src/glx/renderpix.c
        src/glx/single2.c
-       src/glx/singlepix.c
        src/glx/vertarr.c
 Copyright: 1991-2000 Silicon Graphics, Inc.
 License: SGI
