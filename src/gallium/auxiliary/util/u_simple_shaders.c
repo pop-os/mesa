@@ -1321,7 +1321,7 @@ util_make_fs_clear_color(struct pipe_context *pipe,
       "FRAG\n"
       "PROPERTY FS_COLOR0_WRITES_ALL_CBUFS %u\n"
       "DCL OUT[0], COLOR[0]\n"
-      "DCL CONST[0][0]\n"
+      "%s"
       "IMM[0] INT32 {0, 0, 0, 0}\n"
 
       "MOV OUT[0], %s\n"
@@ -1330,6 +1330,7 @@ util_make_fs_clear_color(struct pipe_context *pipe,
 
    snprintf(text, ARRAY_SIZE(text), text_templ,
             write_all_cbufs,
+            use_const_buf ? "DCL CONST[0][0]\n" : "",
             use_const_buf ? "CONST[0][0]" : "IMM[0]");
 
    struct tgsi_token tokens[1000];

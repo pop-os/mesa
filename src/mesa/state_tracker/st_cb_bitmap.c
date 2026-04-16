@@ -468,6 +468,7 @@ st_flush_bitmap_cache(struct st_context *st)
                           cache->fp,
                           cache->scissor_enabled,
                           cache->clamp_frag_color);
+         pipe->sampler_view_release(pipe, sv);
       }
 
       /* release/free the texture */

@@ -227,6 +227,14 @@ panfrost_create_sampler_state(struct pipe_context *pctx,
       cfg.border_color_a = so->base.border_color.ui[3];
 
 #if PAN_ARCH >= 6
+      /*
+       * Disabling round_to_nearest_even for NEAREST filters ensures proper
+       * floor() behavior as required by OpenCL_C spec section 8.2.
+       */
+      if (cso->mag_img_filter == PIPE_TEX_FILTER_NEAREST &&
+          cso->min_img_filter == PIPE_TEX_FILTER_NEAREST)
+         cfg.round_to_nearest_even = false;
+
       if (cso->max_anisotropy > 1) {
          cfg.maximum_anisotropy = cso->max_anisotropy;
          cfg.lod_algorithm = MALI_LOD_ALGORITHM_ANISOTROPIC;
