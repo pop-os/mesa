@@ -799,8 +799,12 @@ radv_shader_spirv_to_nir(struct radv_device *device, struct radv_shader_stage *s
       NIR_PASS(progress, nir, nir_lower_flrp, lower_flrp, false /* always precise */);
 
    if (stage->key.descriptor_heap) {
+      const vk_nir_lower_descriptor_heaps_options heap_options = {
+         .lower_shader_record_index_to_non_uniform = true,
+      };
+
       progress = false;
-      NIR_PASS(progress, nir, vk_nir_lower_descriptor_heaps, stage->layout.mapping, &embedded_samplers);
+      NIR_PASS(progress, nir, vk_nir_lower_descriptor_heaps, stage->layout.mapping, &heap_options, &embedded_samplers);
       if (progress) {
          NIR_PASS(_, nir, nir_remove_dead_variables, nir_var_uniform | nir_var_image, NULL);
          NIR_PASS(_, nir, nir_opt_dce);
@@ -3453,7 +3457,7 @@ radv_create_trap_handler_shader(struct radv_device *device)
    info.type = RADV_SHADER_TYPE_TRAP_HANDLER;
 
    struct radv_shader_args args;
-   struct radv_shader_debug_info debug = {};
+   struct radv_shader_debug_info debug = {0};
    radv_declare_shader_args(device, NULL, &info, stage, MESA_SHADER_NONE, &args, &debug);
 
 #if AMD_LLVM_AVAILABLE

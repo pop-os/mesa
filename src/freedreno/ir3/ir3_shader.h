@@ -1085,7 +1085,7 @@ static inline unsigned
 ir3_constlen(const struct ir3_shader_variant *v)
 {
    return ir3_const_state(v)->allocs.max_const_offset_vec4 +
-          v->imm_state.size / 4;
+          DIV_ROUND_UP(v->imm_state.count, 4);
 }
 
 static inline unsigned

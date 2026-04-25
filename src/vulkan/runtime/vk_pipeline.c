@@ -1010,7 +1010,7 @@ vk_pipeline_precompile_shader(struct vk_device *device,
    struct vk_sampler_state_array embedded_samplers;
    bool heaps_progress = false;
    NIR_PASS(heaps_progress, nir, vk_nir_lower_descriptor_heaps,
-            desc_map, &embedded_samplers);
+            desc_map, NULL, &embedded_samplers);
    if (heaps_progress) {
       NIR_PASS(_, nir, nir_remove_dead_variables,
                nir_var_uniform | nir_var_image, NULL);

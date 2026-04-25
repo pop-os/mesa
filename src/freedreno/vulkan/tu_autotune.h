@@ -242,7 +242,6 @@ struct tu_autotune {
    std::mutex rp_latency_mutex; /* Protects rp_latency_tracking */
    uint64_t last_latency_cleanup_ts = 0;
 
-   const fd_perfcntr_group *cp_group;
    uint32_t preemption_latency_selector_reg;
    uint32_t preemption_latency_selector;
    uint32_t preemption_latency_counter_reg_lo;

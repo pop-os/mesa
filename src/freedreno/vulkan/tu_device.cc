@@ -1778,6 +1778,9 @@ tu_physical_device_init(struct tu_physical_device *device,
 
    device->vk.pipeline_cache_import_ops = cache_import_ops;
 
+   /* gen8 and onwards must use kernel UAPI for perfcntr management */
+   device->is_perf_cntr_selectable &= (device->info->chip <= 7);
+
    return VK_SUCCESS;
 
 fail_free_name:
@@ -2776,8 +2779,6 @@ tu_CreateDevice(VkPhysicalDevice physicalDevice,
          &dispatch_table, &tu_device_entrypoints_a7xx, false);
       break;
    case 8:
-      /* gen8 TODO: */
-      tu_env.debug |= TU_DEBUG_FLUSHALL;  /* dEQP-VK.draw.\*from_compute\* */
       vk_device_dispatch_table_from_entrypoints(
          &dispatch_table, &tu_device_entrypoints_a8xx, false);
    }

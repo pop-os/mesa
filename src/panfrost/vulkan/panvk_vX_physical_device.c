@@ -95,7 +95,7 @@ panvk_per_arch(get_physical_device_extensions)(
       .KHR_sampler_mirror_clamp_to_edge = true,
       .KHR_sampler_ycbcr_conversion = true,
       .KHR_separate_depth_stencil_layouts = true,
-      .KHR_shader_clock = true,
+      .KHR_shader_clock = device->kmod.dev->props.gpu_can_query_timestamp,
       .KHR_shader_draw_parameters = true,
       .KHR_shader_expect_assume = true,
       .KHR_shader_float_controls = true,
@@ -221,7 +221,7 @@ panvk_per_arch(get_physical_device_extensions)(
 
       .VALVE_mutable_descriptor_type = PAN_ARCH >= 9,
 
-      .ARM_shader_core_builtins = true,
+      .ARM_shader_core_builtins = PAN_ARCH >= 9,
       .ARM_shader_core_properties = has_vk1_1,
       .ARM_scheduling_controls = PAN_ARCH >= 10,
    };
@@ -739,9 +739,6 @@ panvk_per_arch(get_physical_device_properties)(
        * except for 2D/Cube dimensions where taking a power-of-two would be
        * too limiting, so we pick power-of-two-minus-one, which makes things
        * fit exactly in our 32-bit budget.
-       *
-       * TODO: increase the limit on v11+ once we have all the necessary bits
-       * patched to handle the size/stride field extension.
        */
       .maxImageDimension1D = (1 << 16),
       .maxImageDimension2D = PAN_ARCH <= 10 ? (1 << 14) - 1 : (1 << 16),
@@ -1259,6 +1256,7 @@ panvk_per_arch(get_physical_device_properties)(
 
       /*  Vulkan 1.2 */
       VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
+      VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_OPTIMAL,
       VK_IMAGE_LAYOUT_STENCIL_ATTACHMENT_OPTIMAL,
       VK_IMAGE_LAYOUT_STENCIL_READ_ONLY_OPTIMAL,
 

@@ -1632,56 +1632,58 @@ tu_autotune::tu_autotune(struct tu_device *device, VkResult &result)
 {
    tu_bo_suballocator_init(&suballoc, device, 128 * 1024, TU_BO_ALLOC_INTERNAL_RESOURCE, "autotune_suballoc");
 
-   uint32_t group_count;
-   const struct fd_perfcntr_group *groups = fd_perfcntrs(&device->physical_device->dev_id, &group_count);
-
-   for (uint32_t i = 0; i < group_count; i++) {
-      if (strcmp(groups[i].name, "CP") == 0) {
-         cp_group = &groups[i];
-         break;
-      }
-   }
-
-   if (!cp_group) {
-      mesa_loge("autotune: CP group not found");
-      result = VK_ERROR_INITIALIZATION_FAILED;
-      return;
-   } else if (cp_group->num_countables < 5) {
-      mesa_loge("autotune: CP group has too few countables");
-      result = VK_ERROR_INITIALIZATION_FAILED;
-      return;
-   }
-
-   auto get_perfcntr_countable = [](const struct fd_perfcntr_group *group,
-                                    const char *name) -> const struct fd_perfcntr_countable * {
-      for (uint32_t i = 0; i < group->num_countables; i++) {
-         if (strcmp(group->countables[i].name, name) == 0)
-            return &group->countables[i];
-      }
-
-      mesa_loge("autotune: %s not found in group %s", name, group->name);
-      return nullptr;
-   };
-
    if (supports_preempt_latency_tracking()) {
-      auto preemption_latency_countable = get_perfcntr_countable(cp_group, "PERF_CP_PREEMPTION_REACTION_DELAY");
-      auto always_count_countable = get_perfcntr_countable(cp_group, "PERF_CP_ALWAYS_COUNT");
+      uint32_t group_count;
+      const struct fd_perfcntr_group *groups = fd_perfcntrs(&device->physical_device->dev_id, &group_count);
+      const char *fail_reason = nullptr;
 
-      if (cp_group->num_counters < 2) {
-         mesa_loge("autotune: CP group has too few counters for preemption latency tracking");
-         result = VK_ERROR_INITIALIZATION_FAILED;
-         return;
+      const fd_perfcntr_group *cp_group = nullptr;
+      for (uint32_t i = 0; i < group_count; i++) {
+         if (strcmp(groups[i].name, "CP") == 0) {
+            cp_group = &groups[i];
+            break;
+         }
       }
 
-      uint32_t preemption_latency_counter_index = cp_group->num_counters - 2;
-      preemption_latency_selector_reg = cp_group->counters[preemption_latency_counter_index].select_reg;
-      preemption_latency_selector = preemption_latency_countable->selector;
-      preemption_latency_counter_reg_lo = cp_group->counters[preemption_latency_counter_index].counter_reg_lo;
+      if (cp_group) {
+         auto get_perfcntr_countable = [](const struct fd_perfcntr_group *group,
+                                          const char *name) -> const struct fd_perfcntr_countable * {
+            for (uint32_t i = 0; i < group->num_countables; i++) {
+               if (strcmp(group->countables[i].name, name) == 0)
+                  return &group->countables[i];
+            }
 
-      uint32_t always_count_counter_index = cp_group->num_counters - 1;
-      always_count_selector_reg = cp_group->counters[always_count_counter_index].select_reg;
-      always_count_selector = always_count_countable->selector;
-      always_count_counter_reg_lo = cp_group->counters[always_count_counter_index].counter_reg_lo;
+            return nullptr;
+         };
+
+         auto preemption_latency_countable = get_perfcntr_countable(cp_group, "PERF_CP_PREEMPTION_REACTION_DELAY");
+         auto always_count_countable = get_perfcntr_countable(cp_group, "PERF_CP_ALWAYS_COUNT");
+         if (preemption_latency_countable && always_count_countable) {
+            if (cp_group->num_counters >= 2) {
+               preemption_latency_selector_reg = cp_group->counters[0].select_reg;
+               preemption_latency_selector = preemption_latency_countable->selector;
+               preemption_latency_counter_reg_lo = cp_group->counters[0].counter_reg_lo;
+
+               always_count_selector_reg = cp_group->counters[1].select_reg;
+               always_count_selector = always_count_countable->selector;
+               always_count_counter_reg_lo = cp_group->counters[1].counter_reg_lo;
+            } else {
+               fail_reason = "not enough counters in CP group for preemption latency tracking";
+            }
+         } else {
+            fail_reason = "required countables not found in CP group";
+         }
+      } else {
+         fail_reason = "CP counter group not found";
+      }
+
+      if (fail_reason) {
+         if (TU_DEBUG(STARTUP) || active_config.load().test(mod_flag::PREEMPT_OPTIMIZE))
+            mesa_logw("autotune: %s, preemption optimization not supported", fail_reason);
+
+         supported_mod_flags &= ~((uint32_t) mod_flag::PREEMPT_OPTIMIZE);
+         disable_preempt_optimize();
+      }
    }
 
    result = VK_SUCCESS;

@@ -721,7 +721,7 @@ Khronos extensions that are not part of any Vulkan version:
   VK_ANDROID_native_buffer                              DONE (anv, lvp, panvk, radv, tu, v3dv, vn)
   VK_ARM_rasterization_order_attachment_access          DONE (lvp, tu, vn)
   VK_ARM_scheduling_controls                            DONE (panvk/v10+)
-  VK_ARM_shader_core_builtins                           DONE (panvk)
+  VK_ARM_shader_core_builtins                           DONE (panvk/v9+)
   VK_ARM_shader_core_properties                         DONE (panvk/v10+)
   VK_GOOGLE_decorate_string                             DONE (anv, hasvk, hk, kk, lvp, nvk, panvk, radv, tu, vn)
   VK_GOOGLE_hlsl_functionality1                         DONE (anv, hasvk, hk, kk, lvp, nvk, panvk, radv, tu, vn)

@@ -662,7 +662,7 @@ build_descriptor_set_bti(nir_builder *b,
          nir_imm_int(b, 0) /* bindless_base_offset */,
          .desc_set = set,
          .binding = -1,
-         .resource_block_intel = state->set[set].desc_offset,
+         .resource_block_intel = state->set[set].push_block,
          .resource_access_intel = nir_resource_intel_pushable);
    }
 }
@@ -2370,7 +2370,7 @@ build_packed_binding_table(struct apply_pipeline_layout_state *state,
                for (unsigned i = 0; i < bind_layout->array_size; i++)
                   add_push_entry(push_map, set, b, i, bind_layout);
             } else {
-               state->set[set].binding[b].push_block = state->set[set].desc_offset;
+               state->set[set].binding[b].push_block = state->set[set].push_block;
             }
          }
       }

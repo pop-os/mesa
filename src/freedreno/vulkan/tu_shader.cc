@@ -1576,7 +1576,8 @@ tu_xs_get_immediates_packet_size_dwords(const struct ir3_shader_variant *xs)
    const struct ir3_const_state *const_state = ir3_const_state(xs);
    uint32_t base = const_state->allocs.max_const_offset_vec4;
    const struct ir3_imm_const_state *imm_state = &xs->imm_state;
-   int32_t size = DIV_ROUND_UP(imm_state->count, 4);
+   int32_t size = xs->compiler->info->props.load_shader_consts_via_preamble ?
+      0 : DIV_ROUND_UP(imm_state->count, 4);
 
    /* truncate size to avoid writing constants that shader
     * does not use:

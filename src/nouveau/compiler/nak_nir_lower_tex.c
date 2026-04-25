@@ -361,8 +361,6 @@ lower_tex(nir_builder *b, nir_tex_instr *tex, const struct nak_compiler *nak)
 
          if (tex_h != NULL)
             PUSH(src1, tex_h);
-         if (ms_idx != NULL)
-            PUSH(src1, ms_idx);
          if (lod != NULL)
             PUSH(src1, lod);
          if (offset_mode == NAK_NIR_OFFSET_MODE_AOFFI) {
@@ -373,6 +371,8 @@ lower_tex(nir_builder *b, nir_tex_instr *tex, const struct nak_compiler *nak)
          }
          if (z_cmpr != NULL)
             PUSH(src1, z_cmpr);
+         if (ms_idx != NULL)
+            PUSH(src1, ms_idx);
       }
 
       scalar = try_scalarize_tex(tex, nak, src0, &src0_comps, src1, &src1_comps);
