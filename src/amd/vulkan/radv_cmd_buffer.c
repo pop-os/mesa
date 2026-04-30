@@ -9780,7 +9780,6 @@ radv_CmdExecuteCommands(VkCommandBuffer commandBuffer, uint32_t commandBufferCou
       primary->state.emitted_compute_pipeline = secondary->state.emitted_compute_pipeline;
       primary->state.emitted_rt_pipeline = secondary->state.emitted_rt_pipeline;
 
-      primary->state.ps_epilog = secondary->state.ps_epilog;
       primary->state.emitted_vs_prolog = secondary->state.emitted_vs_prolog;
 
       if (secondary->state.last_ia_multi_vgt_param) {
@@ -9839,6 +9838,9 @@ radv_CmdExecuteCommands(VkCommandBuffer commandBuffer, uint32_t commandBufferCou
    primary->state.last_first_instance = -1;
    primary->state.last_drawid = -1;
    primary->state.last_vertex_offset_valid = false;
+
+   /* Make sure to re-emit the PS epilog if the same graphics pipeline is bind again. */
+   primary->state.ps_epilog = NULL;
 }
 
 static void
@@ -13313,6 +13315,8 @@ radv_CmdExecuteGeneratedCommandsEXT(VkCommandBuffer commandBuffer, VkBool32 isPr
    VK_FROM_HANDLE(radv_indirect_execution_set, ies, pGeneratedCommandsInfo->indirectExecutionSet);
    VK_FROM_HANDLE(radv_cmd_buffer, cmd_buffer, commandBuffer);
    const struct radv_device *device = radv_cmd_buffer_device(cmd_buffer);
+   const struct radv_physical_device *pdev = radv_device_physical(device);
+   const struct radv_instance *instance = radv_physical_device_instance(pdev);
    const bool use_predication = radv_use_dgc_predication(cmd_buffer, pGeneratedCommandsInfo);
    const bool compute = !!(layout->vk.dgc_info & BITFIELD_BIT(MESA_VK_DGC_DISPATCH));
    const bool rt = !!(layout->vk.dgc_info & BITFIELD_BIT(MESA_VK_DGC_RT));
@@ -13411,7 +13415,22 @@ radv_CmdExecuteGeneratedCommandsEXT(VkCommandBuffer commandBuffer, VkBool32 isPr
       ac_emit_cp_pfp_sync_me(cs->b, cmd_buffer->state.predicating);
    }
 
-   radv_dgc_execute_ib(cmd_buffer, pGeneratedCommandsInfo);
+   /* The Vulkan spec 1.4.349 says:
+    *
+    * "VUID-vkCmdExecuteGeneratedCommandsEXT-None-11062
+    *  If a rendering pass is currently active, the view mask must be 0."
+    *
+    * But it's a valid behavior with DX12, so it can be enabled via drirc.
+    */
+   const uint32_t view_mask = instance->drirc.features.allow_dgc_multiview ? cmd_buffer->state.render.view_mask : 0;
+   if (rt || compute || !view_mask) {
+      radv_dgc_execute_ib(cmd_buffer, pGeneratedCommandsInfo);
+   } else {
+      u_foreach_bit (view, view_mask) {
+         radv_emit_view_index(&cmd_buffer->state, cmd_buffer->cs, view);
+         radv_dgc_execute_ib(cmd_buffer, pGeneratedCommandsInfo);
+      }
+   }
 
    if (rt) {
       cmd_buffer->push_constant_stages |= RADV_RT_STAGE_BITS;

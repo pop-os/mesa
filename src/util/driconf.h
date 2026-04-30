@@ -841,6 +841,10 @@
    DRI_CONF_OPT_B(radv_cooperative_matrix2_nv, def, \
                   "Expose VK_NV_cooperative_matrix2 on supported hardware.")
 
+#define DRI_CONF_RADV_ALLOW_DGC_MULTIVIEW(def) \
+   DRI_CONF_OPT_B(radv_allow_dgc_multiview, def, \
+                  "Allow to use DGC with multiview for DX12 emulation.")
+
 #define DRI_CONF_RADV_GFX12_HIZ_WA() \
    DRI_CONF_OPT_S_NODEF(radv_gfx12_hiz_wa, \
                         "Choose the specific HiZ workaround to apply on GFX12 (RDNA4). " \
@@ -947,6 +951,10 @@
 #define DRI_CONF_ANV_BARRIER_POST_TYPED_CLEAR_SHADER(def) \
    DRI_CONF_OPT_B(anv_barrier_post_typed_clear_shader, def, \
                   "Insert pipeline barriers post clearing shader on typed data")
+
+#define DRI_CONF_ANV_BRW_DISABLE_SUBGROUP_SIZE_CONTROL(def) \
+   DRI_CONF_OPT_B(anv_brw_disable_subgroup_size_control, def, \
+                  "Disable EXT_subgroup_size_control support when using brw compiler.")
 
 /**
  * \brief HASVK specific configuration options
