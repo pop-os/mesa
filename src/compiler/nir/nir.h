@@ -2118,7 +2118,8 @@ typedef struct nir_io_semantics {
 
    /* Start of the second uint. */
    unsigned no_signed_zero : 1; /* whether it matters if the input/output is -0.0 or +0.0. */
-   unsigned padding : 31;
+   unsigned clamp : 1; /* whether the IO component should be clamped when GL_CLAMP_VERTEX_COLOR is enabled */
+   unsigned padding : 30;
 } nir_io_semantics;
 
 /* Transform feedback info for 4 outputs. */

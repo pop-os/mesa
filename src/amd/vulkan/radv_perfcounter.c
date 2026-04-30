@@ -539,16 +539,20 @@ radv_pc_sample_block(struct radv_cmd_buffer *cmd_buffer, struct ac_pc_block *blo
 static void
 radv_pc_wait_idle(struct radv_cmd_buffer *cmd_buffer)
 {
+   struct radv_device *device = radv_cmd_buffer_device(cmd_buffer);
+   const struct radv_physical_device *pdev = radv_device_physical(device);
    struct radv_cmd_stream *cs = cmd_buffer->cs;
 
    radeon_begin(cs);
 
    radeon_event_write(V_028A90_CS_PARTIAL_FLUSH);
 
+   const uint32_t coher_size_hi = pdev->info.gfx_level >= GFX11 ? 0xffffff : 0xff;
+
    radeon_emit(PKT3(PKT3_ACQUIRE_MEM, 6, 0));
    radeon_emit(0);          /* CP_COHER_CNTL */
    radeon_emit(0xffffffff); /* CP_COHER_SIZE */
-   radeon_emit(0xffffff);   /* CP_COHER_SIZE_HI */
+   radeon_emit(coher_size_hi); /* CP_COHER_SIZE_HI */
    radeon_emit(0);          /* CP_COHER_BASE */
    radeon_emit(0);          /* CP_COHER_BASE_HI */
    radeon_emit(0x0000000A); /* POLL_INTERVAL */

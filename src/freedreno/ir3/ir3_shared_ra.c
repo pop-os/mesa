@@ -1246,7 +1246,9 @@ reload_live_outs(struct ra_ctx *ctx, struct ir3_block *block)
       struct ir3_register *reg = ctx->live->definitions[name];
 
       struct ra_interval *interval = &ctx->intervals[name];
-      if (!interval->interval.inserted) {
+      if (!interval->interval.inserted ||
+          (interval->spill_def &&
+           interval->physreg_start != interval->physreg_start_orig)) {
          d("reloading %d at end of backedge", reg->name);
 
          /* When this interval was spilled inside the loop, we probably chose a

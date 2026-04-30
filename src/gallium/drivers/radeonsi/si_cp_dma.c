@@ -53,8 +53,8 @@ static void si_emit_cp_dma(struct si_context *sctx, struct radeon_cmdbuf *cs, ui
    else
       command |= S_415_BYTE_COUNT(size);
 
-   /* Sync flags. */
-   if (flags & CP_DMA_SYNC)
+   /* Sync flags. Only present for PFP/ME. MEC always sync. */
+   if ((flags & CP_DMA_SYNC) && sctx->is_gfx_queue)
       header |= S_501_CP_SYNC(1);
 
    if (flags & CP_DMA_RAW_WAIT)

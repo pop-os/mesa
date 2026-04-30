@@ -1039,7 +1039,11 @@ process_fp_query(struct analysis_state *state, struct analysis_query *aq, uint32
    }
 
    case nir_op_frcp:
-      r = frcp_fp_class(handle_sz(alu, src_res[0]));
+      /* Some backends have terrible precision for fp64,
+       * so don't try to do anything clever.
+       */
+      if (alu->def.bit_size < 64)
+         r = frcp_fp_class(handle_sz(alu, src_res[0]));
       break;
 
    case nir_op_mov:
@@ -1085,11 +1089,13 @@ process_fp_query(struct analysis_state *state, struct analysis_query *aq, uint32
       break;
 
    case nir_op_fsqrt:
-      r = fsqrt_fp_class(src_res[0]);
+      if (alu->def.bit_size < 64)
+         r = fsqrt_fp_class(src_res[0]);
       break;
 
    case nir_op_frsq:
-      r = frcp_fp_class(fsqrt_fp_class(handle_sz(alu, src_res[0])));
+      if (alu->def.bit_size < 64)
+         r = frcp_fp_class(fsqrt_fp_class(handle_sz(alu, src_res[0])));
       break;
 
    case nir_op_ffloor: {

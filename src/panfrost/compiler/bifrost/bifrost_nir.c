@@ -668,6 +668,14 @@ mem_access_size_align_cb(nir_intrinsic_op intrin, uint8_t bytes,
    /* No more than 16 bytes at a time. */
    bytes = MIN2(bytes, 16);
 
+   /* All loads must be aligned up to the next power of two of their byte
+    * size. If we have insufficient alignment, split into smaller loads. */
+   unsigned required_align = util_next_power_of_two(bytes);
+   if (align < required_align) {
+      bytes = align;
+      required_align = bytes;
+   }
+
    /* If the number of bytes is a multiple of 4, use 32-bit loads. Else if it's
     * a multiple of 2, use 16-bit loads. Else use 8-bit loads.
     *
@@ -701,15 +709,13 @@ mem_access_size_align_cb(nir_intrinsic_op intrin, uint8_t bytes,
       }
 
       bit_size = MAX2(bit_size, 32);
-      align = 4;
-   } else {
-      align = bit_size / 8;
+      required_align = 4;
    }
 
    return (nir_mem_access_size_align){
       .num_components = num_comps,
       .bit_size = bit_size,
-      .align = align,
+      .align = required_align,
       .shift = nir_mem_access_shift_method_scalar,
    };
 }

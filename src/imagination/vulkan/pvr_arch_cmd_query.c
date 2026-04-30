@@ -22,6 +22,9 @@ void PVR_PER_ARCH(CmdResetQueryPool)(VkCommandBuffer commandBuffer,
 
    PVR_CHECK_COMMAND_BUFFER_BUILDING_STATE(cmd_buffer);
 
+   if (queryCount == 0)
+      return;
+
    query_info.type = PVR_QUERY_TYPE_RESET_QUERY_POOL;
 
    query_info.reset_query_pool.query_pool = queryPool;
@@ -80,6 +83,9 @@ void PVR_PER_ARCH(CmdCopyQueryPoolResults)(VkCommandBuffer commandBuffer,
    VkResult result;
 
    PVR_CHECK_COMMAND_BUFFER_BUILDING_STATE(cmd_buffer);
+
+   if (queryCount == 0)
+      return;
 
    query_info.type = PVR_QUERY_TYPE_COPY_QUERY_RESULTS;
 

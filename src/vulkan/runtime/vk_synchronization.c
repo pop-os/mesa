@@ -99,6 +99,14 @@ vk_collect_dependency_info_src_stages(const VkDependencyInfo* pDependencyInfo)
       stages |= pDependencyInfo->pBufferMemoryBarriers[i].srcStageMask;
    for (uint32_t i = 0; i < pDependencyInfo->imageMemoryBarrierCount; i++)
       stages |= pDependencyInfo->pImageMemoryBarriers[i].srcStageMask;
+
+   const VkMemoryRangeBarriersInfoKHR *mem_barriers_info =
+      vk_find_struct_const(pDependencyInfo->pNext, MEMORY_RANGE_BARRIERS_INFO_KHR);
+   if (mem_barriers_info) {
+      for (uint32_t i = 0; i < mem_barriers_info->memoryRangeBarrierCount; i++)
+         stages |= mem_barriers_info->pMemoryRangeBarriers[i].srcStageMask;
+   }
+
    return stages;
 }
 

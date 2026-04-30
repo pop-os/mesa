@@ -2101,13 +2101,12 @@ prepare_dcd(struct panvk_cmd_buffer *cmdbuf,
 }
 
 static void
-prepare_index_buffer(struct panvk_cmd_buffer *cmdbuf,
-                     struct panvk_draw_info *draw)
+prepare_index_buffer(struct panvk_cmd_buffer *cmdbuf)
 {
    struct cs_builder *b =
       panvk_get_cs_builder(cmdbuf, PANVK_SUBQUEUE_VERTEX_TILER);
 
-   if (draw->index.size && gfx_state_dirty(cmdbuf, IB)) {
+   if (gfx_state_dirty(cmdbuf, IB)) {
       cs_move32_to(b, cs_sr_reg32(b, IDVS, INDEX_BUFFER_SIZE),
                    cmdbuf->state.gfx.ib.size);
 
@@ -2300,7 +2299,7 @@ prepare_draw(struct panvk_cmd_buffer *cmdbuf, struct panvk_draw_info *draw)
       return result;
 
    cs_update_vt_ctx(b) {
-      prepare_index_buffer(cmdbuf, draw);
+      prepare_index_buffer(cmdbuf);
 
       set_tiler_idvs_flags(b, cmdbuf, draw);
 

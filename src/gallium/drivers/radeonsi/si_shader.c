@@ -51,6 +51,12 @@ bool si_is_merged_shader(struct si_shader *shader)
    return shader->key.ge.as_ngg || si_is_multi_part_shader(shader);
 }
 
+static bool si_is_color_builtin(unsigned loc)
+{
+   return loc == VARYING_SLOT_COL0 || loc == VARYING_SLOT_COL1 ||
+          loc == VARYING_SLOT_BFC0 || loc == VARYING_SLOT_BFC1;
+}
+
 /**
  * Returns a unique index for a semantic name and index. The index must be
  * less than 64, so that a 64-bit bitmask of used inputs or outputs can be
@@ -594,6 +600,30 @@ static void si_assign_param_offsets(nir_shader *nir, struct si_shader *shader,
    STATIC_ASSERT(sizeof(temp_info->vs_output_param_offset[0]) == 1);
    memset(temp_info->vs_output_param_offset, AC_EXP_PARAM_UNDEFINED,
           sizeof(temp_info->vs_output_param_offset));
+
+    /* Before we mess with io locations set clamp flag for color builtins */
+   if (nir->info.stage == MESA_SHADER_VERTEX ||
+       nir->info.stage == MESA_SHADER_TESS_EVAL ||
+       nir->info.stage == MESA_SHADER_GEOMETRY) {
+      nir_function_impl *impl = nir_shader_get_entrypoint(nir);
+      assert(impl);
+      nir_foreach_block(block, impl) {
+         nir_foreach_instr_safe(instr, block) {
+            if (instr->type != nir_instr_type_intrinsic)
+               continue;
+
+            nir_intrinsic_instr *intr = nir_instr_as_intrinsic(instr);
+            if (intr->intrinsic != nir_intrinsic_store_output)
+               continue;
+
+            nir_io_semantics sem = nir_intrinsic_io_semantics(intr);
+            if (si_is_color_builtin(sem.location)) {
+               sem.clamp = 1;
+               nir_intrinsic_set_io_semantics(intr,sem);
+            }
+         }
+      }
+   }
 
    /* A slot remapping table for duplicated outputs, so that 1 vertex shader output can be
     * mapped to multiple fragment shader inputs.
