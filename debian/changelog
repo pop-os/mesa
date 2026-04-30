@@ -1,8 +1,8 @@
-mesa (26.1.0~rc3-1) UNRELEASED; urgency=medium
+mesa (26.1.0~rc3-1) experimental; urgency=medium
 
   * New upstream release candidate.
 
- -- Timo Aaltonen <tjaalton@debian.org>  Thu, 30 Apr 2026 09:31:39 +0300
+ -- Timo Aaltonen <tjaalton@debian.org>  Thu, 30 Apr 2026 09:44:53 +0300
 
 mesa (26.1.0~rc2-1) experimental; urgency=medium
 
