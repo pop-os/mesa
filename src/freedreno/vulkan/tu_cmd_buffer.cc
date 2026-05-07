@@ -352,8 +352,13 @@ tu6_emit_flushes(struct tu_cmd_buffer *cmd_buffer,
       tu_emit_event_write<CHIP>(cmd_buffer, cs, FD_CCU_CLEAN_BLIT_CACHE);
    if (CHIP >= A7XX && (flushes & TU_CMD_FLAG_CCHE_INVALIDATE) &&
        /* Invalidating UCHE seems to also invalidate CCHE */
-       !(flushes & TU_CMD_FLAG_CACHE_INVALIDATE))
+       !(flushes & TU_CMD_FLAG_CACHE_INVALIDATE)) {
+      /* CP_CCHE_INVALIDATE is just a plain register write underneath, so
+       * it needs WFI before it, in order to invalidate at the right point.
+       */
+      tu_cs_emit_wfi(cs);
       tu_cs_emit_pkt7(cs, CP_CCHE_INVALIDATE, 0);
+   }
    if (CHIP == A7XX && (flushes & TU_CMD_FLAG_RTU_INVALIDATE) &&
        cmd_buffer->device->physical_device->info->props.has_rt_workaround)
       tu_emit_rt_workaround<CHIP>(cmd_buffer, cs);
