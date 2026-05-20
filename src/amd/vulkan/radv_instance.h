@@ -76,7 +76,6 @@ struct radv_drirc {
 
    struct {
       bool cooperative_matrix2_nv;
-      bool allow_dgc_multiview;
       bool emulate_rt;
       bool expose_float16_gfx8;
       bool vk_require_astc;

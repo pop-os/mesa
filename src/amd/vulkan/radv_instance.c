@@ -206,7 +206,6 @@ static const driOptionDescription radv_dri_options[] = {
       DRI_CONF_RADV_EMULATE_RT(false)
       DRI_CONF_RADV_ENABLE_FLOAT16_GFX8(false)
       DRI_CONF_RADV_COOPERATIVE_MATRIX2_NV(false)
-      DRI_CONF_RADV_ALLOW_DGC_MULTIVIEW(false)
       DRI_CONF_RADV_WAIT_FOR_VM_MAP_UPDATES(false)
       DRI_CONF_RADV_NO_IMPLICIT_VARYING_SUBGROUP_SIZE(false)
       DRI_CONF_RADV_HIDE_REBAR_ON_DGPU(false)
@@ -279,7 +278,6 @@ radv_init_dri_features_options(struct radv_instance *instance)
    struct radv_drirc *drirc = &instance->drirc;
 
    drirc->features.cooperative_matrix2_nv = driQueryOptionb(&drirc->options, "radv_cooperative_matrix2_nv");
-   drirc->features.allow_dgc_multiview = driQueryOptionb(&drirc->options, "radv_allow_dgc_multiview");
    drirc->features.emulate_rt = driQueryOptionb(&drirc->options, "radv_emulate_rt");
    drirc->features.expose_float16_gfx8 = driQueryOptionb(&drirc->options, "radv_enable_float16_gfx8");
    drirc->features.vk_require_etc2 = driQueryOptionb(&drirc->options, "vk_require_etc2");
