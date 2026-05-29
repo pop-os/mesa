@@ -6545,6 +6545,9 @@ void genX(CmdBeginRendering)(
     */
    gfx->dirty |= ANV_CMD_DIRTY_ALL_SHADERS(cmd_buffer->device);
 
+   memset(gfx->color_output_mapping, ANV_COLOR_OUTPUT_UNKNOWN,
+          sizeof(gfx->color_output_mapping));
+
 #if GFX_VER >= 11
    if (render_target_change) {
       /* The PIPE_CONTROL command description says:
@@ -7155,7 +7158,7 @@ void genX(cmd_emit_timestamp)(struct anv_batch *batch,
 
       GENX(EXECUTE_INDIRECT_DISPATCH_pack)
       (batch, dwords, &(struct GENX(EXECUTE_INDIRECT_DISPATCH)) {
-            .MOCS = anv_mocs(device, NULL, 0),
+            .MOCSIndex = MOCS_GET_INDEX(anv_mocs(device, NULL, 0)),
             .body = {
                .PostSync = (struct GENX(POSTSYNC_DATA)) {
                   .Operation = WriteTimestamp,

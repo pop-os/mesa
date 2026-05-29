@@ -8948,6 +8948,9 @@ static VkResult pvr_execute_sub_cmd(struct pvr_cmd_buffer *cmd_buffer,
 
    primary_sub_cmd->type = sec_sub_cmd->type;
    primary_sub_cmd->owned = false;
+   primary_sub_cmd->is_dynamic_render = sec_sub_cmd->is_dynamic_render;
+   primary_sub_cmd->is_suspend = sec_sub_cmd->is_suspend;
+   primary_sub_cmd->is_resume = sec_sub_cmd->is_resume;
 
    list_addtail(&primary_sub_cmd->link, &cmd_buffer->sub_cmds);
 

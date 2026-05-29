@@ -493,8 +493,8 @@ emit_indirect_compute_walker(struct anv_cmd_buffer *cmd_buffer,
             },
          },
          .ArgumentBufferStartAddress = indirect_addr,
-         .MOCS                       = anv_mocs(cmd_buffer->device,
-                                                indirect_addr.bo, 0),
+         .MOCSIndex                  = MOCS_GET_INDEX(anv_mocs(cmd_buffer->device,
+                                                               indirect_addr.bo, 0)),
       );
 
    cmd_buffer_post_dispatch_wa(cmd_buffer);
