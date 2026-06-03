@@ -22,6 +22,24 @@ mesa (26.1.0~rc1-1) experimental; urgency=medium
 
  -- Timo Aaltonen <tjaalton@debian.org>  Thu, 16 Apr 2026 10:40:58 +0300
 
+mesa (26.0.8-1) unstable; urgency=medium
+
+  * New upstream release.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Fri, 29 May 2026 15:26:38 +0300
+
+mesa (26.0.7-1) unstable; urgency=medium
+
+  * New upstream release.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Thu, 21 May 2026 09:56:28 +0300
+
+mesa (26.0.6-1) unstable; urgency=medium
+
+  * New upstream release.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Thu, 30 Apr 2026 09:24:23 +0300
+
 mesa (26.0.5-1) unstable; urgency=medium
 
   * New upstream release.
