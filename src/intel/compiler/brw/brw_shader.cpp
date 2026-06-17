@@ -353,8 +353,9 @@ brw_shader::assign_curb_setup()
             continue;
 
          struct brw_reg brw_reg;
-         if (inst->src[i].nr == BRW_INLINE_PARAM_REG) {
+         if (inst->src[i].nr >= BRW_INLINE_PARAM_REG) {
             brw_reg = cs_payload().inline_parameter;
+            brw_reg.nr += inst->src[i].nr - BRW_INLINE_PARAM_REG;
          } else {
             assert(inst->src[i].nr < 64);
             used |= BITFIELD64_BIT(inst->src[i].nr);

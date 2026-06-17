@@ -196,10 +196,20 @@ vtn_nir_alu_op_for_spirv_glsl_opcode(struct vtn_builder *b,
    *extra_fp_math_ctrl = nir_fp_fast_math;
    switch (opcode) {
    case GLSLstd450NMin:
-   case GLSLstd450NMax: {
-      *extra_fp_math_ctrl = nir_fp_preserve_nan | nir_fp_preserve_inf;
+   case GLSLstd450NMax:
+      *extra_fp_math_ctrl |= nir_fp_preserve_nan;
+      FALLTHROUGH;
+   case GLSLstd450FMax:
+   case GLSLstd450FMin: {
+      /* We don't have to preserve infinities according to the VK spec,
+       * but games break without it. Both Unity and Unreal Engine
+       * are affected.
+       */
+      *extra_fp_math_ctrl |= nir_fp_preserve_inf;
       switch (opcode) {
+      case GLSLstd450FMin:
       case GLSLstd450NMin: return nir_op_fmin;
+      case GLSLstd450FMax:
       case GLSLstd450NMax: return nir_op_fmax;
       default: UNREACHABLE("unhandled");
       }
@@ -221,10 +231,8 @@ vtn_nir_alu_op_for_spirv_glsl_opcode(struct vtn_builder *b,
    case GLSLstd450Log2:          return nir_op_flog2;
    case GLSLstd450Sqrt:          return nir_op_fsqrt;
    case GLSLstd450InverseSqrt:   return nir_op_frsq;
-   case GLSLstd450FMin:          return nir_op_fmin;
    case GLSLstd450UMin:          return nir_op_umin;
    case GLSLstd450SMin:          return nir_op_imin;
-   case GLSLstd450FMax:          return nir_op_fmax;
    case GLSLstd450UMax:          return nir_op_umax;
    case GLSLstd450SMax:          return nir_op_imax;
    case GLSLstd450FMix:          return nir_op_flrp;
@@ -409,9 +417,19 @@ handle_glsl450_alu(struct vtn_builder *b, enum GLSLstd450 entrypoint,
       dest->def = nir_flog(nb, src[0]);
       break;
 
-   case GLSLstd450FClamp:
+   case GLSLstd450FClamp: {
+      /* We don't have to preserve infinities according to the VK spec,
+       * but games break without it. Both Unity and Unreal Engine
+       * are affected.
+       */
+      const unsigned save_math_ctrl = nb->fp_math_ctrl;
+      b->nb.fp_math_ctrl = nir_fp_preserve_inf;
+
       dest->def = nir_fclamp(nb, src[0], src[1], src[2]);
+
+      nb->fp_math_ctrl = save_math_ctrl;
       break;
+   }
    case GLSLstd450NClamp: {
       const unsigned save_math_ctrl = nb->fp_math_ctrl;
       nb->fp_math_ctrl |= nir_fp_preserve_nan | nir_fp_preserve_inf;

@@ -1590,7 +1590,8 @@ prepare_vs(struct panvk_cmd_buffer *cmdbuf, const struct panvk_draw_info *draw)
                       vs_desc_state->res_table);
 
 #if PAN_ARCH >= 12
-      if (gfx_state_dirty(cmdbuf, VS))
+      if (gfx_state_dirty(cmdbuf, VS) ||
+          dyn_gfx_state_dirty(cmdbuf, IA_PRIMITIVE_TOPOLOGY))
          cs_move64_to(b, cs_sr_reg64(b, IDVS, VERTEX_SPD), get_vs_all_spd(cmdbuf));
 #else
       if (gfx_state_dirty(cmdbuf, VS) ||

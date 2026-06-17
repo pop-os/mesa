@@ -52,6 +52,7 @@ struct radv_physical_device_cache_key {
    uint32_t ge_wave32 : 1;
    uint32_t invariant_geom : 1;
    uint32_t no_fmask : 1;
+   uint32_t force_64_byte_sampled_image : 1;
    uint32_t no_ngg_gs : 1;
    uint32_t no_rt : 1;
    uint32_t ps_wave32 : 1;
@@ -67,7 +68,7 @@ struct radv_physical_device_cache_key {
    uint32_t mitigate_smem_oob : 1;
    uint32_t rt_cps : 1;
 
-   uint32_t reserved : 6;
+   uint32_t reserved : 5;
 };
 
 enum radv_video_enc_hw_ver {
@@ -121,6 +122,9 @@ struct radv_physical_device {
 
    /* Whether to enable FMASK compression for MSAA textures (GFX6-GFX10.3) */
    bool use_fmask;
+
+   /* Whether to use space for 2 descriptors for sampled image descriptors, even when fmask is disabled. */
+   bool force_64_byte_sampled_image;
 
    /* Whether to enable HTILE compression for depth/stencil images. */
    bool use_hiz;
@@ -305,7 +309,7 @@ static inline uint32_t
 radv_get_sampled_image_desc_size(const struct radv_physical_device *pdev)
 {
    /* Main descriptor + FMASK desccriptor if needed. */
-   return 32 + (pdev->use_fmask ? 32 : 0);
+   return 32 + (pdev->use_fmask || pdev->force_64_byte_sampled_image ? 32 : 0);
 }
 
 static inline uint32_t

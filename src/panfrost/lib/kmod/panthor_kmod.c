@@ -1261,7 +1261,7 @@ panthor_kmod_query_timestamp(const struct pan_kmod_dev *dev)
    if (!pan_kmod_driver_version_at_least(&dev->driver, 1, 1))
       return 0;
 
-   struct drm_panthor_timestamp_info timestamp_info;
+   struct drm_panthor_timestamp_info timestamp_info = {};
 
    struct drm_panthor_dev_query query = (struct drm_panthor_dev_query){
       .type = DRM_PANTHOR_DEV_QUERY_TIMESTAMP_INFO,

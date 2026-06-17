@@ -222,7 +222,7 @@ radv_nir_lower_io_to_mem(struct radv_device *device, struct radv_shader_stage *s
       ac_nir_lower_task_outputs_to_mem(nir, info->cs.has_query);
       return true;
    } else if (nir->info.stage == MESA_SHADER_MESH) {
-      ac_nir_lower_mesh_inputs_to_mem(nir);
+      ac_nir_lower_mesh_inputs_to_mem(nir, stage->info.ms.has_task);
       return true;
    }
 

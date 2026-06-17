@@ -156,6 +156,13 @@ bo_can_reclaim(struct zink_screen *screen, struct pb_buffer *pbuf)
 {
    struct zink_bo *bo = zink_bo(pbuf);
 
+   /* ensure that submit_count is checked to determine if the usage pointer is stale */
+   if (!zink_bo_has_usage(bo)) {
+      /* if (submit_count > 1) then the usage pointer is invalid */
+      bo->reads.u = NULL;
+      bo->writes.u = NULL;
+      return true;
+   }
    return zink_screen_usage_check_completion(screen, bo->reads.u) && zink_screen_usage_check_completion(screen, bo->writes.u);
 }
 

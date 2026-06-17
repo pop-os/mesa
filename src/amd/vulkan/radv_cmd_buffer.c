@@ -1996,13 +1996,19 @@ radv_is_sample_shading_enabled(struct radv_cmd_buffer *cmd_buffer, float *min_sa
    if (min_sample_shading)
       *min_sample_shading = 1.0f;
 
+   /* If the PS requires sample shading for inputs,
+    * min_sample_shading is overwritten to 1.0.
+    */
+   if (ps && ps->info.ps.uses_sample_shading)
+      return true;
+
    if (cmd_buffer->state.ms.sample_shading_enable) {
       if (min_sample_shading)
          *min_sample_shading = cmd_buffer->state.ms.min_sample_shading;
       return true;
    }
 
-   return ps ? ps->info.ps.uses_sample_shading : false;
+   return false;
 }
 
 static ALWAYS_INLINE unsigned
@@ -4322,6 +4328,7 @@ radv_emit_fsr_state(struct radv_cmd_buffer *cmd_buffer)
    struct radv_device *device = radv_cmd_buffer_device(cmd_buffer);
    const struct radv_physical_device *pdev = radv_device_physical(device);
    const struct radv_dynamic_state *d = &cmd_buffer->state.dynamic;
+   const struct radv_rendering_state *render = &cmd_buffer->state.render;
    struct radv_cmd_stream *cs = cmd_buffer->cs;
 
    /* When per-vertex VRS is forced and the dynamic fragment shading rate is a no-op, ignore
@@ -4341,7 +4348,7 @@ radv_emit_fsr_state(struct radv_cmd_buffer *cmd_buffer)
 
    assert(pdev->info.gfx_level >= GFX10_3);
 
-   if (!cmd_buffer->state.render.vrs_att.iview) {
+   if (!render->vrs_att.iview) {
       /* When the current subpass has no VRS attachment, the VRS rates are expected to be 1x1, so we
        * can cheat by tweaking the different combiner modes.
        */
@@ -4363,6 +4370,20 @@ radv_emit_fsr_state(struct radv_cmd_buffer *cmd_buffer)
          FALLTHROUGH;
       case VK_FRAGMENT_SHADING_RATE_COMBINER_OP_KEEP_KHR:
          /* Nothing to do here because the SAMPLE_ITER combiner mode should already be passthrough. */
+         break;
+      default:
+         break;
+      }
+   } else if (render->ds_att.iview && radv_image_has_vrs_htile(device, render->ds_att.iview->image) &&
+              !radv_htile_enabled(render->ds_att.iview->image, render->ds_att.iview->vk.base_mip_level)) {
+      /* Otherwise, adjust the combiners to force VRS rate to 1x1 when the depth/stencil view is
+       * incompatible with VRS which can happen with mipmaps.
+       */
+      switch (htile_comb_mode) {
+      case VK_FRAGMENT_SHADING_RATE_COMBINER_OP_MIN_KHR:
+      case VK_FRAGMENT_SHADING_RATE_COMBINER_OP_REPLACE_KHR:
+         rate_x = rate_y = 0;
+         pipeline_comb_mode = V_028848_SC_VRS_COMB_MODE_PASSTHRU;
          break;
       default:
          break;

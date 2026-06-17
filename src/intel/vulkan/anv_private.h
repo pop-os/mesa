@@ -288,15 +288,18 @@ get_max_vbs(const struct intel_device_info *devinfo) {
 #define ANV_TRTT_L1_NULL_TILE_VAL 0
 #define ANV_TRTT_L1_INVALID_TILE_VAL 1
 
-/* The binding table entry id disabled, the shader can write to it and the
+/* The binding table entry is disabled, the shader can write to it and the
  * driver should use a null surface state so that writes are discarded.
  */
 #define ANV_COLOR_OUTPUT_DISABLED (0xff)
-/* The binding table entry id unused, the shader does not write to it and the
+/* The binding table entry is unused, the shader does not write to it and the
  * driver can leave whatever surface state was used before. Transitioning
  * to/from this entry does not require render target cache flush.
  */
 #define ANV_COLOR_OUTPUT_UNUSED   (0xfe)
+/* The binding table entry is unknown.
+ */
+#define ANV_COLOR_OUTPUT_UNKNOWN  (0xfd)
 
 static inline uint32_t
 align_down_npot_u32(uint32_t v, uint32_t a)

@@ -1366,9 +1366,18 @@ transition_color_buffer(struct anv_cmd_buffer *cmd_buffer,
           final_aux_usage == ISL_AUX_USAGE_NONE ||
           initial_aux_usage == final_aux_usage);
 
-   /* If initial aux usage is NONE, there is nothing to resolve */
-   if (initial_aux_usage == ISL_AUX_USAGE_NONE)
+   /* If initial aux usage is NONE, there is nothing to resolve. However, we
+    * need to ensure uncompressed cachelines don't interfere with compressed
+    * cachelines which may be generated in the final layout.
+    */
+   if (initial_aux_usage == ISL_AUX_USAGE_NONE) {
+      if (final_aux_usage != ISL_AUX_USAGE_NONE) {
+         genX(cmd_buffer_update_color_aux_op)(cmd_buffer, GFX_VER == 9 ?
+              ANV_COLOR_AUX_OP_CLASS_SW_AMBIGUATE :
+              ANV_COLOR_AUX_OP_CLASS_HW_AMBIGUATE);
+      }
       return;
+   }
 
    enum isl_aux_op resolve_op = ISL_AUX_OP_NONE;
 
@@ -6530,6 +6539,9 @@ void genX(CmdBeginRendering)(
     */
    gfx->dirty |= ANV_CMD_DIRTY_ALL_SHADERS(cmd_buffer->device);
 
+   memset(gfx->color_output_mapping, ANV_COLOR_OUTPUT_UNKNOWN,
+          sizeof(gfx->color_output_mapping));
+
 #if GFX_VER >= 11
    if (render_target_change && cmd_buffer->device->physical->rt_change_needs_flush) {
       /* The PIPE_CONTROL command description says:
@@ -7143,7 +7155,7 @@ void genX(cmd_emit_timestamp)(struct anv_batch *batch,
 
       GENX(EXECUTE_INDIRECT_DISPATCH_pack)
       (batch, dwords, &(struct GENX(EXECUTE_INDIRECT_DISPATCH)) {
-            .MOCS = anv_mocs(device, NULL, 0),
+            .MOCSIndex = MOCS_GET_INDEX(anv_mocs(device, NULL, 0)),
             .body = {
                .PostSync = (struct GENX(POSTSYNC_DATA)) {
                   .Operation = WriteTimestamp,

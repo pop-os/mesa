@@ -1496,6 +1496,29 @@ live_in_rewrite(struct ra_spill_ctx *ctx,
 }
 
 static void
+live_in_interval_rewrite(struct ra_spill_ctx *ctx,
+                         struct ra_spill_interval *interval,
+                         struct reg_or_immed *new_val, struct ir3_block *block,
+                         unsigned pred_idx, struct ir3_cursor cursor)
+{
+   live_in_rewrite(ctx, interval, new_val, block, pred_idx);
+
+   rb_tree_foreach (struct ra_spill_interval, child,
+                    &interval->interval.children, interval.node) {
+      assert(!(new_val->flags & (IR3_REG_CONST | IR3_REG_IMMED)));
+      struct ir3_register *child_reg = child->interval.reg;
+      struct ir3_register *child_def = extract(
+         new_val->def,
+         (child_reg->interval_start - interval->interval.reg->interval_start) /
+            reg_elem_size(new_val->def),
+         reg_elems(child_reg), cursor);
+      struct reg_or_immed *child_val = ralloc(ctx, struct reg_or_immed);
+      child_val->def = child_def;
+      live_in_interval_rewrite(ctx, child, child_val, block, pred_idx, cursor);
+   }
+}
+
+static void
 reload_live_in(struct ra_spill_ctx *ctx, struct ir3_register *def,
                struct ir3_block *block)
 {
@@ -1519,7 +1542,8 @@ reload_live_in(struct ra_spill_ctx *ctx, struct ir3_register *def,
             new_val->def = reload(ctx, def, ir3_before_terminator(pred));
          new_val->flags = new_val->def->flags;
       }
-      live_in_rewrite(ctx, interval, new_val, block, i);
+      live_in_interval_rewrite(ctx, interval, new_val, block, i,
+                               ir3_before_terminator(pred));
    }
 }
 

@@ -889,7 +889,7 @@
   </struct>
 
   <struct name="CS PROT_REGION" size="2">
-    <field name="Size" size="16" start="0" type="uint"/>
+    <field name="Size" size="16" start="0" type="uint" modifier="shr(3)"/>
     <field name="Opcode" size="8" start="56" type="CS Opcode" default="PROT_REGION"/>
   </struct>
 

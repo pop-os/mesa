@@ -2688,6 +2688,16 @@ assign_consumer_var_io(mesa_shader_stage stage, nir_variable *var, struct io_slo
    }
    uint8_t *slot_map = var->data.patch ? io->patch_slot_map : io->slot_map;
    if (slot_map[slot] == (unsigned char)-1) {
+      switch (slot) {
+      case VARYING_SLOT_COL0:
+      case VARYING_SLOT_COL1:
+         slot += VARYING_SLOT_BFC0 - 1;
+         break;
+      default:
+         break;
+      }
+   }
+   if (slot_map[slot] == (unsigned char)-1) {
       /* texcoords can't be eliminated in fs due to GL_COORD_REPLACE,
          * so keep for now and eliminate later
          */

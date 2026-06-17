@@ -740,36 +740,34 @@ emit_trunc_f64(isel_context* ctx, Builder& bld, Definition dst, Temp val)
 }
 
 Temp
-emit_floor_f64(isel_context* ctx, Builder& bld, Definition dst, Temp val)
+emit_floor_ceil_f64(isel_context* ctx, Builder& bld, aco_opcode opcode, Definition dst, Temp val)
 {
    if (ctx->options->gfx_level >= GFX7)
-      return bld.vop1(aco_opcode::v_floor_f64, Definition(dst), val);
+      return bld.vop1(opcode, Definition(dst), val);
 
-   /* GFX6 doesn't support V_FLOOR_F64, lower it (note that it's actually
-    * lowered at NIR level for precision reasons). */
+   /* GFX6 only supports fract, use it to lower floor/ceil.
+    * ffloor(a) -> fadd(a, -fsat(ffract(a)))
+    * fceil(a) -> -fadd(-a, -fsat(ffract(-a))) (the many negs are needed for -0.0)
+    */
    Temp src0 = as_vgpr(ctx, val);
 
-   Temp min_val = bld.pseudo(aco_opcode::p_create_vector, bld.def(s2), Operand::c32(-1u),
-                             Operand::c32(0x3fefffffu));
+   Builder::Result fract = bld.vop1_e64(aco_opcode::v_fract_f64, bld.def(v2), src0);
+   /* fract(Inf) is NaN, clamp turns it into zero to make the subtract a nop.
+    * For all other values, fract is already in [0.0, 1.0] anyway.
+    */
+   fract->valu().clamp = true;
+   fract->valu().neg[0] = opcode == aco_opcode::v_ceil_f64;
 
-   Temp isnan = bld.vopc(aco_opcode::v_cmp_neq_f64, bld.def(bld.lm), src0, src0);
-   Temp fract = bld.vop1(aco_opcode::v_fract_f64, bld.def(v2), src0);
-   Temp min = bld.vop3(aco_opcode::v_min_f64_e64, bld.def(v2), fract, min_val);
+   Temp tmp = opcode == aco_opcode::v_floor_f64 ? dst.getTemp() : bld.tmp(v2);
 
-   Temp then_lo = bld.tmp(v1), then_hi = bld.tmp(v1);
-   bld.pseudo(aco_opcode::p_split_vector, Definition(then_lo), Definition(then_hi), src0);
-   Temp else_lo = bld.tmp(v1), else_hi = bld.tmp(v1);
-   bld.pseudo(aco_opcode::p_split_vector, Definition(else_lo), Definition(else_hi), min);
-
-   Temp dst0 = bld.vop2(aco_opcode::v_cndmask_b32, bld.def(v1), else_lo, then_lo, isnan);
-   Temp dst1 = bld.vop2(aco_opcode::v_cndmask_b32, bld.def(v1), else_hi, then_hi, isnan);
-
-   Temp v = bld.pseudo(aco_opcode::p_create_vector, bld.def(v2), dst0, dst1);
-
-   Instruction* add = bld.vop3(aco_opcode::v_add_f64_e64, Definition(dst), src0, v);
+   Builder::Result add = bld.vop3(aco_opcode::v_add_f64_e64, Definition(tmp), src0, fract);
+   add->valu().neg[0] = opcode == aco_opcode::v_ceil_f64;
    add->valu().neg[1] = true;
 
-   return add->definitions[0].getTemp();
+   if (opcode == aco_opcode::v_ceil_f64)
+      bld.vop3(aco_opcode::v_mul_f64_e64, Definition(dst), Operand::c64(0xBFF0000000000000), add);
+
+   return dst.getTemp();
 }
 
 Temp
@@ -2394,7 +2392,7 @@ visit_alu_instr(isel_context* ctx, nir_alu_instr* instr)
          emit_vop1_instruction(ctx, instr, aco_opcode::v_floor_f32, dst);
       } else if (dst.regClass() == v2) {
          Temp src = get_alu_src(ctx, instr->src[0]);
-         emit_floor_f64(ctx, bld, Definition(dst), src);
+         emit_floor_ceil_f64(ctx, bld, aco_opcode::v_floor_f64, Definition(dst), src);
       } else if (dst.regClass() == s1) {
          Temp src = get_alu_src(ctx, instr->src[0]);
          aco_opcode op =
@@ -2411,27 +2409,8 @@ visit_alu_instr(isel_context* ctx, nir_alu_instr* instr)
       } else if (dst.regClass() == v1) {
          emit_vop1_instruction(ctx, instr, aco_opcode::v_ceil_f32, dst);
       } else if (dst.regClass() == v2) {
-         if (ctx->options->gfx_level >= GFX7) {
-            emit_vop1_instruction(ctx, instr, aco_opcode::v_ceil_f64, dst);
-         } else {
-            /* GFX6 doesn't support V_CEIL_F64, lower it. */
-            /* trunc = trunc(src0)
-             * if (src0 > 0.0 && src0 != trunc)
-             *    trunc += 1.0
-             */
-            Temp src0 = get_alu_src(ctx, instr->src[0]);
-            Temp trunc = emit_trunc_f64(ctx, bld, bld.def(v2), src0);
-            Temp tmp0 =
-               bld.vopc_e64(aco_opcode::v_cmp_gt_f64, bld.def(bld.lm), src0, Operand::zero());
-            Temp tmp1 = bld.vopc(aco_opcode::v_cmp_lg_f64, bld.def(bld.lm), src0, trunc);
-            Temp cond = bld.sop2(aco_opcode::s_and_b64, bld.def(s2), bld.def(s1, scc), tmp0, tmp1);
-            Temp add = bld.vop2(aco_opcode::v_cndmask_b32, bld.def(v1),
-                                bld.copy(bld.def(v1), Operand::zero()),
-                                bld.copy(bld.def(v1), Operand::c32(0x3ff00000u)), cond);
-            add = bld.pseudo(aco_opcode::p_create_vector, bld.def(v2),
-                             bld.copy(bld.def(v1), Operand::zero()), add);
-            bld.vop3(aco_opcode::v_add_f64_e64, Definition(dst), trunc, add);
-         }
+         Temp src = get_alu_src(ctx, instr->src[0]);
+         emit_floor_ceil_f64(ctx, bld, aco_opcode::v_ceil_f64, Definition(dst), src);
       } else if (dst.regClass() == s1) {
          Temp src = get_alu_src(ctx, instr->src[0]);
          aco_opcode op =
@@ -2469,39 +2448,38 @@ visit_alu_instr(isel_context* ctx, nir_alu_instr* instr)
          if (ctx->options->gfx_level >= GFX7) {
             emit_vop1_instruction(ctx, instr, aco_opcode::v_rndne_f64, dst);
          } else {
-            /* GFX6 doesn't support V_RNDNE_F64, lower it. */
-            Temp src0_lo = bld.tmp(v1), src0_hi = bld.tmp(v1);
-            Temp src0 = get_alu_src(ctx, instr->src[0]);
-            bld.pseudo(aco_opcode::p_split_vector, Definition(src0_lo), Definition(src0_hi), src0);
+            /* GFX6 doesn't support V_RNDNE_F64, lower it.
+             * For small numbers, add 2**52 to the abs(src), then subtract it again.
+             * This rounds off any additional bits. Then reapply the sign bit.
+             */
+            Temp src0 = as_vgpr(ctx, get_alu_src(ctx, instr->src[0]));
 
-            Temp bitmask = bld.sop1(aco_opcode::s_brev_b32, bld.def(s1),
-                                    bld.copy(bld.def(s1), Operand::c32(-2u)));
-            Temp bfi =
-               bld.vop3(aco_opcode::v_bfi_b32, bld.def(v1), bitmask,
-                        bld.copy(bld.def(v1), Operand::c32(0x43300000u)), as_vgpr(ctx, src0_hi));
-            Temp tmp =
-               bld.vop3(aco_opcode::v_add_f64_e64, bld.def(v2), src0,
-                        bld.pseudo(aco_opcode::p_create_vector, bld.def(v2), Operand::zero(), bfi));
-            Instruction* sub =
-               bld.vop3(aco_opcode::v_add_f64_e64, bld.def(v2), tmp,
-                        bld.pseudo(aco_opcode::p_create_vector, bld.def(v2), Operand::zero(), bfi));
+            Temp two_p52_exp = bld.copy(bld.def(s1), Operand::c32(0x43300000u));
+            Temp two_p52 =
+               bld.pseudo(aco_opcode::p_create_vector, bld.def(s2), Operand::c32(0), two_p52_exp);
+
+            Builder::Result add = bld.vop3(aco_opcode::v_add_f64_e64, bld.def(v2), src0, two_p52);
+            add->valu().abs[0] = true;
+
+            Builder::Result sub = bld.vop3(aco_opcode::v_add_f64_e64, bld.def(v2), add, two_p52);
             sub->valu().neg[1] = true;
-            tmp = sub->definitions[0].getTemp();
 
-            Temp v = bld.pseudo(aco_opcode::p_create_vector, bld.def(v2), Operand::c32(-1u),
-                                Operand::c32(0x432fffffu));
-            Instruction* vop3 = bld.vopc_e64(aco_opcode::v_cmp_gt_f64, bld.def(bld.lm), src0, v);
-            vop3->valu().abs[0] = true;
-            Temp cond = vop3->definitions[0].getTemp();
+            Builder::Result cond =
+               bld.vopc_e64(aco_opcode::v_cmp_ge_f64, bld.def(bld.lm), src0, two_p52);
+            cond->valu().abs[0] = true;
 
             Temp tmp_lo = bld.tmp(v1), tmp_hi = bld.tmp(v1);
-            bld.pseudo(aco_opcode::p_split_vector, Definition(tmp_lo), Definition(tmp_hi), tmp);
-            Temp dst0 = bld.vop2_e64(aco_opcode::v_cndmask_b32, bld.def(v1), tmp_lo,
-                                     as_vgpr(ctx, src0_lo), cond);
-            Temp dst1 = bld.vop2_e64(aco_opcode::v_cndmask_b32, bld.def(v1), tmp_hi,
-                                     as_vgpr(ctx, src0_hi), cond);
+            Temp src0_lo = bld.tmp(v1), src0_hi = bld.tmp(v1);
+            bld.pseudo(aco_opcode::p_split_vector, Definition(src0_lo), Definition(src0_hi), src0);
+            bld.pseudo(aco_opcode::p_split_vector, Definition(tmp_lo), Definition(tmp_hi), sub);
 
-            bld.pseudo(aco_opcode::p_create_vector, Definition(dst), dst0, dst1);
+            Temp sign_mask = bld.copy(bld.def(s1), Operand::c32(0x7fffffffu));
+            tmp_hi = bld.vop3(aco_opcode::v_bfi_b32, bld.def(v1), sign_mask, tmp_hi, src0_hi);
+
+            Temp dst_lo = bld.vop2(aco_opcode::v_cndmask_b32, bld.def(v1), tmp_lo, src0_lo, cond);
+            Temp dst_hi = bld.vop2(aco_opcode::v_cndmask_b32, bld.def(v1), tmp_hi, src0_hi, cond);
+
+            bld.pseudo(aco_opcode::p_create_vector, Definition(dst), dst_lo, dst_hi);
          }
       } else if (dst.regClass() == s1) {
          Temp src = get_alu_src(ctx, instr->src[0]);

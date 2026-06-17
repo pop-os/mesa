@@ -687,29 +687,25 @@ static VkResult pvr_setup_texture_state_words(
 {
    const struct pvr_image *image = vk_to_pvr_image(image_view->vk.image);
    const struct pvr_image_plane *plane = pvr_single_plane_const(image);
-   struct pvr_texture_state_info info = {
-      .format = image_view->vk.format,
-      .mem_layout = image->memlayout,
-      .type = image_view->vk.view_type,
-      .is_cube = image_view->vk.view_type == VK_IMAGE_VIEW_TYPE_CUBE ||
-                 image_view->vk.view_type == VK_IMAGE_VIEW_TYPE_CUBE_ARRAY,
-      .tex_state_type = PVR_TEXTURE_STATE_SAMPLE,
-      .extent = image_view->vk.extent,
-      .mip_levels = 1,
-      .sample_count = image_view->vk.image->samples,
-      .stride = plane->physical_extent.width,
-      .offset = plane->layer_size * view_index,
-      .addr = image->dev_addr,
-   };
-   const uint8_t *const swizzle = pvr_get_format_swizzle(info.format);
-   VkResult result;
 
-   memcpy(&info.swizzle, swizzle, sizeof(info.swizzle));
+   STATIC_ASSERT(sizeof(descriptor->image) ==
+                 sizeof(image_view->image_state[PVR_TEXTURE_STATE_SAMPLE]));
+   memcpy(&descriptor->image,
+          &image_view->image_state[PVR_TEXTURE_STATE_SAMPLE],
+          sizeof(descriptor->image));
 
-   /* TODO: Can we use image_view->texture_state instead of generating here? */
-   result = pvr_arch_pack_tex_state(device, &info, &descriptor->image);
-   if (result != VK_SUCCESS)
-      return result;
+   const struct ROGUE_TEXSTATE_IMAGE_WORD1 image_word1 = pvr_csb_unpack(
+      &descriptor->image.words[1],
+      TEXSTATE_IMAGE_WORD1);
+
+   pvr_csb_pack (&descriptor->image.words[1],
+                 TEXSTATE_IMAGE_WORD1,
+                 word1) {
+      word1 = image_word1;
+      word1.texaddr =
+         PVR_DEV_ADDR_OFFSET(word1.texaddr,
+                             plane->layer_size * view_index);
+   }
 
    pvr_csb_pack (&descriptor->sampler.words[0],
                  TEXSTATE_SAMPLER_WORD0,
@@ -2466,7 +2462,7 @@ VkResult pvr_arch_cmd_buffer_end_sub_cmd(struct pvr_cmd_buffer *cmd_buffer)
       if (result != VK_SUCCESS)
          return pvr_cmd_buffer_set_error_unwarned(cmd_buffer, result);
 
-      if (gfx_sub_cmd->multiview_enabled) {
+      if (gfx_sub_cmd->view_index_wanted) {
          result = pvr_csb_gfx_build_view_index_ctrl_stream(
             device,
             pvr_csb_get_start_address(&gfx_sub_cmd->control_stream),
@@ -2737,6 +2733,7 @@ VkResult pvr_arch_cmd_buffer_start_sub_cmd(struct pvr_cmd_buffer *cmd_buffer,
                ? state->render_pass_info.pass->multiview_enabled
                : false;
       }
+      sub_cmd->gfx.view_index_wanted = sub_cmd->gfx.multiview_enabled;
 
       if (state->vis_test_enabled)
          sub_cmd->gfx.query_pool = state->query_pool;
@@ -6611,11 +6608,19 @@ pvr_setup_isp_faces_and_control(struct pvr_cmd_buffer *const cmd_buffer,
    const enum ROGUE_TA_OBJTYPE obj_type =
       pvr_ta_objtype(dynamic_state->ia.primitive_topology);
 
-   const VkImageAspectFlags ds_aspects =
+   VkImageAspectFlags ds_aspects =
       (!rasterizer_discard && attachment)
          ? vk_format_aspects(attachment->vk_format) &
               (VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT)
          : VK_IMAGE_ASPECT_NONE;
+
+   /* Dynamic rendering attachments could be bound with a D+S format but only
+    * D or S active.
+    */
+   if (!pass_info->pass && attachment && !attachment->is_depth)
+      ds_aspects &= ~VK_IMAGE_ASPECT_DEPTH_BIT;
+   if (!pass_info->pass && attachment && !attachment->is_stencil)
+      ds_aspects &= ~VK_IMAGE_ASPECT_STENCIL_BIT;
 
    /* This is deliberately a full copy rather than a pointer because
     * vk_optimize_depth_stencil_state() can only be run once against any given
@@ -8140,6 +8145,7 @@ static VkResult pvr_validate_draw_state(struct pvr_cmd_buffer *cmd_buffer)
    struct vk_dynamic_graphics_state *const dynamic_state =
       &cmd_buffer->vk.dynamic_graphics_state;
    const struct pvr_graphics_pipeline *const gfx_pipeline = state->gfx_pipeline;
+   const pco_data *const vs_data = &gfx_pipeline->vs_data;
    const pco_data *const fs_data = &gfx_pipeline->fs_data;
    struct pvr_sub_cmd_gfx *sub_cmd;
    bool fstencil_writemask_zero;
@@ -8185,6 +8191,9 @@ static VkResult pvr_validate_draw_state(struct pvr_cmd_buffer *cmd_buffer)
    sub_cmd->frag_has_side_effects |= fs_data->common.uses.side_effects;
    sub_cmd->frag_uses_texture_rw |= false;
    sub_cmd->vertex_uses_texture_rw |= false;
+
+   sub_cmd->view_index_wanted |= vs_data->common.multiview;
+   sub_cmd->view_index_wanted |= fs_data->common.multiview;
 
    sub_cmd->job.get_vis_results = state->vis_test_enabled;
 
@@ -8950,6 +8959,9 @@ static VkResult pvr_execute_sub_cmd(struct pvr_cmd_buffer *cmd_buffer,
 
    primary_sub_cmd->type = sec_sub_cmd->type;
    primary_sub_cmd->owned = false;
+   primary_sub_cmd->is_dynamic_render = sec_sub_cmd->is_dynamic_render;
+   primary_sub_cmd->is_suspend = sec_sub_cmd->is_suspend;
+   primary_sub_cmd->is_resume = sec_sub_cmd->is_resume;
 
    list_addtail(&primary_sub_cmd->link, &cmd_buffer->sub_cmds);
 
@@ -9083,6 +9095,8 @@ pvr_execute_graphics_cmd_buffer(struct pvr_cmd_buffer *cmd_buffer,
 
       primary_sub_cmd->gfx.job.get_vis_results |=
          sec_sub_cmd->gfx.job.get_vis_results;
+      primary_sub_cmd->gfx.view_index_wanted |=
+         sec_sub_cmd->gfx.view_index_wanted;
 
       primary_sub_cmd->gfx.max_tiles_in_flight =
          MIN2(primary_sub_cmd->gfx.max_tiles_in_flight,

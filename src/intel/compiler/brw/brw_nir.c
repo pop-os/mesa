@@ -633,7 +633,7 @@ brw_nir_lower_deferred_urb_writes(nir_shader *nir,
             const nir_io_semantics sem = nir_intrinsic_io_semantics(intrin);
             const unsigned slot =
                vue_map->varying_to_slot[sem.location] +
-               (view_index ? nir_src_as_uint(*view_index) : 0);
+               (view_index ? nir_src_as_uint(*view_index) : 0) +
                nir_src_as_uint(*offset);
             const unsigned c = io_component(intrin, NULL);
             const unsigned mask = nir_intrinsic_write_mask(intrin);
@@ -689,7 +689,17 @@ brw_nir_lower_deferred_urb_writes(nir_shader *nir,
 
    free(outputs);
 
-   return nir_progress(true, impl, nir_metadata_control_flow);
+   bool progress = nir_progress(true, impl, nir_metadata_control_flow);
+
+   if (progress) {
+      /* This is important! brw_from_nir really, really needs divergence
+       * information. Call this explicitly here becuase this function just
+       * dirtied divergence metadata.
+       */
+      nir_divergence_analysis(nir);
+   }
+
+   return progress;
 }
 
 
@@ -3185,6 +3195,12 @@ brw_postprocess_nir_out_of_ssa(brw_pass_tracker *pt,
    nir_trivialize_registers(nir);
 
    nir_sweep(nir);
+
+   /* This is important! brw_from_nir really, really needs divergence
+    * information. Calculate it here so that it will be logged with
+    * INTEL_DEBUG=shaders or INTEL_DEBUG=mda.
+    */
+   nir_divergence_analysis(nir);
 
    if (unlikely(debug_enabled)) {
       fprintf(stderr, "NIR (final form) for %s shader:\n",

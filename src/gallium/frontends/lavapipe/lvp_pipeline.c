@@ -139,8 +139,12 @@ lvp_needs_advanced_blend_lowering(struct lvp_pipeline *pipeline)
    if (!cb)
       return false;
 
+   if (BITSET_TEST(pipeline->graphics_state.dynamic, MESA_VK_DYNAMIC_CB_BLEND_ADVANCED))
+      return false;
+
    for (uint32_t i = 0; i < cb->attachment_count; i++)
-      if (cb->attachments[i].color_blend_op >= VK_BLEND_OP_ZERO_EXT)
+      if (cb->attachments[i].blend_enable &&
+          cb->attachments[i].color_blend_op >= VK_BLEND_OP_ZERO_EXT)
          return true;
 
    return false;
@@ -177,7 +181,7 @@ lvp_lower_advanced_blend(struct lvp_pipeline *pipeline)
       const struct vk_color_blend_attachment_state *att = &cb->attachments[rt];
 
       /* Advanced blend ops start at VK_BLEND_OP_ZERO_EXT */
-      if (att->color_blend_op < VK_BLEND_OP_ZERO_EXT)
+      if (!att->blend_enable || att->color_blend_op < VK_BLEND_OP_ZERO_EXT)
          continue;
 
       const bool write_enable = cb->color_write_enables & BITFIELD_BIT(rt);

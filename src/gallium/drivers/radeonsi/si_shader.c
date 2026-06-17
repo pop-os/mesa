@@ -693,7 +693,7 @@ static void si_preprocess_nir(struct si_nir_shader_ctx *ctx)
    if (nir->info.stage == MESA_SHADER_TASK) {
       NIR_PASS(progress, nir, ac_nir_lower_task_outputs_to_mem, false);
    } else if (nir->info.stage == MESA_SHADER_MESH) {
-      NIR_PASS(progress, nir, ac_nir_lower_mesh_inputs_to_mem);
+      NIR_PASS(progress, nir, ac_nir_lower_mesh_inputs_to_mem, true);
    }
 
    if (mesa_shader_stage_is_compute(nir->info.stage)) {

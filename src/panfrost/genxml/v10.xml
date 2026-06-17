@@ -572,7 +572,7 @@
   </struct>
 
   <struct name="CS WAIT" size="2">
-    <field name="Wait mask" size="8" start="16" type="hex"/>
+    <field name="Wait mask" size="16" start="16" type="hex"/>
     <field name="Progress increment" size="1" start="32" type="bool" default="false"/>
     <field name="Opcode" size="8" start="56" type="CS Opcode" default="WAIT"/>
   </struct>

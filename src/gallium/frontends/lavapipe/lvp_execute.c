@@ -100,6 +100,7 @@ struct rendering_state {
    bool rs_dirty;
    bool dsa_dirty;
    bool dsa_no_stencil;
+   bool dsa_no_depth;
    bool stencil_ref_dirty;
    bool clip_state_dirty;
    bool blend_color_dirty;
@@ -123,6 +124,7 @@ struct rendering_state {
    struct pipe_grid_info trace_rays_info;
    struct pipe_framebuffer_state framebuffer;
    int fb_map[PIPE_MAX_COLOR_BUFS];
+   unsigned fb_max_cbufs;
    bool fb_remapped;
 
    struct pipe_blend_state blend_state;
@@ -358,9 +360,12 @@ emit_fb_state(struct rendering_state *state)
       struct pipe_framebuffer_state fb = state->framebuffer;
       memset(fb.cbufs, 0, sizeof(fb.cbufs));
       for (unsigned i = 0; i < fb.nr_cbufs; i++) {
-         if (state->fb_map[i] < PIPE_MAX_COLOR_BUFS)
+         if (state->fb_map[i] < PIPE_MAX_COLOR_BUFS) {
             fb.cbufs[state->fb_map[i]] = state->framebuffer.cbufs[i];
+            fb.nr_cbufs = MAX2(fb.nr_cbufs, state->fb_map[i] + 1);
+         }
       }
+      state->fb_max_cbufs = fb.nr_cbufs;
       state->pctx->set_framebuffer_state(state->pctx, &fb);
    } else {
       state->pctx->set_framebuffer_state(state->pctx, &state->framebuffer);
@@ -489,7 +494,7 @@ static void emit_state(struct rendering_state *state)
       }
       if (state->fb_remapped) {
          struct pipe_blend_state blend = state->blend_state;
-         for (unsigned i = 0; i < state->framebuffer.nr_cbufs; i++) {
+         for (unsigned i = 0; i < state->fb_max_cbufs; i++) {
             if (state->fb_map[i] < PIPE_MAX_COLOR_BUFS) {
                blend.rt[state->fb_map[i]] = state->blend_state.rt[i];
             }
@@ -548,14 +553,18 @@ static void emit_state(struct rendering_state *state)
    if (state->dsa_dirty) {
       bool s0_enabled = state->dsa_state.stencil[0].enabled;
       bool s1_enabled = state->dsa_state.stencil[1].enabled;
+      bool d_enabled = state->dsa_state.depth_enabled;
       if (state->dsa_no_stencil) {
          state->dsa_state.stencil[0].enabled = false;
          state->dsa_state.stencil[1].enabled = false;
       }
+      if (state->dsa_no_depth)
+         state->dsa_state.depth_enabled = false;
       cso_set_depth_stencil_alpha(state->cso, &state->dsa_state);
       state->dsa_dirty = false;
       state->dsa_state.stencil[0].enabled = s0_enabled;
       state->dsa_state.stencil[1].enabled = s1_enabled;
+      state->dsa_state.depth_enabled = d_enabled;
    }
 
    if (state->sample_mask_dirty) {
@@ -988,6 +997,19 @@ static void handle_graphics_pipeline(struct lvp_pipeline *pipeline,
             state->blend_state.rt[i].colormask = att->write_mask;
          if (!BITSET_TEST(ps->dynamic, MESA_VK_DYNAMIC_CB_BLEND_ENABLES))
             state->blend_state.rt[i].blend_enable = att->blend_enable;
+
+         /* An advanced blend op with dynamic advanced state is lowered in the
+          * fragment shader at draw time. Track the enable for that lowering and
+          * keep HW blending as passthrough. The advanced op must not reach
+          * vk_blend_op_to_pipe() below.
+          */
+         if (att->color_blend_op >= VK_BLEND_OP_ZERO_EXT) {
+            if (!BITSET_TEST(ps->dynamic, MESA_VK_DYNAMIC_CB_BLEND_ENABLES))
+               state->advanced_blend[i].blend_enable = att->blend_enable;
+
+            state->blend_state.rt[i].blend_enable = false;
+            continue;
+         }
 
          if (!att->blend_enable) {
             state->blend_state.rt[i].rgb_func = 0;
@@ -1845,6 +1867,7 @@ handle_begin_rendering(struct vk_cmd_queue_entry *cmd,
    bool suspending = (info->flags & VK_RENDERING_SUSPENDING_BIT) == VK_RENDERING_SUSPENDING_BIT;
 
    state->fb_remapped = false;
+   state->fb_max_cbufs = 0;
    for (unsigned i = 0; i < PIPE_MAX_COLOR_BUFS; i++)
       state->fb_map[i] = i;
 
@@ -1892,6 +1915,7 @@ handle_begin_rendering(struct vk_cmd_queue_entry *cmd,
 
    render_att_init(&state->depth_att, info->pDepthAttachment, state->poison_mem, false);
    render_att_init(&state->stencil_att, info->pStencilAttachment, state->poison_mem, true);
+   state->dsa_no_depth = !state->depth_att.imgv;
    state->dsa_no_stencil = !state->stencil_att.imgv;
    state->dsa_dirty = true;
    if (state->depth_att.imgv || state->stencil_att.imgv) {
@@ -1943,6 +1967,7 @@ static void handle_end_rendering(struct vk_cmd_queue_entry *cmd,
    /* ensure that textures are correctly framebuffer-referenced in llvmpipe */
    if (state->fb_remapped) {
       state->fb_remapped = false;
+      state->fb_max_cbufs = 0;
       emit_fb_state(state);
    }
 
@@ -1997,7 +2022,8 @@ static void
 handle_rendering_attachment_locations(struct vk_cmd_queue_entry *cmd, struct rendering_state *state)
 {
    VkRenderingAttachmentLocationInfoKHR *set = cmd->u.set_rendering_attachment_locations.location_info;
-   state->fb_remapped = true;
+   state->fb_remapped = !!set->pColorAttachmentLocations;
+   state->fb_max_cbufs = 0;
    memset(state->fb_map, PIPE_MAX_COLOR_BUFS, sizeof(state->fb_map));
    assert(state->color_att_count == set->colorAttachmentCount);
    if (set->pColorAttachmentLocations) {
@@ -2007,6 +2033,8 @@ handle_rendering_attachment_locations(struct vk_cmd_queue_entry *cmd, struct ren
          state->fb_map[i] = set->pColorAttachmentLocations[i];
       }
    }
+   /* force re-emitting colormasks */
+   state->blend_dirty = true;
    emit_fb_state(state);
 }
 
@@ -2899,7 +2927,14 @@ static void handle_execute_commands(struct vk_cmd_queue_entry *cmd,
 {
    for (unsigned i = 0; i < cmd->u.execute_commands.command_buffer_count; i++) {
       VK_FROM_HANDLE(lvp_cmd_buffer, secondary_buf, cmd->u.execute_commands.command_buffers[i]);
+      bool dsa_no_depth = !secondary_buf->rendering_info.depthAttachmentFormat;
+      bool dsa_no_stencil = !secondary_buf->rendering_info.stencilAttachmentFormat;
+      state->dsa_dirty |= dsa_no_depth != state->dsa_no_depth || dsa_no_stencil != state->dsa_no_stencil;
+      state->dsa_no_depth = dsa_no_depth;
+      state->dsa_no_stencil = dsa_no_stencil;
       lvp_execute_cmd_buffer(&secondary_buf->vk.cmd_queue.cmds, state, print_cmds);
+      state->dsa_no_depth = !state->depth_att.imgv;
+      state->dsa_no_stencil = !state->stencil_att.imgv;
    }
 }
 

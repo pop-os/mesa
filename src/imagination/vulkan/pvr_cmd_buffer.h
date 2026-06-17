@@ -217,6 +217,7 @@ struct pvr_sub_cmd_gfx {
 
    uint32_t view_mask;
    bool multiview_enabled;
+   bool view_index_wanted;
 
    /* Recorded deferred RTA clears for secondary command buffers */
    struct util_dynarray unbound_deferred_clears;

@@ -255,7 +255,7 @@ ac_nir_lower_task_outputs_to_mem(nir_shader *shader,
                                  bool has_query);
 
 bool
-ac_nir_lower_mesh_inputs_to_mem(nir_shader *shader);
+ac_nir_lower_mesh_inputs_to_mem(nir_shader *shader, bool has_task_shader);
 
 bool
 ac_nir_lower_global_access(nir_shader *shader);

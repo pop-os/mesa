@@ -183,6 +183,9 @@ pandecode_zs_crc_ext(struct pandecode_context *ctx, uint64_t gpu_va)
 #endif
    case MALI_BLOCK_FORMAT_TILED_U_INTERLEAVED:
    case MALI_BLOCK_FORMAT_LINEAR:
+#if PAN_ARCH >= 10
+   case MALI_BLOCK_FORMAT_INTERLEAVED_64K:
+#endif
       DUMP_UNPACKED(ctx, ZS_TARGET, zs_crc.zs, "ZS:\n");
       break;
 #if PAN_ARCH >= 7
@@ -204,6 +207,9 @@ pandecode_zs_crc_ext(struct pandecode_context *ctx, uint64_t gpu_va)
 #endif
    case MALI_BLOCK_FORMAT_TILED_U_INTERLEAVED:
    case MALI_BLOCK_FORMAT_LINEAR:
+#if PAN_ARCH >= 10
+   case MALI_BLOCK_FORMAT_INTERLEAVED_64K:
+#endif
       DUMP_UNPACKED(ctx, S_TARGET, zs_crc.s, "S:\n");
       break;
 #if PAN_ARCH >= 9

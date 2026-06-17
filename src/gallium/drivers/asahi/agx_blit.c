@@ -619,11 +619,12 @@ agx_resource_copy_region(struct pipe_context *pctx, struct pipe_resource *dst,
       assert(dst->format == src->format);
       unsigned bs = util_format_get_blocksize(dst->format);
       unsigned size = bs * src_box->width;
-      uint64_t dst_addr = agx_map_gpu(agx_resource(dst)) + dstx * bs;
+      unsigned dst_offset = dstx * bs;
+      uint64_t dst_addr = agx_map_gpu(agx_resource(dst)) + dst_offset;
       uint64_t src_addr = agx_map_gpu(agx_resource(src)) + src_box->x * bs;
 
       agx_batch_reads(batch, agx_resource(src));
-      agx_batch_writes_range(batch, agx_resource(dst), dst_addr, size);
+      agx_batch_writes_range(batch, agx_resource(dst), dst_offset, size);
       /* Use vectorized copies for as much of the buffer as possible. This requires
        * that dst, src, and size are all properly aligned. Failing to check for
        * alignment on the buffers causes subtle and hard-to-debug issues!

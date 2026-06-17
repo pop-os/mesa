@@ -503,9 +503,9 @@ optimizations.extend([
    (('ftrunc@64', a), ('bcsel', ('flt', a, 0.0), ('fneg', ('ffloor', ('fabs', a))), ('ffloor', ('fabs', a))),
     '(options->lower_ftrunc || (options->lower_doubles_options & nir_lower_dtrunc)) && (!(options->lower_doubles_options & nir_lower_dfloor) || !(options->lower_doubles_options & nir_lower_dfract))'),
 
-   (('ffloor@16', a), ('fsub', a, ('ffract', a)), 'options->lower_ffloor'),
-   (('ffloor@32', a), ('fsub', a, ('ffract', a)), 'options->lower_ffloor'),
-   (('ffloor@64', a), ('fsub', a, ('ffract', a)), '(options->lower_ffloor || (options->lower_doubles_options & nir_lower_dfloor)) && !(options->lower_doubles_options & nir_lower_dfract)'),
+   (('ffloor@16', a), ('fsub', a, ('!ffract', a)), 'options->lower_ffloor'),
+   (('ffloor@32', a), ('fsub', a, ('!ffract', a)), 'options->lower_ffloor'),
+   (('ffloor@64', a), ('fsub', a, ('!ffract', a)), '(options->lower_ffloor || (options->lower_doubles_options & nir_lower_dfloor)) && !(options->lower_doubles_options & nir_lower_dfract)'),
    (('fadd@16', a, ('fadd@16', b, ('fneg', ('ffract', a)))), ('fadd@16', b, ('ffloor', a)), '!options->lower_ffloor'),
    (('fadd@32', a, ('fadd@32', b, ('fneg', ('ffract', a)))), ('fadd@32', b, ('ffloor', a)), '!options->lower_ffloor'),
    (('fadd@64', a, ('fadd@64', b, ('fneg', ('ffract', a)))), ('fadd@64', b, ('ffloor', a)), '!options->lower_ffloor && !(options->lower_doubles_options & nir_lower_dfloor)'),

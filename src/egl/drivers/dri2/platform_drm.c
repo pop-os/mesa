@@ -224,7 +224,8 @@ destroy_oldest_unused_bo(struct dri2_egl_surface *dri2_surf)
 
    for (unsigned i = 0; i < ARRAY_SIZE(dri2_surf->color_buffers); i++) {
       if (dri2_surf->color_buffers[i].locked ||
-          dri2_surf->back == &dri2_surf->color_buffers[i])
+          dri2_surf->back == &dri2_surf->color_buffers[i] ||
+          dri2_surf->current == &dri2_surf->color_buffers[i])
          continue;
 
       if (!max_age || dri2_surf->color_buffers[i].age > max_age) {

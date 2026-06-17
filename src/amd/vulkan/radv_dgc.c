@@ -3104,7 +3104,7 @@ radv_CmdPreprocessGeneratedCommandsEXT(VkCommandBuffer commandBuffer,
 static void
 radv_prepare_dgc_compute(struct radv_cmd_buffer *cmd_buffer, const VkGeneratedCommandsInfoEXT *pGeneratedCommandsInfo,
                          struct radv_cmd_buffer *state_cmd_buffer, unsigned *upload_size, unsigned *upload_offset,
-                         void **upload_data, struct radv_dgc_params *params, bool cond_render_enabled)
+                         void **upload_data, struct radv_dgc_params *params)
 
 {
    VK_FROM_HANDLE(radv_indirect_execution_set, ies, pGeneratedCommandsInfo->indirectExecutionSet);
@@ -3116,12 +3116,6 @@ radv_prepare_dgc_compute(struct radv_cmd_buffer *cmd_buffer, const VkGeneratedCo
    if (!radv_cmd_buffer_upload_alloc(cmd_buffer, *upload_size, upload_offset, upload_data)) {
       vk_command_buffer_set_error(&cmd_buffer->vk, VK_ERROR_OUT_OF_HOST_MEMORY);
       return;
-   }
-
-   if (cond_render_enabled) {
-      params->predicating = true;
-      params->predication_va = state_cmd_buffer->state.user_predication_va;
-      params->predication_type = state_cmd_buffer->state.predication_type;
    }
 
    if (ies) {
@@ -3317,6 +3311,12 @@ radv_prepare_dgc(struct radv_cmd_buffer *cmd_buffer, const VkGeneratedCommandsIn
       .queue_family = state_cmd_buffer->qf,
    };
 
+   if (cond_render_enabled) {
+      params.predicating = true;
+      params.predication_va = state_cmd_buffer->state.user_predication_va;
+      params.predication_type = state_cmd_buffer->state.predication_type;
+   }
+
    if (layout->push_constant_mask) {
       radv_dgc_get_pc_layout_info(layout, ies, pipeline_info, eso_info, &dgc_pc_info);
 
@@ -3325,7 +3325,7 @@ radv_prepare_dgc(struct radv_cmd_buffer *cmd_buffer, const VkGeneratedCommandsIn
 
    if (layout->vk.dgc_info & BITFIELD_BIT(MESA_VK_DGC_DISPATCH)) {
       radv_prepare_dgc_compute(cmd_buffer, pGeneratedCommandsInfo, state_cmd_buffer, &upload_size, &upload_offset,
-                               &upload_data, &params, cond_render_enabled);
+                               &upload_data, &params);
    } else if (layout->vk.dgc_info & BITFIELD_BIT(MESA_VK_DGC_RT)) {
       radv_prepare_dgc_rt(cmd_buffer, pGeneratedCommandsInfo, &upload_size, &upload_offset, &upload_data, &params);
    } else {

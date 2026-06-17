@@ -229,7 +229,8 @@ nir_deref_instr_has_complex_use(nir_deref_instr *deref,
 
          case nir_intrinsic_deref_atomic:
          case nir_intrinsic_deref_atomic_swap:
-            if (opts & nir_deref_instr_has_complex_use_allow_atomics)
+            if (use_src == &use_intrin->src[0] &&
+                (opts & nir_deref_instr_has_complex_use_allow_atomics))
                continue;
             return true;
 

@@ -1651,9 +1651,11 @@ enumerate_devices(struct vk_instance *vk_instance)
          break;
    }
 
-   if (render_fd < 0 || primary_fd < 0)
+   if (render_fd < 0 || primary_fd < 0) {
+      if (display_fd != -1)
+         close(display_fd);
       result = VK_ERROR_INCOMPATIBLE_DRIVER;
-   else
+   } else
       result = create_physical_device(instance, primary_fd, render_fd, display_fd);
 
    drmFreeDevices(devices, max_devices);

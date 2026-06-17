@@ -528,7 +528,7 @@ r2d_setup_common(struct tu_cmd_buffer *cmd,
       output_ifmt_type = OUTPUT_IFMT_2D_FLOAT;
 
    tu_cs_emit_regs(cs, SP_A2D_OUTPUT_INFO(CHIP,
-         .half_precision = util_format_is_float16(src_format),
+         .half_precision = util_format_is_float16(src_format) || src_format == PIPE_FORMAT_R11G11B10_FLOAT,
          .ifmt_type = output_ifmt_type,
          .color_format = fmt,
          .srgb = util_format_is_srgb(dst_format),

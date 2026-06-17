@@ -607,6 +607,7 @@ struct lvp_query_pool {
 struct lvp_cmd_buffer {
    struct vk_command_buffer vk;
    uint8_t push_constants[MAX_PUSH_CONSTANTS_SIZE];
+   VkCommandBufferInheritanceRenderingInfo rendering_info; //for secondaries
 };
 
 static inline struct lvp_device *
