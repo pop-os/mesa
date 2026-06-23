@@ -882,6 +882,10 @@ radv_rt_compile_shaders(struct radv_device *device, struct vk_pipeline_cache *ca
          result = radv_rt_compile_nir(device, cache, pipeline, RADV_RT_LOWERING_MODE_FUNCTION_CALLS, &combined_stage,
                                       &payload_size, &hit_attrib_size, &stack_size, NULL, NULL, replay_block,
                                       skip_shaders_cache, has_position_fetch, &pipeline->groups[idx].ahit_isec_shader);
+         ralloc_free(final_shader);
+         if (isec && ahit)
+            ralloc_free(ahit);
+
          if (result != VK_SUCCESS)
             goto cleanup;
 
@@ -1061,6 +1065,7 @@ compile_rt_prolog(struct radv_device *device, struct radv_ray_tracing_pipeline *
    NIR_PASS(_, prolog_stage.nir, nir_opt_remove_phis);
 
    pipeline->prolog = radv_compile_rt_prolog(device, &prolog_stage, &debug);
+   ralloc_free(prolog_stage.nir);
 
    bool has_traversal = !!pipeline->base.base.shaders[MESA_SHADER_INTERSECTION];
 

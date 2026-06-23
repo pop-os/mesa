@@ -70,8 +70,8 @@ blorp_params_get_clear_kernel_fs(struct blorp_batch *batch,
    struct blorp_context *blorp = batch->blorp;
 
    const struct blorp_const_color_prog_key blorp_key = {
-      .base = BLORP_BASE_KEY_INIT(BLORP_SHADER_TYPE_CLEAR),
-      .base.shader_pipeline = BLORP_SHADER_PIPELINE_RENDER,
+      .base = BLORP_BASE_KEY_INIT(BLORP_SHADER_TYPE_CLEAR,
+                                  BLORP_SHADER_PIPELINE_RENDER),
       .is_fast_clear = is_fast_clear,
       .use_simd16_replicated_data = use_replicated_data,
       .clear_rgb_as_red = clear_rgb_as_red,
@@ -134,8 +134,8 @@ blorp_params_get_clear_kernel_cs(struct blorp_batch *batch,
    struct blorp_context *blorp = batch->blorp;
 
    const struct blorp_const_color_prog_key blorp_key = {
-      .base = BLORP_BASE_KEY_INIT(BLORP_SHADER_TYPE_CLEAR),
-      .base.shader_pipeline = BLORP_SHADER_PIPELINE_COMPUTE,
+      .base = BLORP_BASE_KEY_INIT(BLORP_SHADER_TYPE_CLEAR,
+                                  BLORP_SHADER_PIPELINE_COMPUTE),
       .use_simd16_replicated_data = false,
       .clear_rgb_as_red = clear_rgb_as_red,
       .local_y = blorp_get_cs_local_y(params),
@@ -1502,7 +1502,8 @@ blorp_params_get_mcs_partial_resolve_kernel(struct blorp_batch *batch,
 {
    struct blorp_context *blorp = batch->blorp;
    const struct blorp_mcs_partial_resolve_key blorp_key = {
-      .base = BLORP_BASE_KEY_INIT(BLORP_SHADER_TYPE_MCS_PARTIAL_RESOLVE),
+      .base = BLORP_BASE_KEY_INIT(BLORP_SHADER_TYPE_MCS_PARTIAL_RESOLVE,
+                                  BLORP_SHADER_PIPELINE_RENDER),
       .indirect_clear_color = params->dst.clear_color_addr.buffer != NULL,
       .int_format = isl_format_has_int_channel(params->dst.view.format),
       .num_samples = params->num_samples,

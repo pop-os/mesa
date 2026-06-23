@@ -1164,7 +1164,7 @@ static void
 init_sampler_view(struct zink_context *ctx, struct zink_sampler_view *sv)
 {
    struct zink_screen *screen = zink_screen(ctx->base.screen);
-   struct zink_resource *res = zink_resource(sv->base.texture);
+   struct zink_resource *res = sv->base.is_tex2d_from_buf ? sv->import2d : zink_resource(sv->base.texture);
    struct pipe_surface templ = pipe_surface_templ_from_sampler_view(&sv->base, &res->base.b, sv->base.target);
    sv->image_view = zink_get_surface(ctx, &templ, &sv->ivci);
 

@@ -1427,7 +1427,19 @@ ALWAYS_INLINE static void
 update_line_width(struct anv_gfx_dynamic_state *hw_state,
                   const struct vk_dynamic_graphics_state *dyn)
 {
-   SET(SF, sf.LineWidth, dyn->rs.line.width);
+   /* The way to enable Bresenham lines is to set LineWith = 0.0f in
+    * 3DSTATE_SF, see SKL PRMs, Volume 7: 3D-Media-GPGPU, Zero-Width
+    * (Cosmetic) Line Rasterization :
+    *
+    *    "When the LineWidth is set to zero, the device will use special rules
+    *     to rasterize “cosmetic” lines. The rasterization rules also comply
+    *     with the OpenGL conformance requirements (for 1-pixel wide non-
+    *     smooth lines)."
+    */
+   SET(SF, sf.LineWidth,
+           (dyn->rs.line.mode == VK_LINE_RASTERIZATION_MODE_BRESENHAM &&
+            dyn->rs.line.width == 1.0f) ?
+           0.0f : dyn->rs.line.width);
 }
 
 ALWAYS_INLINE static void
@@ -2393,7 +2405,8 @@ cmd_buffer_flush_gfx_runtime_state(struct anv_gfx_dynamic_state *hw_state,
       update_primitive_replication(hw_state, gfx);
 #endif
 
-   if (BITSET_TEST(dyn->dirty, MESA_VK_DYNAMIC_RS_LINE_WIDTH))
+   if (BITSET_TEST(dyn->dirty, MESA_VK_DYNAMIC_RS_LINE_WIDTH) ||
+       BITSET_TEST(dyn->dirty, MESA_VK_DYNAMIC_RS_LINE_MODE))
       update_line_width(hw_state, dyn);
 
    if (gfx->dirty & ANV_CMD_DIRTY_PRERASTER_SHADERS)
@@ -2410,6 +2423,7 @@ cmd_buffer_flush_gfx_runtime_state(struct anv_gfx_dynamic_state *hw_state,
 
    if ((gfx->dirty & ANV_CMD_DIRTY_PRERASTER_SHADERS) ||
        (gfx->dirty & ANV_CMD_DIRTY_RENDER_TARGETS) ||
+       BITSET_TEST(dyn->dirty, MESA_VK_DYNAMIC_MS_RASTERIZATION_SAMPLES) ||
        BITSET_TEST(dyn->dirty, MESA_VK_DYNAMIC_IA_PRIMITIVE_TOPOLOGY) ||
        BITSET_TEST(dyn->dirty, MESA_VK_DYNAMIC_RS_CULL_MODE) ||
        BITSET_TEST(dyn->dirty, MESA_VK_DYNAMIC_RS_FRONT_FACE) ||
@@ -2990,6 +3004,7 @@ cmd_buffer_repack_gfx_state(struct anv_gfx_dynamic_state *hw_state,
          SET(sf, sf, DerefBlockSize);
 #endif
          SET(sf, sf, PointWidthSource);
+         SET(sf, sf, LastPixelEnable);
          SET(sf, sf, LineWidth);
          SET(sf, sf, TriangleStripListProvokingVertexSelect);
          SET(sf, sf, LineStripListProvokingVertexSelect);

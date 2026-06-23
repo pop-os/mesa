@@ -815,7 +815,7 @@ radv_GetPhysicalDeviceVideoCapabilitiesKHR(VkPhysicalDevice physicalDevice, cons
       ext->maxL1ReferenceCount = pdev->enc_hw_ver >= RADV_VIDEO_ENC_HW_3 ? 1 : 0;
       ext->maxTemporalLayerCount = 4;
       ext->expectDyadicTemporalLayerPattern = false;
-      ext->minQp = 0;
+      ext->minQp = pdev->info.vcn_ip_version >= VCN_5_0_0 ? 0 : 1;
       ext->maxQp = 51;
       ext->prefersGopRemainingFrames = false;
       ext->requiresGopRemainingFrames = false;
@@ -859,7 +859,8 @@ radv_GetPhysicalDeviceVideoCapabilitiesKHR(VkPhysicalDevice physicalDevice, cons
 
       ext->flags = VK_VIDEO_ENCODE_H265_CAPABILITY_HRD_COMPLIANCE_BIT_KHR |
                    VK_VIDEO_ENCODE_H265_CAPABILITY_PER_PICTURE_TYPE_MIN_MAX_QP_BIT_KHR |
-                   VK_VIDEO_ENCODE_H265_CAPABILITY_ROW_UNALIGNED_SLICE_SEGMENT_BIT_KHR;
+                   VK_VIDEO_ENCODE_H265_CAPABILITY_ROW_UNALIGNED_SLICE_SEGMENT_BIT_KHR |
+                   VK_VIDEO_ENCODE_H265_CAPABILITY_MULTIPLE_SLICE_SEGMENTS_PER_TILE_BIT_KHR;
       ext->maxLevelIdc = cap ? cap->max_level : 0;
       ext->maxSliceSegmentCount = 128;
       ext->maxTiles.width = 1;
@@ -955,7 +956,10 @@ radv_GetPhysicalDeviceVideoCapabilitiesKHR(VkPhysicalDevice physicalDevice, cons
       ext->maxTemporalLayerCount = 4;
       ext->maxSpatialLayerCount = 1;
       ext->maxOperatingPoints = 4;
-      ext->minQIndex = 1;
+      ext->minQIndex = (pdev->info.vcn_ip_version == VCN_4_0_2 ||
+                        pdev->info.vcn_ip_version == VCN_4_0_5 ||
+                        pdev->info.vcn_ip_version == VCN_4_0_6) ?
+                        8 : 1;
       ext->maxQIndex = 255;
       ext->prefersGopRemainingFrames = false;
       ext->requiresGopRemainingFrames = false;

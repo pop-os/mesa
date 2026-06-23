@@ -3030,7 +3030,6 @@ radv_emit_hw_ngg(struct radv_cmd_buffer *cmd_buffer, const struct radv_shader *e
          gfx12_push_sh_reg(shader->regs.pgm_lo, va >> 8);
          gfx12_push_sh_reg(shader->regs.pgm_rsrc1, shader->config.rsrc1);
          gfx12_push_sh_reg(shader->regs.pgm_rsrc2, shader->config.rsrc2);
-         gfx12_push_sh_reg(R_00B220_SPI_SHADER_PGM_RSRC4_GS, shader->regs.spi_shader_pgm_rsrc4_gs);
       } else {
          radeon_set_sh_reg(shader->regs.pgm_lo, va >> 8);
          radeon_set_sh_reg_seq(shader->regs.pgm_rsrc1, 2);
@@ -3136,6 +3135,9 @@ radv_emit_hw_ngg(struct radv_cmd_buffer *cmd_buffer, const struct radv_shader *e
 
    if (pdev->info.gfx_level >= GFX12) {
       radeon_set_uconfig_reg(R_030988_VGT_PRIMITIVEID_EN, shader->regs.ngg.vgt_primitiveid_en);
+
+      gfx12_push_sh_reg(R_00B220_SPI_SHADER_PGM_RSRC4_GS, shader->regs.spi_shader_pgm_rsrc4_gs);
+
       gfx12_push_sh_reg(ngg_lds_layout_offset,
                         SET_SGPR_FIELD(NGG_LDS_LAYOUT_GS_OUT_VERTEX_BASE, shader->info.ngg_info.esgs_ring_size));
    } else {
@@ -6554,7 +6556,7 @@ radv_emit_push_constants_per_stage(const struct radv_device *device, struct radv
 
    /* Emit inlined push constants. */
    if (inline_push_const_mask) {
-      const uint8_t base = ffs(inline_push_const_mask) - 1;
+      const uint8_t base = ffsll(inline_push_const_mask) - 1;
 
       if (inline_push_const_mask == u_bit_consecutive64(base, util_last_bit64(inline_push_const_mask) - base)) {
          /* consecutive inline push constants */

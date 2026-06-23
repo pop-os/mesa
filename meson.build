@@ -849,8 +849,16 @@ if with_gallium_rusticl or with_nouveau_vk or with_tools.contains('etnaviv') or 
 
   # bindgen 0.71 is the first version that knows about `editions`
   bindgen_version = find_program('bindgen').version()
-  # unknown covers buggy 0.69.0, 0.71.0
-  if bindgen_version == 'unknown' or bindgen_version.version_compare('< 0.71.1')
+  bindgen_bad_versions = [
+    # unknown covers buggy 0.69.0, 0.71.0
+    'unknown',
+    '0.72.0',
+  ]
+  if bindgen_version in bindgen_bad_versions
+    error('Your bingden version is known to be buggy, please upgrade it. ' +
+          'If your distribution does not ship a more recent version, ' +
+          'you can install the latest version for your user with `cargo install bindgen-cli`.')
+  elif bindgen_version.version_compare('< 0.71.1')
     error('Mesa requires bindgen 0.71.1 or newer. ' +
           'If your distribution does not ship a recent enough version, ' +
           'you can install the latest version for your user with `cargo install bindgen-cli`.')
@@ -1144,6 +1152,13 @@ endforeach
 
 # Check for GCC overflow intrinsics
 foreach b : ['add_overflow', 'add_overflow_p', 'sub_overflow_p']
+  if cc.has_function('__builtin_' + b)
+    pre_args += '-DHAVE___BUILTIN_@0@'.format(b.to_upper())
+  endif
+endforeach
+
+# Check for ARM FP state builtins
+foreach b : ['arm_get_fpscr', 'arm_set_fpscr', 'aarch64_get_fpcr', 'aarch64_set_fpcr']
   if cc.has_function('__builtin_' + b)
     pre_args += '-DHAVE___BUILTIN_@0@'.format(b.to_upper())
   endif

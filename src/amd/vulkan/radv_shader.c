@@ -1433,6 +1433,9 @@ radv_free_shader_memory(struct radv_device *device, union radv_shader_arena_bloc
       free(arena);
    } else if (free_list) {
       add_hole(free_list, hole);
+   } else {
+      /* Mark it as a hole, allowing merges when adjacent blocks are freed later. */
+      list_inithead(&hole->freelist);
    }
 
    mtx_unlock(&device->shader_arena_mutex);

@@ -1189,7 +1189,7 @@ dri2_initialize_x11_swrast(_EGLDisplay *disp)
 {
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
 
-   if (x11_xcb_display_supports_xshm(dri2_dpy->conn)) {
+   if (x11_xcb_display_supports_xshm(dri2_dpy->conn, NULL)) {
       dri2_dpy->loader_extensions = swrast_loader_shm_extensions;
    } else {
       dri2_dpy->loader_extensions = swrast_loader_extensions;

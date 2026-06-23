@@ -234,6 +234,24 @@ bi_collect_v2i32(bi_builder *b, bi_index s0, bi_index s1)
    return dst;
 }
 
+static void
+bi_split_i64_for_shadd(bi_builder *b, bi_index src, bi_index out[2])
+{
+   bi_index tmp[4] = {bi_null(), bi_null(), bi_null(), bi_null()};
+   bi_emit_split_i32(b, tmp, src, 2);
+   out[0] = tmp[0];
+   out[1] = tmp[1];
+}
+
+static bi_index
+bi_materialize_i64_for_shadd(bi_builder *b, bi_index src)
+{
+   bi_index components[2] = {bi_null(), bi_null()};
+   bi_split_i64_for_shadd(b, src, components);
+
+   return bi_collect_v2i32(b, components[0], components[1]);
+}
+
 static inline bi_instr *
 bi_f32_to_f16_to(bi_builder *b, bi_index dest, bi_index src)
 {
@@ -3384,6 +3402,8 @@ bi_emit_alu(bi_builder *b, nir_alu_instr *instr)
    case nir_op_iadd:
       if (sz == 64) {
          assert(b->shader->arch >= 9);
+         s0 = bi_materialize_i64_for_shadd(b, s0);
+         s1 = bi_materialize_i64_for_shadd(b, s1);
          bi_shaddx_s64_to(b, dst, s0, s1, 0);
          bi_index dsts[4] = {bi_null(), bi_null(), bi_null(), bi_null()};
          bi_emit_split_i32(b, dsts, dst, 2);

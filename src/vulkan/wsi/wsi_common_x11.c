@@ -354,7 +354,7 @@ wsi_x11_connection_create(struct wsi_device *wsi_dev,
    wsi_conn->has_mit_shm = false;
 #if defined(HAVE_X11_DRM) && defined(HAVE_SYS_SHM_H)
    if (wsi_conn->has_dri3 && wsi_conn->has_present && wants_shm) {
-      wsi_conn->has_mit_shm = x11_xcb_display_supports_xshm(conn);
+      wsi_conn->has_mit_shm = x11_xcb_display_supports_xshm(conn, NULL);
    }
 #endif
 

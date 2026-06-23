@@ -247,6 +247,8 @@ struct tu_instance
 
    /* Configuration option to use a specific autotune algorithm by default. */
    const char *autotune_algo;
+
+   bool allow_concurrent_binning;
 };
 VK_DEFINE_HANDLE_CASTS(tu_instance, vk.base, VkInstance,
                        VK_OBJECT_TYPE_INSTANCE)

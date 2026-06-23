@@ -223,7 +223,8 @@ destroy_oldest_unused_bo(struct dri2_egl_surface *dri2_surf)
    struct dri2_egl_buffer *oldest_buffer = NULL;
 
    for (unsigned i = 0; i < ARRAY_SIZE(dri2_surf->color_buffers); i++) {
-      if (dri2_surf->color_buffers[i].locked ||
+      if (!dri2_surf->color_buffers[i].bo ||
+          dri2_surf->color_buffers[i].locked ||
           dri2_surf->back == &dri2_surf->color_buffers[i] ||
           dri2_surf->current == &dri2_surf->color_buffers[i])
          continue;
@@ -251,10 +252,12 @@ get_back_bo(struct dri2_egl_surface *dri2_surf)
 
    if (dri2_surf->back == NULL) {
       for (unsigned i = 0; i < ARRAY_SIZE(dri2_surf->color_buffers); i++) {
-         if (!dri2_surf->color_buffers[i].locked) {
+         if (!dri2_surf->color_buffers[i].locked &&
+             dri2_surf->current != &dri2_surf->color_buffers[i]) {
             int age = dri2_surf->color_buffers[i].age;
 
-            if (!min_age || age < min_age)
+            if (dri2_surf->color_buffers[i].bo &&
+                (!min_age || age < min_age))
                min_age = age;
 
             if (!max_age || age > max_age) {

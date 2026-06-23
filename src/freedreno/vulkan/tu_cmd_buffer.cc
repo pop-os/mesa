@@ -441,7 +441,7 @@ tu_emit_cache_flush(struct tu_cmd_buffer *cmd_buffer)
 
    if ((flushes & TU_CMD_FLAG_WAIT_FOR_BR) && CHIP >= A7XX &&
        !(cmd_buffer->state.pass && cmd_buffer->state.renderpass_cb_disabled) &&
-       !TU_DEBUG(NO_CONCURRENT_BINNING)) {
+       cmd_buffer->device->instance->allow_concurrent_binning) {
       trace_start_concurrent_binning_barrier(&cmd_buffer->trace, cs, cmd_buffer);
 
       /* Wait-for-BR when repeated a lot of times per frame can add up
@@ -3058,8 +3058,8 @@ tu7_emit_concurrent_binning_start(struct tu_cmd_buffer *cmd,
        tu7_cb_disable_reason(
           (!cmd->state.lrz.fast_clear && cmd->state.lrz.image_view), cmd,
           "LRZ fast clear disabled") ||
-       tu7_cb_disable_reason(TU_DEBUG(NO_CONCURRENT_BINNING), cmd,
-                             "TU_DEBUG(NO_CONCURRENT_BINNING)")) {
+       tu7_cb_disable_reason(!cmd->device->instance->allow_concurrent_binning, cmd,
+                             "globally disabled")) {
      tu_cs_emit_pkt7(cs, CP_THREAD_CONTROL, 1);
      tu_cs_emit(cs, CP_THREAD_CONTROL_0_THREAD(CP_SET_THREAD_BR) |
                     CP_THREAD_CONTROL_0_CONCURRENT_BIN_DISABLE);

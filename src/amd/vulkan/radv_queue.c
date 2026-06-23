@@ -1058,6 +1058,9 @@ radv_update_preamble_cs(struct radv_queue_state *queue, struct radv_device *devi
             radeon_end();
          }
 
+         if (mesh_scratch_ring_bo)
+            radv_cs_add_buffer(device->ws, cs->b, mesh_scratch_ring_bo);
+
          radv_emit_gs_ring_sizes(device, cs, esgs_ring_bo, needs->esgs_ring_size, gsvs_ring_bo, needs->gsvs_ring_size);
          radv_emit_tess_factor_ring(device, cs, tess_rings_bo);
          radv_emit_task_rings(device, cs, task_rings_bo, false);

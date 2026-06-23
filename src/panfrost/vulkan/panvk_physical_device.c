@@ -20,6 +20,7 @@
 #include "vk_android.h"
 #include "vk_device.h"
 #include "vk_drm_syncobj.h"
+#include "vk_enum_defines.h"
 #include "vk_format.h"
 #include "vk_log.h"
 #include "vk_util.h"
@@ -963,10 +964,14 @@ panvk_GetPhysicalDeviceFormatProperties2(VkPhysicalDevice physicalDevice,
    VkFormatFeatureFlags2 buffer =
       get_buffer_format_features(physical_device, format);
 
+   VkFormatFeatureFlags tex_legacy = vk_format_features2_to_features(tex);
+   VkFormatFeatureFlags buffer_legacy =
+      vk_format_features2_to_features(buffer);
+
    pFormatProperties->formatProperties = (VkFormatProperties){
-      .linearTilingFeatures = tex,
-      .optimalTilingFeatures = tex,
-      .bufferFeatures = buffer,
+      .linearTilingFeatures = tex_legacy,
+      .optimalTilingFeatures = tex_legacy,
+      .bufferFeatures = buffer_legacy,
    };
 
    VkFormatProperties3 *formatProperties3 =
@@ -977,39 +982,80 @@ panvk_GetPhysicalDeviceFormatProperties2(VkPhysicalDevice physicalDevice,
       formatProperties3->bufferFeatures = buffer;
    }
 
+   PAN_SUPPORTED_MODIFIERS(supported);
+   uint64_t afbc_modifiers[ARRAY_SIZE(supported)];
+   uint32_t afbc_modifier_count = 0;
+   if (PANVK_DEBUG(WSI_AFBC) &&
+         pan_afbc_supports_format(arch, vk_format_to_pipe_format(format))) {
+      for (uint32_t mi = 0; mi < ARRAY_SIZE(supported); mi++) {
+         if (drm_is_afbc(supported[mi]))
+            afbc_modifiers[afbc_modifier_count++] = supported[mi];
+      }
+   }
    VkDrmFormatModifierPropertiesListEXT *list = vk_find_struct(
       pFormatProperties->pNext, DRM_FORMAT_MODIFIER_PROPERTIES_LIST_EXT);
    if (list) {
+      VkFormatFeatureFlags optimal_features =
+         pFormatProperties->formatProperties.optimalTilingFeatures;
+      VkFormatFeatureFlags linear_features =
+         pFormatProperties->formatProperties.linearTilingFeatures;
+
       VK_OUTARRAY_MAKE_TYPED(VkDrmFormatModifierPropertiesEXT, out,
-                             list->pDrmFormatModifierProperties,
-                             &list->drmFormatModifierCount);
-      if (pFormatProperties->formatProperties.optimalTilingFeatures &&
-          PANVK_DEBUG(WSI_AFBC))
-      {
-         PAN_SUPPORTED_MODIFIERS(supported);
-         for (int mi = 0; mi < ARRAY_SIZE(supported); mi++) {
-            if (drm_is_afbc(supported[mi]) &&
-                pan_afbc_supports_format(arch, vk_format_to_pipe_format(format)))
+                              list->pDrmFormatModifierProperties,
+                              &list->drmFormatModifierCount);
+
+      if (optimal_features) {
+         for (uint32_t i = 0; i < afbc_modifier_count; i++) {
+            vk_outarray_append_typed(VkDrmFormatModifierPropertiesEXT, &out,
+                                       mod_props)
             {
-               vk_outarray_append_typed(VkDrmFormatModifierPropertiesEXT, &out, mod_props)
-               {
-                  mod_props->drmFormatModifier = supported[mi];
-                  mod_props->drmFormatModifierPlaneCount = 1;
-                  mod_props->drmFormatModifierTilingFeatures =
-                     pFormatProperties->formatProperties.optimalTilingFeatures;
-               }
+               mod_props->drmFormatModifier = afbc_modifiers[i];
+               mod_props->drmFormatModifierPlaneCount = 1;
+               mod_props->drmFormatModifierTilingFeatures = optimal_features;
             }
          }
       }
 
-      if (pFormatProperties->formatProperties.linearTilingFeatures) {
+      if (linear_features) {
          vk_outarray_append_typed(VkDrmFormatModifierPropertiesEXT, &out,
-                                  mod_props)
+                                    mod_props)
          {
             mod_props->drmFormatModifier = DRM_FORMAT_MOD_LINEAR;
             mod_props->drmFormatModifierPlaneCount = 1;
-            mod_props->drmFormatModifierTilingFeatures =
-               pFormatProperties->formatProperties.linearTilingFeatures;
+            mod_props->drmFormatModifierTilingFeatures = linear_features;
+         }
+      }
+   }
+   VkDrmFormatModifierPropertiesList2EXT *list2 = vk_find_struct(
+      pFormatProperties->pNext, DRM_FORMAT_MODIFIER_PROPERTIES_LIST_2_EXT);
+   if (list2) {
+      VkFormatFeatureFlags2 optimal_features2 = tex;
+      VkFormatFeatureFlags2 linear_features2 = tex;
+
+      VK_OUTARRAY_MAKE_TYPED(VkDrmFormatModifierProperties2EXT, out,
+                              list2->pDrmFormatModifierProperties,
+                              &list2->drmFormatModifierCount);
+
+      if (optimal_features2) {
+         for (uint32_t i = 0; i < afbc_modifier_count; i++) {
+            vk_outarray_append_typed(VkDrmFormatModifierProperties2EXT, &out,
+                                       mod_props)
+            {
+               mod_props->drmFormatModifier = afbc_modifiers[i];
+               mod_props->drmFormatModifierPlaneCount = 1;
+               mod_props->drmFormatModifierTilingFeatures =
+                  optimal_features2;
+            }
+         }
+      }
+
+      if (linear_features2) {
+         vk_outarray_append_typed(VkDrmFormatModifierProperties2EXT, &out,
+                                    mod_props)
+         {
+            mod_props->drmFormatModifier = DRM_FORMAT_MOD_LINEAR;
+            mod_props->drmFormatModifierPlaneCount = 1;
+            mod_props->drmFormatModifierTilingFeatures = linear_features2;
          }
       }
    }

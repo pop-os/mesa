@@ -2050,10 +2050,7 @@ zink_resource_get_handle(struct pipe_screen *pscreen,
          int fd;
          fd_info.sType = VK_STRUCTURE_TYPE_MEMORY_GET_FD_INFO_KHR;
          fd_info.memory = zink_bo_get_mem(obj->bo);
-         if (whandle->type == WINSYS_HANDLE_TYPE_FD)
-            fd_info.handleType = VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT;
-         else
-            fd_info.handleType = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT;
+         fd_info.handleType = VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT;
          VkResult result = VKSCR(GetMemoryFdKHR)(screen->dev, &fd_info, &fd);
          if (result != VK_SUCCESS) {
             mesa_loge("ZINK: vkGetMemoryFdKHR failed");

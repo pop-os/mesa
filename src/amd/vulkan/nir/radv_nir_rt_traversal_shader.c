@@ -401,6 +401,8 @@ insert_inlined_shader(nir_builder *b, struct traversal_inlining_params *params, 
    nir_push_if(b, nir_ieq_imm(b, idx, call_idx));
    nir_inline_function_impl(b, nir_shader_get_entrypoint(shader), NULL, var_remap);
    nir_pop_if(b, NULL);
+
+   _mesa_hash_table_destroy(var_remap, NULL);
 }
 
 static nir_function_impl *

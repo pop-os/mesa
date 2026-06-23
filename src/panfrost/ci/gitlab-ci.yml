@@ -34,7 +34,7 @@ panfrost-t860-cl:arm64:
     - .panfrost-midgard-manual-rules
     - .panfrost-test
     - .test-piglit
-    - .lava-rk3399-gru-kevin:arm64
+    - .lava-rk3399-rock-pi-4b:arm64
   rules:
     - !reference [.panfrost-midgard-manual-rules, rules]
     - !reference [.rusticl-manual-rules, rules]
@@ -48,7 +48,7 @@ panfrost-t860-gl:arm64:
     - .lava-arm64-test-gl
     - .panfrost-midgard-rules
     - .panfrost-test
-    - .lava-rk3399-gru-kevin:arm64
+    - .lava-rk3399-rock-pi-4b:arm64
   variables:
     FDO_CI_CONCURRENT: 6
     DEQP_SUITE: panfrost-t860
@@ -58,7 +58,7 @@ panfrost-t860-egl:arm64:
     - .lava-arm64-test-gl
     - .panfrost-midgard-rules
     - .panfrost-test
-    - .lava-rk3399-gru-kevin:arm64
+    - .lava-rk3399-rock-pi-4b:arm64
   variables:
     HWCI_START_WESTON: 1
     DEQP_SUITE: panfrost-t860-egl
@@ -68,7 +68,7 @@ panfrost-t860-traces:arm64:
     - .lava-arm64-piglit-traces
     - .panfrost-midgard-manual-rules
     - .panfrost-test
-    - .lava-rk3399-gru-kevin:arm64
+    - .lava-rk3399-rock-pi-4b:arm64
     - .panfrost-traces
 
 panfrost-g52-gl:arm64:

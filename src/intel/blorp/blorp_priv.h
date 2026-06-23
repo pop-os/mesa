@@ -317,11 +317,11 @@ struct blorp_base_key
    enum blorp_shader_pipeline shader_pipeline;
 };
 
-#define BLORP_BASE_KEY_INIT(_type)                      \
-   (struct blorp_base_key) {                            \
-      .name = "blorp",                                  \
-      .shader_type = _type,                             \
-      .shader_pipeline = BLORP_SHADER_PIPELINE_RENDER,  \
+#define BLORP_BASE_KEY_INIT(_type, _pipeline)   \
+   (struct blorp_base_key) {                    \
+      .name = "blorp",                          \
+      .shader_type = (_type),                   \
+      .shader_pipeline = (_pipeline),           \
    }
 
 struct blorp_blit_prog_key

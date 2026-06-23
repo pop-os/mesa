@@ -192,7 +192,7 @@ vir_setup_def_use(struct v3d_compile *c)
                         if (inst->src[0].file == QFILE_REG) {
                                 uint32_t min_payload_r = c->devinfo->ver >= 71 ? 1 : 0;
                                 uint32_t max_payload_r = c->devinfo->ver >= 71 ? 3 : 2;
-                                if (inst->src[0].index >= min_payload_r ||
+                                if (inst->src[0].index >= min_payload_r &&
                                     inst->src[0].index <= max_payload_r) {
                                         c->temp_start[inst->dst.index] = 0;
                                 }

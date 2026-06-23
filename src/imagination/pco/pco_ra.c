@@ -701,17 +701,19 @@ static bool pco_ra_func(pco_func *func, pco_ra_ctx *ctx)
       if (ctx->allocable_vtxins > 0) {
          pco_foreach_instr_src_vtxin_reg (psrc, instr) {
             pco_ref src = *psrc;
-
+            unsigned chans = pco_ref_get_chans(src);
             /* Place vtxin regs after ssa vars and vregs. */
             src.val += num_ssas + num_vregs;
 
-            live_ranges[src.val].end =
-               MAX2(live_ranges[src.val].end, instr->index);
-            live_ranges[src.val].start = 0;
+            for (unsigned chan = 0; chan < chans; chan++) {
+               live_ranges[src.val + chan].end =
+                  MAX2(live_ranges[src.val + chan].end, instr->index);
+               live_ranges[src.val + chan].start = 0;
 
-            ra_set_node_reg(ra_graph,
-                            src.val,
-                            psrc->val + ctx->allocable_temps);
+               ra_set_node_reg(ra_graph,
+                               src.val + chan,
+                               psrc->val + chan + ctx->allocable_temps);
+            }
          }
       }
    }

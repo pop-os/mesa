@@ -387,15 +387,14 @@ build_addr_to_node(struct radv_device *device, nir_builder *b, nir_def *addr, ni
    nir_def *node = nir_ushr_imm(b, addr, 3);
    node = nir_iand_imm(b, node, (bvh_size - 1) << 3);
 
-   if (pdev->cache_key.bvh8) {
+   if (pdev->info.gfx_level >= GFX11 && !pdev->cache_key.emulate_rt) {
       /* The HW ray flags are the same bits as the API flags.
        * - SpvRayFlagsTerminateOnFirstHitKHRMask, SpvRayFlagsSkipClosestHitShaderKHRMask are handled in shader code.
-       * - SpvRayFlagsSkipTrianglesKHRMask, SpvRayFlagsSkipAABBsKHRMask do not work.
+       * - SpvRayFlagsSkipTrianglesKHRMask, SpvRayFlagsSkipAABBsKHRMask do not work (gfx12).
        */
-      flags = nir_iand_imm(b, flags,
-                           SpvRayFlagsOpaqueKHRMask | SpvRayFlagsNoOpaqueKHRMask |
-                              SpvRayFlagsCullBackFacingTrianglesKHRMask | SpvRayFlagsCullFrontFacingTrianglesKHRMask |
-                              SpvRayFlagsCullOpaqueKHRMask | SpvRayFlagsCullNoOpaqueKHRMask);
+      flags = nir_iand_imm(b, flags, ~(SpvRayFlagsTerminateOnFirstHitKHRMask | SpvRayFlagsSkipClosestHitShaderKHRMask));
+      if (pdev->info.gfx_level >= GFX12)
+         flags = nir_iand_imm(b, flags, ~(SpvRayFlagsSkipTrianglesKHRMask | SpvRayFlagsSkipAABBsKHRMask));
       node = nir_ior(b, node, nir_ishl_imm(b, nir_u2u64(b, flags), 54));
    }
 
@@ -847,9 +846,6 @@ radv_build_ray_traversal(struct radv_device *device, nir_builder *b, const struc
 
    nir_def *ptr_flags =
       nir_iand_imm(b, args->flags, ~(SpvRayFlagsTerminateOnFirstHitKHRMask | SpvRayFlagsSkipClosestHitShaderKHRMask));
-
-   nir_store_deref(b, args->vars.bvh_base,
-                   build_bvh_base(b, pdev, nir_load_deref(b, args->vars.bvh_base), ptr_flags, true), 0x1);
 
    nir_def *desc = create_bvh_descriptor(b, pdev, &ray_flags);
    nir_def *vec3ones = nir_imm_vec3(b, 1.0, 1.0, 1.0);

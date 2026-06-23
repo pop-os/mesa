@@ -700,6 +700,10 @@
    DRI_CONF_OPT_B(tu_restrict_subgroup_size_64, def, \
                   "Restrict subgroup size to 64 (instead of a max of 128) to work around games assuming desktop GPU 32/64 sizes")
 
+#define DRI_CONF_TU_ALLOW_CONCURRENT_BINNING(def) \
+   DRI_CONF_OPT_B(tu_allow_concurrent_binning, def, \
+                  "Allow concurrent binning on A7XX+, the CB is disabled by default because it regresses performance on desktop games")
+
 /**
  * \brief Honeykrisp specific configuration options
  */

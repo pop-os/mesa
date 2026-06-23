@@ -292,6 +292,7 @@ struct radeon_info {
    bool needs_llvm_wait_wa; /* True if the chip needs to workarounds based on s_waitcnt_deptr but
                              * the LLVM version doesn't work with multiparts shaders.
                              */
+   bool has_smem_partial_oob_access_bug;
 
    /* Support GS_FAST_LAUNCH(2) for mesh shaders. */
    bool mesh_fast_launch_2;

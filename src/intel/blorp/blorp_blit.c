@@ -2719,9 +2719,9 @@ blorp_blit(struct blorp_batch *batch,
       isl_format_get_layout(params.src.view.format);
 
    struct blorp_blit_prog_key key = {
-      .base = BLORP_BASE_KEY_INIT(BLORP_SHADER_TYPE_BLIT),
-      .base.shader_pipeline = compute ? BLORP_SHADER_PIPELINE_COMPUTE :
-                                        BLORP_SHADER_PIPELINE_RENDER,
+      .base = BLORP_BASE_KEY_INIT(BLORP_SHADER_TYPE_BLIT,
+                                  (compute ? BLORP_SHADER_PIPELINE_COMPUTE :
+                                             BLORP_SHADER_PIPELINE_RENDER)),
       .filter = filter,
       .sint32_to_uint = src_fmtl->channels.r.bits == 32 &&
                         isl_format_has_sint_channel(params.src.view.format) &&
@@ -3271,9 +3271,9 @@ blorp_copy(struct blorp_batch *batch,
                            dst_layer, ISL_FORMAT_UNSUPPORTED, true);
 
    struct blorp_blit_prog_key key = {
-      .base = BLORP_BASE_KEY_INIT(BLORP_SHADER_TYPE_COPY),
-      .base.shader_pipeline = compute ? BLORP_SHADER_PIPELINE_COMPUTE :
-                                        BLORP_SHADER_PIPELINE_RENDER,
+      .base = BLORP_BASE_KEY_INIT(BLORP_SHADER_TYPE_COPY,
+                                  (compute ? BLORP_SHADER_PIPELINE_COMPUTE :
+                                             BLORP_SHADER_PIPELINE_RENDER)),
       .filter = BLORP_FILTER_NONE,
       .need_src_offset = src_surf->tile_x_sa || src_surf->tile_y_sa,
       .need_dst_offset = dst_surf->tile_x_sa || dst_surf->tile_y_sa,

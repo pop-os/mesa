@@ -2743,6 +2743,7 @@ radv_physical_device_destroy(struct vk_physical_device *vk_device)
 
    radv_finish_wsi(pdev);
    ac_destroy_perfcounters(&pdev->ac_perfcounters);
+   free(pdev->perfcounters);
    if (pdev->addrlib)
       ac_addrlib_destroy(pdev->addrlib);
    if (pdev->ws)

@@ -2291,6 +2291,7 @@ struct anv_gfx_dynamic_state {
    struct {
       uint32_t DerefBlockSize;
       uint32_t PointWidthSource;
+      bool     LastPixelEnable;
       float    LineWidth;
       uint32_t TriangleStripListProvokingVertexSelect;
       uint32_t LineStripListProvokingVertexSelect;

@@ -182,7 +182,7 @@ resolve_vis_stream_patchpoints(struct tu_queue *queue,
     * streams and therefore should be avoided.
     */
    uint32_t min_vis_stream_count =
-      (TU_DEBUG(NO_CONCURRENT_BINNING) || dev->physical_device->info->chip < 7) ?
+      (!dev->instance->allow_concurrent_binning || dev->physical_device->info->chip < 7) ?
       1 : MIN2(MAX2(rp_count, 1), TU_MAX_VIS_STREAMS);
    uint32_t vis_stream_count;
 
@@ -630,9 +630,11 @@ tu_queue_init(struct tu_device *device,
    queue->type = type;
 
    int ret = tu_drm_submitqueue_new(device, queue);
-   if (ret)
+   if (ret) {
+      vk_queue_finish(&queue->vk);
       return vk_startup_errorf(device->instance, VK_ERROR_INITIALIZATION_FAILED,
                                "submitqueue create failed");
+   }
 
    queue->fence = -1;
 

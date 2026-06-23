@@ -833,7 +833,8 @@ gather_shader_info_fs(enum amd_gfx_level gfx_level, const nir_shader *nir,
         BITSET_TEST(nir->info.system_values_read, SYSTEM_VALUE_SAMPLE_ID) ||
         BITSET_TEST(nir->info.system_values_read, SYSTEM_VALUE_SAMPLE_POS) ||
         BITSET_TEST(nir->info.system_values_read, SYSTEM_VALUE_SAMPLE_MASK_IN) ||
-        BITSET_TEST(nir->info.system_values_read, SYSTEM_VALUE_HELPER_INVOCATION));
+        BITSET_TEST(nir->info.system_values_read, SYSTEM_VALUE_HELPER_INVOCATION) ||
+        BITSET_TEST(nir->info.system_values_read, SYSTEM_VALUE_SUBGROUP_INVOCATION));
 
    info->ps.pops_is_per_sample =
       info->ps.pops && (nir->info.fs.sample_interlock_ordered || nir->info.fs.sample_interlock_unordered);

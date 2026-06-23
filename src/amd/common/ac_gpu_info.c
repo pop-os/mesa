@@ -975,6 +975,14 @@ void ac_fill_bug_info(struct radeon_info *info)
    info->never_stop_sq_perf_counters = info->gfx_level == GFX10 ||
                                        info->gfx_level == GFX10_3;
    info->never_send_perfcounter_stop = info->gfx_level == GFX11;
+
+   /* A partially out-of-bounds SMEM load seems to hang if the out-of-bounds
+    * part is unmapped. This was observed on vega10, but not renoir or raven2.
+    * As far as I know, this bug isn't documented anywhere else.
+    */
+   info->has_smem_partial_oob_access_bug = info->gfx_level == GFX9 &&
+                                           info->family != CHIP_RENOIR &&
+                                           info->family != CHIP_RAVEN2;
 }
 
 void ac_fill_feature_info(struct radeon_info *info, const struct drm_amdgpu_info_device *device_info)
@@ -1887,6 +1895,7 @@ void ac_print_gpu_info(FILE *f, const struct radeon_info *info, int fd)
    fprintf(f, "    has_set_sh_pairs_packed = %i\n", info->has_set_sh_pairs_packed);
    fprintf(f, "    has_set_uconfig_pairs = %i\n", info->has_set_uconfig_pairs);
    fprintf(f, "    mesh_fast_launch_2 = %i\n", info->mesh_fast_launch_2);
+   fprintf(f, "    has_smem_partial_oob_access_bug = %i\n", info->has_smem_partial_oob_access_bug);
 
    if (info->gfx_level < GFX12) {
       fprintf(f, "Display features:\n");

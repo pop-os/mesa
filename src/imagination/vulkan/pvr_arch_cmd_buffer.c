@@ -707,6 +707,12 @@ static VkResult pvr_setup_texture_state_words(
                              plane->layer_size * view_index);
    }
 
+   if (image_view->vk.view_type == VK_IMAGE_VIEW_TYPE_2D &&
+       image->vk.image_type == VK_IMAGE_TYPE_3D) {
+      descriptor->image.meta[PCO_IMAGE_META_Z_SLICE] =
+         fui(image_view->vk.base_array_layer);
+   }
+
    pvr_csb_pack (&descriptor->sampler.words[0],
                  TEXSTATE_SAMPLER_WORD0,
                  sampler) {

@@ -1710,7 +1710,7 @@ VkResult anv_AllocateMemory(
                VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT ||
              fd_info->handleType ==
                VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT);
-      if (alloc_flags & ANV_BO_ALLOC_COMPRESSED) {
+      if ((alloc_flags & ANV_BO_ALLOC_COMPRESSED) && image != NULL) {
          /* First, when importing a compressed buffer on Xe2+, we are sure
           * about that the buffer is from a resource created with modifiers
           * supporting compression, even the info of modifier is not available
@@ -1728,7 +1728,6 @@ VkResult anv_AllocateMemory(
           * heap and then PAT entry in the later vm_bind stage.
           */
          assert(device->info->ver >= 20);
-         assert(image);
          if (vk_format_is_color(image->vk.format))
             alloc_flags |= ANV_BO_ALLOC_SCANOUT;
       }

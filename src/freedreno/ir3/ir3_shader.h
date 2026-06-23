@@ -1345,7 +1345,7 @@ ir3_link_add(struct ir3_shader_linkage *l, uint8_t slot, uint8_t regid_,
 {
    for (unsigned j = 0; j < util_last_bit(compmask); j++) {
       uint8_t comploc = loc + j;
-      l->varmask[comploc / 32] |= 1 << (comploc % 32);
+      l->varmask[comploc / 32] |= UINT32_C(1) << (comploc % 32);
    }
 
    l->max_loc = MAX2(l->max_loc, loc + util_last_bit(compmask));
