@@ -9,7 +9,6 @@ Build-Depends:
  bindgen (>= 0.71~) [@RUSTICL_ARCHS@],
  bison,
  cbindgen (>= 0.25) [@RUSTICL_ARCHS@],
- directx-headers-dev (>= 1.619.1) [linux-amd64 linux-arm64],
  flatbuffers-compiler [linux-arm64],
  flex,
  glslang-tools [@LLVM_ARCHS@],

@@ -668,23 +668,23 @@ if with_dri
 endif
 
 dep_dxheaders = null_dep
-if with_gallium_d3d12 or with_microsoft_clc or with_microsoft_vk or (with_any_vk and host_machine.system() == 'windows')
-  dep_dxheaders = dependency('directx-headers', required : false)
-  if not dep_dxheaders.found()
-    dep_dxheaders = dependency('DirectX-Headers',
-      version : '>= 1.619.1',
-      fallback : ['DirectX-Headers', 'dep_dxheaders'],
-      required : with_gallium_d3d12 or with_microsoft_vk
-    )
-  endif
-endif
+# if with_gallium_d3d12 or with_microsoft_clc or with_microsoft_vk or (with_any_vk and host_machine.system() == 'windows')
+#   dep_dxheaders = dependency('directx-headers', required : false)
+#   if not dep_dxheaders.found()
+#     dep_dxheaders = dependency('DirectX-Headers',
+#       version : '>= 1.619.1',
+#       fallback : ['DirectX-Headers', 'dep_dxheaders'],
+#       required : with_gallium_d3d12 or with_microsoft_vk
+#     )
+#   endif
+# endif
 
 if dep_dxheaders.found()
-  if (dep_dxheaders.version().version_compare('>= 1.700.0'))
-    pre_args += '-DUSE_D3D12_PREVIEW_HEADERS=1'
-  else
+#  if (dep_dxheaders.version().version_compare('>= 1.700.0'))
+#    pre_args += '-DUSE_D3D12_PREVIEW_HEADERS=1'
+#  else
     pre_args += '-DUSE_D3D12_PREVIEW_HEADERS=0'
-  endif
+#  endif
 endif
 
 _with_gallium_d3d12_video = get_option('gallium-d3d12-video')
