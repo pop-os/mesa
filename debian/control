@@ -9,7 +9,6 @@ Build-Depends:
  bindgen (>= 0.71~) [amd64 arm64 armhf i386 loong64 powerpc ppc64 ppc64el riscv64 s390x x32],
  bison,
  cbindgen (>= 0.25) [amd64 arm64 armhf i386 loong64 powerpc ppc64 ppc64el riscv64 s390x x32],
- directx-headers-dev (>= 1.618.2) [linux-amd64 linux-arm64],
  flatbuffers-compiler [linux-arm64],
  flex,
  glslang-tools [amd64 arm64 armhf i386 loong64 powerpc ppc64 ppc64el riscv64 s390x sparc64 x32],

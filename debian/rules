@@ -114,9 +114,9 @@ else
   endif
 
   # WSL supports only amd64 and arm64
-  ifneq (,$(filter $(DEB_HOST_ARCH), amd64 arm64))
-	GALLIUM_DRIVERS += d3d12
-  endif
+  # ifneq (,$(filter $(DEB_HOST_ARCH), amd64 arm64))
+  #	GALLIUM_DRIVERS += d3d12
+  # endif
 
   # asahi supports only arm64, amd64 and i386
   ifneq (,$(filter $(DEB_HOST_ARCH), arm64 amd64 i386))
