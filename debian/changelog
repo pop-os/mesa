@@ -1,3 +1,9 @@
+mesa (26.1.2-1pop1) noble; urgency=medium
+
+  * Backport
+
+ -- Michael Murphy <michael@mmurphy.dev>  Fri, 26 Jun 2026 16:38:20 +0200
+
 mesa (26.1.2-1) unstable; urgency=medium
 
   * New upstream release.
