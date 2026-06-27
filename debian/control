@@ -16,7 +16,7 @@ Build-Depends:
  libclang-cpp20-dev [amd64 arm64 armhf i386 loong64 powerpc ppc64 ppc64el riscv64 s390x sparc64 x32],
  libclc-20 [amd64 arm64 armhf i386 loong64 powerpc ppc64 ppc64el riscv64 s390x sparc64 x32],
  libclc-20-dev [amd64 arm64 armhf i386 loong64 powerpc ppc64 ppc64el riscv64 s390x sparc64 x32],
- libdisplay-info-dev [amd64 arm64 armhf i386 loong64 powerpc ppc64 ppc64el riscv64 s390x sparc64 x32],
+ libdisplay-info-dev [amd64 arm64 armhf],
  libdrm-dev (>= 2.4.125-1),
  libelf-dev [amd64 arm64 armhf i386 loong64 powerpc ppc64 ppc64el riscv64 s390x sparc64 x32],
  libexpat1-dev,
