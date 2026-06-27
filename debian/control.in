@@ -57,7 +57,7 @@ Build-Depends:
  python3-yaml,
  rustc (>= 1.78) [@RUSTICL_ARCHS@],
  rustfmt [@RUSTICL_ARCHS@],
- spirv-tools,
+ spirv-tools [@LLVM_ARCHS@],
  valgrind [@VALGRIND_ARCHS@],
  wayland-protocols (>= 1.41),
  x11proto-dev,
