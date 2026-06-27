@@ -6,9 +6,9 @@ Uploaders: Andreas Boll <aboll@debian.org>
 Standards-Version: 4.1.4
 Build-Depends:
  debhelper-compat (= 13),
- bindgen (>= 0.71~) [amd64 arm64 armhf i386 loong64 powerpc ppc64 ppc64el riscv64 s390x x32],
+ bindgen (>= 0.71~) [amd64 arm64 armhf loong64 powerpc ppc64 ppc64el riscv64 s390x x32],
  bison,
- cbindgen (>= 0.25) [amd64 arm64 armhf i386 loong64 powerpc ppc64 ppc64el riscv64 s390x x32],
+ cbindgen (>= 0.25) [amd64 arm64 armhf loong64 powerpc ppc64 ppc64el riscv64 s390x x32],
  flatbuffers-compiler [linux-arm64],
  flex,
  glslang-tools [amd64 arm64 armhf i386 loong64 powerpc ppc64 ppc64el riscv64 s390x sparc64 x32],
@@ -24,7 +24,7 @@ Build-Depends:
  libglvnd-core-dev (>= 1.3.2),
  libllvmspirvlib-20-dev [amd64 arm64 armhf i386 loong64 powerpc ppc64 ppc64el riscv64 s390x sparc64 x32],
  libpng-dev [amd64 arm64 armhf i386 loong64 powerpc ppc64 ppc64el riscv64 s390x sparc64 x32],
- librust-syn-dev (>= 2.0.48) [amd64 arm64 armhf i386 ppc64 riscv64 x32],
+ librust-syn-dev (>= 2.0.48) [amd64 arm64 armhf ppc64 riscv64 x32],
  libsensors-dev [!hurd-any],
  libva-dev (>= 1.6.0) [linux-any],
  libvulkan-dev [amd64 arm64 armhf i386 loong64 powerpc ppc64 ppc64el riscv64 s390x sparc64 x32],
@@ -47,7 +47,7 @@ Build-Depends:
  libzstd-dev,
  linux-libc-dev (>= 2.6.31) [linux-any],
  llvm-20-dev [amd64 arm64 armhf i386 loong64 powerpc ppc64 ppc64el riscv64 s390x sparc64 x32],
- llvm-spirv-20 [amd64 arm64 armhf i386 loong64 powerpc ppc64 ppc64el riscv64 s390x x32],
+ llvm-spirv-20 [amd64 arm64 armhf loong64 powerpc ppc64 ppc64el riscv64 s390x x32],
  meson-1.7 (>= 1.7.0),
  pkgconf,
  python3,
@@ -55,9 +55,9 @@ Build-Depends:
  python3-pycparser [arm64 armhf],
  python3-setuptools,
  python3-yaml,
- rustc (>= 1.78) [amd64 arm64 armhf i386 loong64 powerpc ppc64 ppc64el riscv64 s390x x32],
- rustfmt [amd64 arm64 armhf i386 loong64 powerpc ppc64 ppc64el riscv64 s390x x32],
- spirv-tools,
+ rustc (>= 1.78) [amd64 arm64 armhf loong64 powerpc ppc64 ppc64el riscv64 s390x x32],
+ rustfmt [amd64 arm64 armhf loong64 powerpc ppc64 ppc64el riscv64 s390x x32],
+ spirv-tools [amd64 arm64 armhf i386 loong64 powerpc ppc64 ppc64el riscv64 s390x sparc64 x32],
  valgrind [amd64 arm64 armhf i386 powerpc ppc64 ppc64el riscv64 s390x],
  wayland-protocols (>= 1.41),
  x11proto-dev,
@@ -253,7 +253,7 @@ Description: Mesa Vulkan graphics drivers
 
 Package: mesa-opencl-icd
 Section: libs
-Architecture: amd64 arm64 armhf i386 loong64 powerpc ppc64 ppc64el riscv64 s390x x32
+Architecture: amd64 arm64 armhf loong64 powerpc ppc64 ppc64el riscv64 s390x x32
 Pre-Depends: ${misc:Pre-Depends}
 Depends:
  libclc-20,
