@@ -188,6 +188,9 @@ confflags += \
 rewrite_wrap_files:
 	debian/get-wraps-from-cargo-registry.py --cargo-registry /usr/share/cargo/registry
 
+override_dh_builddeb:
+	dh_builddeb -- -Zzstd -z3
+
 override_dh_clean: regen_control
 	dpkg-parsechangelog | awk '/^Version:/ {print $$2}' | sed 's/-.*//;s/~/-/' > VERSION
 	rm -rf build
