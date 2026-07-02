@@ -906,6 +906,9 @@ radv_shader_spirv_to_nir(struct radv_device *device, struct radv_shader_stage *s
       }
    }
 
+   free(stage->layout.embedded_samplers.samplers);
+   stage->layout.embedded_samplers.samplers = NULL;
+
    return nir;
 }
 

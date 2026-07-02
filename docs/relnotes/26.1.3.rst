@@ -19,7 +19,8 @@ SHA checksums
 
 ::
 
-    TBD.
+    SHA256: 7725004e724b34c6d4fbaf5c48fc6c6223aa9f2741d6d7782c699b049356fc45  mesa-26.1.3.tar.xz
+    SHA512: 6dd452e8c7f2e7e9a26733f53dd0daf4df824f82de3d37c171581854dd419f519e104212aacdf8bdf94042a845d9ba5c45a1605d7cba1dc491570a9e72a91f83  mesa-26.1.3.tar.xz
 
 
 New features
@@ -31,7 +32,14 @@ New features
 Bug fixes
 ---------
 
-- None
+- [RADV/ACO]: (Bisected) Regression causes flashing reflections in CyperPunk 2077
+- [RADV] Regression: Infinite loop in NIR compiler during nir_opt_dead_write_vars loading Gemma 4 via llama.cpp on gfx1100
+- [radeonsi] SIGSEGV in gallivm during software fallback for GL_FEEDBACK with lighting
+- anv: NULL deref in anv_AllocateMemory when importing DMA-BUF without VkMemoryDedicatedAllocateInfo on Xe2 (regression)
+- anv: World of Warcraft dx11 CMAA 2 option buggy on a b580
+- anv: atan shader compiler bug leads to negative infinity
+- intel/blorp: shader_pipeline initialization results in incorrect blorp_key values
+- llvm23 breaks build of clc_helpers.cpp
 
 
 Changes

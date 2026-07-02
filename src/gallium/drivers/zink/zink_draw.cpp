@@ -562,7 +562,7 @@ zink_draw(struct pipe_context *pctx,
    ctx->rp_draw = true;
 
    if (ctx->memory_barrier && !ctx->blitting)
-      zink_flush_memory_barrier(ctx, false);
+      zink_flush_memory_barrier(ctx);
 
    if (unlikely(ctx->buffer_rebind_counter < screen->buffer_rebind_counter && !ctx->blitting)) {
       ctx->buffer_rebind_counter = screen->buffer_rebind_counter;
@@ -1032,7 +1032,7 @@ zink_draw_mesh_tasks(struct pipe_context *pctx, const struct pipe_grid_info *inf
    ctx->rp_draw = true;
 
    if (ctx->memory_barrier && !ctx->blitting)
-      zink_flush_memory_barrier(ctx, false);
+      zink_flush_memory_barrier(ctx);
 
    if (unlikely(ctx->buffer_rebind_counter < screen->buffer_rebind_counter && !ctx->blitting)) {
       ctx->buffer_rebind_counter = screen->buffer_rebind_counter;
@@ -1273,7 +1273,7 @@ zink_launch_grid(struct pipe_context *pctx, const struct pipe_grid_info *info)
 
    zink_update_barriers(ctx, true, NULL, info->indirect, NULL);
    if (ctx->memory_barrier)
-      zink_flush_memory_barrier(ctx, true);
+      zink_flush_memory_barrier(ctx);
 
    if (unlikely(zink_debug & ZINK_DEBUG_SYNC)) {
       zink_batch_no_rp(ctx);

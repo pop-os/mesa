@@ -2640,6 +2640,8 @@ brw_vectorize_lower_mem_access(brw_pass_tracker *pt)
       options.robust_modes |= nir_var_mem_ubo;
    if (pt->key->robust_flags & BRW_ROBUSTNESS_SSBO)
       options.robust_modes |= nir_var_mem_ssbo;
+   if (pt->key->robust_flags & BRW_ROBUSTNESS_SLM)
+      options.robust_modes |= nir_var_mem_shared;
 
    OPT(nir_opt_load_store_vectorize, &options);
 

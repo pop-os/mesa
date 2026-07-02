@@ -86,6 +86,7 @@ load_image_param(nir_builder *b, nir_def *surface_handle, unsigned index)
    case ISL_SURF_PARAM_TILE_MODE:
    case ISL_SURF_PARAM_PITCH:
    case ISL_SURF_PARAM_QPITCH:
+   case ISL_SURF_PARAM_MIN_ARRAY_ELEMENT:
       bit_size = 32;
       num_components = 1;
       break;
@@ -100,11 +101,23 @@ load_image_param(nir_builder *b, nir_def *surface_handle, unsigned index)
 
 static nir_def *
 image_linear_address(nir_builder *b,
+                     enum glsl_sampler_dim dim,
                      unsigned bpp,
-                     nir_def **coords,
+                     nir_def **in_coords,
                      nir_def *pitch,
-                     nir_def *qpitch)
+                     nir_def *qpitch,
+                     nir_def *min_array_el)
 {
+   nir_def *coords[3];
+   for (uint32_t i = 0; i < 3; i++)
+      coords[i] = in_coords[i];
+
+   if (dim == GLSL_SAMPLER_DIM_1D) {
+      coords[1] = nir_iadd(b, coords[1], min_array_el);
+   } else {
+      coords[2] = nir_iadd(b, coords[2], min_array_el);
+   }
+
    nir_def *qpitch_in_bytes = nir_imul(b, qpitch, nir_imax_imm(b, pitch, bpp / 8));
    return nir_iadd(b,
                    nir_iadd(b,
@@ -127,10 +140,15 @@ image_tiled_address(nir_builder *b,
                     enum glsl_sampler_dim dim,
                     bool is_array,
                     unsigned bpp,
-                    nir_def **coords,
+                    nir_def *in_coords[3],
                     nir_def *pitch,
-                    nir_def *qpitch)
+                    nir_def *qpitch,
+                    nir_def *min_array_el)
 {
+   nir_def *coords[3];
+   for (uint32_t i = 0; i < 3; i++)
+      coords[i] = in_coords[i];
+
    struct isl_tile_info tile_info;
    isl_tiling_get_info(tiling,
                        glsl_sampler_dim_to_isl(dim),
@@ -143,9 +161,11 @@ image_tiled_address(nir_builder *b,
     * the TileId/IntraTile offset should be computed using the QPitch not
     * being aligned to a tile's height.
     */
-   if (dim == GLSL_SAMPLER_DIM_2D && is_array) {
-      coords[1] = nir_iadd(b, coords[1], nir_imul(b, qpitch, coords[2]));
+   if (dim == GLSL_SAMPLER_DIM_2D) {
+      coords[1] = nir_iadd(b, coords[1], nir_imul(b, qpitch, nir_iadd(b, coords[2], min_array_el)));
       coords[2] = nir_imm_int(b, 0);
+   } else if (dim == GLSL_SAMPLER_DIM_3D) {
+      coords[2] = nir_iadd(b, coords[2], min_array_el);
    }
 
    /* Compute the intra tile offset using the swizzle (swizzles use u,v,r,p
@@ -246,10 +266,14 @@ image_address(nir_builder *b,
       load_image_param(b, surface_handle, ISL_SURF_PARAM_PITCH);
    nir_def *qpitch =
       load_image_param(b, surface_handle, ISL_SURF_PARAM_QPITCH);
+   nir_def *min_array_el =
+      load_image_param(b, surface_handle, ISL_SURF_PARAM_MIN_ARRAY_ELEMENT);
 
    if (!isl_tiling_supports_dimensions(devinfo, tiling,
-                                       glsl_sampler_dim_to_isl(dim)))
-      return image_linear_address(b, bpp, coords, pitch, qpitch);
+                                       glsl_sampler_dim_to_isl(dim))) {
+      return image_linear_address(b, dim, bpp, coords,
+                                  pitch, qpitch, min_array_el);
+   }
 
    nir_def *linear_addr = NULL;
    nir_def *tiled_addr = NULL;
@@ -258,12 +282,15 @@ image_address(nir_builder *b,
       load_image_param(b, surface_handle, ISL_SURF_PARAM_TILE_MODE);
    nir_push_if(b, nir_ieq_imm(b, tile_mode, 0));
    {
-      linear_addr = image_linear_address(b, bpp, coords, pitch, qpitch);
+      linear_addr = image_linear_address(b, dim, bpp, coords,
+                                         pitch, qpitch,
+                                         min_array_el);
    }
    nir_push_else(b, NULL);
    {
       tiled_addr = image_tiled_address(b, tiling, dim, is_array,
-                                       bpp, coords, pitch, qpitch);
+                                       bpp, coords, pitch, qpitch,
+                                       min_array_el);
    }
    nir_pop_if(b, NULL);
 

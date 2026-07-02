@@ -56,7 +56,7 @@ vk_buffer_init(struct vk_device *device,
        VK_ADDRESS_COMMAND_STORAGE_BUFFER_USAGE_BIT_KHR : 0) |
       ((buffer->usage & VK_BUFFER_USAGE_TRANSFORM_FEEDBACK_BUFFER_BIT_EXT) ?
        VK_ADDRESS_COMMAND_TRANSFORM_FEEDBACK_BUFFER_USAGE_BIT_KHR : 0) |
-      ((buffer->usage & VK_BUFFER_CREATE_SPARSE_BINDING_BIT) == 0 ?
+      ((buffer->create_flags & VK_BUFFER_CREATE_SPARSE_BINDING_BIT) == 0 ?
        VK_ADDRESS_COMMAND_FULLY_BOUND_BIT_KHR : 0);
 
    buffer->copy_flags =

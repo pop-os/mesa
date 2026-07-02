@@ -46,6 +46,7 @@ static void
 applegl_destroy_context(struct glx_context *gc)
 {
    apple_glx_destroy_context(&gc->driContext, gc->psc->dpy);
+   free(gc);
 }
 
 static int

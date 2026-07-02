@@ -807,8 +807,10 @@ radv_amdgpu_winsys_bo_from_fd(struct radeon_winsys *_ws, int fd, unsigned priori
       goto error_va_map;
    }
 
-   if (info.preferred_heap & AMDGPU_GEM_DOMAIN_VRAM)
+   if (info.preferred_heap & AMDGPU_GEM_DOMAIN_VRAM) {
+      bo->base.vram_no_cpu_access = !!(info.alloc_flags & AMDGPU_GEM_CREATE_NO_CPU_ACCESS);
       initial |= RADEON_DOMAIN_VRAM;
+   }
    if (info.preferred_heap & AMDGPU_GEM_DOMAIN_GTT)
       initial |= RADEON_DOMAIN_GTT;
 
@@ -823,8 +825,14 @@ radv_amdgpu_winsys_bo_from_fd(struct radeon_winsys *_ws, int fd, unsigned priori
    bo->cpu_map = NULL;
    bo->base.obj_id = (uintptr_t)(result.bo.abo);
 
-   if (bo->base.initial_domain & RADEON_DOMAIN_VRAM)
-      p_atomic_add(&ws->allocated_vram, align64(bo->base.size, ws->info.gart_page_size));
+   if (bo->base.initial_domain & RADEON_DOMAIN_VRAM) {
+      if (bo->base.vram_no_cpu_access) {
+         p_atomic_add(&ws->allocated_vram, align64(bo->base.size, ws->info.gart_page_size));
+      } else {
+         p_atomic_add(&ws->allocated_vram_vis, align64(bo->base.size, ws->info.gart_page_size));
+      }
+   }
+
    if (bo->base.initial_domain & RADEON_DOMAIN_GTT)
       p_atomic_add(&ws->allocated_gtt, align64(bo->base.size, ws->info.gart_page_size));
 

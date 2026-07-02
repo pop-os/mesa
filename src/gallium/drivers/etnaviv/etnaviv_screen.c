@@ -1115,6 +1115,8 @@ etna_screen_create(struct etna_device *dev, struct etna_gpu *gpu,
    etna_init_shader_caps(screen);
    etna_init_screen_caps(screen);
 
+   screen->compiler->max_render_targets = screen->base.caps.max_render_targets;
+
    screen->supported_pm_queries = UTIL_DYNARRAY_INIT;
    slab_create_parent(&screen->transfer_pool, sizeof(struct etna_transfer), 16);
 

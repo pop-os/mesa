@@ -307,6 +307,22 @@ etna_fragtex_set_sampler_views(struct etna_context *ctx, unsigned nr,
 
    set_sampler_views(ctx, start, end, nr, views);
    ctx->num_fragment_sampler_views = nr;
+
+   uint16_t mask = 0;
+   for (unsigned i = 0; i < nr; i++) {
+      if (views[i] && format_is_128bit(views[i]->format)) {
+         assert(nr + i < screen->specs.fragment_sampler_count);
+         mask |= 1u << i;
+      }
+   }
+
+   ctx->tex_is_128bit[MESA_SHADER_FRAGMENT] = mask;
+
+   for (unsigned i = nr; i < screen->specs.fragment_sampler_count; i++)
+      ctx->sampler_companion[MESA_SHADER_FRAGMENT][i - nr] = i;
+
+   for (unsigned i = screen->specs.fragment_sampler_count - nr; i < 16; i++)
+      ctx->sampler_companion[MESA_SHADER_FRAGMENT][i] = ~0U;
 }
 
 
@@ -319,6 +335,19 @@ etna_vertex_set_sampler_views(struct etna_context *ctx, unsigned nr,
    unsigned end = start + screen->specs.vertex_sampler_count;
 
    set_sampler_views(ctx, start, end, nr, views);
+
+   uint16_t mask = 0;
+   for (unsigned k = 0; k < nr; k++)
+      if (views[k] && format_is_128bit(views[k]->format))
+         mask |= 1u << k;
+
+   ctx->tex_is_128bit[MESA_SHADER_VERTEX] = mask;
+
+   for (unsigned k = 0; k < nr; k++)
+      ctx->sampler_companion[MESA_SHADER_VERTEX][k] = nr + k < screen->specs.vertex_sampler_count ? nr + k : ~0U;
+
+   for (unsigned k = nr; k < 16; k++)
+      ctx->sampler_companion[MESA_SHADER_VERTEX][k] = ~0U;
 }
 
 static void

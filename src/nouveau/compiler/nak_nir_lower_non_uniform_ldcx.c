@@ -52,18 +52,22 @@ lower_ldcx_to_global(nir_builder *b, nir_intrinsic_instr *load,
       size = nir_unpack_64_2x32_split_y(b, handle);
       size = nir_ishl_imm(b, nir_ushr_imm(b, size, 13), 4);
    }
+
+   /* The semantics of base change, so spill it to a normal iadd, so we get
+    * proper bound checking. */
+   offset = nir_iadd_imm(b, offset, nir_intrinsic_base(load));
+
    /* At this point we can assume the offset is aligned so we only need a
     * simple less-than check here.
     */
-   nir_def *cond = nir_ilt(b, offset, size);
+   nir_def *cond = nir_ult(b, offset, size);
    nir_def *val = nir_load_global_nv(b,
       load->def.num_components, load->def.bit_size,
       nir_iadd(b, addr, nir_u2u64(b, offset)),
       cond,
       .align_mul = nir_intrinsic_align_mul(load),
       .align_offset = nir_intrinsic_align_offset(load),
-      .access = ACCESS_CAN_REORDER,
-      .base = nir_intrinsic_base(load));
+      .access = ACCESS_CAN_REORDER);
 
    nir_def_replace(&load->def, val);
 }

@@ -329,16 +329,6 @@
     HWCI_KERNEL_MODULES: i915
     RUNNER_TAG: mesa-ci-x86-64-lava-dell-latitude-5400-8665U-sarien
 
-# Status: https://lava.collabora.dev/scheduler/device_type/acer-chromebox-cxi4-puff
-.lava-acer-chromebox-cxi4-puff:x86_64:
-  variables:
-    DEVICE_TYPE: acer-chromebox-cxi4-puff
-    FARM: collabora
-    FDO_CI_CONCURRENT: 3
-    GPU_VERSION: iris-cml
-    HWCI_KERNEL_MODULES: i915
-    RUNNER_TAG: mesa-ci-x86-64-lava-acer-chromebox-cxi4-puff
-
 
 .intel-common-test:
   variables:
@@ -408,13 +398,6 @@
     - .iris-test
     - .lava-dell-latitude-5400-8665U-sarien:x86_64
 
-.iris-cml-test:
-  extends:
-    - .iris-test
-    - .lava-acer-chromebox-cxi4-puff:x86_64
-  variables:
-    LAVA_FORCE_UART: 1
-
 .iris-adl-test:
   extends:
     - .iris-test
@@ -458,13 +441,6 @@
     - .profile-traces
   variables:
     GPU_VERSION: intel-whl
-
-.iris-cml-traces-performance:
-  extends:
-    - .iris-cml-test
-    - .profile-traces
-  variables:
-    GPU_VERSION: intel-cml
 
 ## Intel (anv + iris)
 .intel-adl-test:

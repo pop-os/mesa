@@ -260,7 +260,11 @@ nvk_push_draw_state_init(struct nvk_queue *queue, struct nv_push *p)
 
    /* Initialize tessellation parameters */
    P_IMMD(p, NV9097, SET_MME_SHADOW_SCRATCH(NVK_MME_SCRATCH_TESS_PARAMS), 0);
-   P_IMMD(p, NV9097, SET_TESSELLATION_PARAMETERS, {});
+   P_IMMD(p, NV9097, SET_TESSELLATION_PARAMETERS, {
+      .domain_type = DOMAIN_TYPE_ISOLINE,
+      .spacing = SPACING_INTEGER,
+      .output_primitives = OUTPUT_PRIMITIVES_LINES,
+   });
 
    P_IMMD(p, NV9097, SET_RENDER_ENABLE_C, MODE_TRUE);
 
@@ -2186,7 +2190,37 @@ const struct nvk_mme_test_case nvk_mme_set_tess_params_tests[] = {{
       },
       { }
    },
-}, {}};
+},
+{
+   /* Test expected default state */
+   .init = (struct nvk_mme_mthd_data[]) {
+      {
+         NVK_SET_MME_SCRATCH(TESS_PARAMS),
+         NVK_MME_TESS_STATE(TRIANGLE, INTEGER, 0)
+      },
+      { }
+   },
+   .params = (uint32_t[]) {
+      NVK_MME_VAL_MASK(0, 0xffff)
+   },
+   .expected = (struct nvk_mme_mthd_data[]) {
+      {
+         NVK_SET_MME_SCRATCH(TESS_PARAMS),
+         NVK_MME_FULL_TESS_STATE(
+            NVDEF(NV9097, SET_TESSELLATION_PARAMETERS, DOMAIN_TYPE, ISOLINE) |
+            NVDEF(NV9097, SET_TESSELLATION_PARAMETERS, SPACING, INTEGER),
+            NVDEF(NV9097, SET_TESSELLATION_PARAMETERS, DOMAIN_TYPE, ISOLINE) |
+            NVDEF(NV9097, SET_TESSELLATION_PARAMETERS, SPACING, INTEGER)
+         )
+      },
+      {
+         NV9097_SET_TESSELLATION_PARAMETERS,
+         NVK_MME_TESS_PARAMS(ISOLINE, INTEGER, LINES)
+      },
+      { }
+   },
+},
+{}};
 
 void
 nvk_cmd_flush_gfx_shaders(struct nvk_cmd_buffer *cmd)

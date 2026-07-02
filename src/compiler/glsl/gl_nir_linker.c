@@ -2995,7 +2995,7 @@ reserve_explicit_locations(struct gl_shader_program *prog,
 
    struct range_entry *re =
       util_range_insert_remap(location, max_loc, prog->UniformRemapTable,
-                              NULL);
+                              NULL, false);
    if (!re) {
       /* ARB_explicit_uniform_location specification states:
        *

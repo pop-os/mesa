@@ -192,15 +192,6 @@ iris-kbl-deqp:
     DEQP_SUITE: iris-kbl
   parallel: 3
 
-iris-cml-deqp:
-  extends:
-    - .iris-cml-test
-    # moved to nightly because of networking issues, gpu tests are all passing as expected
-    - .iris-manual-rules
-  variables:
-    DEQP_SUITE: iris-cml
-  parallel: 8
-
 iris-jsl-deqp:
   extends:
     - .iris-test
@@ -264,15 +255,6 @@ iris-kbl-traces:
   extends:
     - .iris-kbl-test
     - .iris-traces
-
-iris-cml-traces:
-  variables:
-    GPU_VERSION: intel-cml
-  extends:
-    - .iris-cml-test
-    - .iris-traces
-    # moved to nightly because of networking issues, gpu tests are all passing as expected
-    - .iris-manual-rules
 
 iris-apl-traces-performance:
   extends:

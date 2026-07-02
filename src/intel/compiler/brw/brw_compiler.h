@@ -204,6 +204,7 @@ PRAGMA_DIAGNOSTIC_ERROR(-Wpadded)
 enum brw_robustness_flags {
    BRW_ROBUSTNESS_UBO  = BITFIELD_BIT(0),
    BRW_ROBUSTNESS_SSBO = BITFIELD_BIT(1),
+   BRW_ROBUSTNESS_SLM  = BITFIELD_BIT(2),
 };
 
 enum brw_divergent_atomics_flags {
@@ -218,7 +219,7 @@ struct brw_base_prog_key {
     */
    uint32_t view_mask;
 
-   enum brw_robustness_flags robust_flags:2;
+   enum brw_robustness_flags robust_flags:3;
 
    bool uses_inline_push_addr:1;
 
@@ -233,7 +234,7 @@ struct brw_base_prog_key {
 
    enum brw_divergent_atomics_flags divergent_atomics_flags:2;
 
-   uint32_t padding:24;
+   uint32_t padding:23;
 };
 
 /**

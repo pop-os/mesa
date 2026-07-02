@@ -76,7 +76,14 @@ kk_create_cmd_buffer(struct vk_command_pool *vk_pool,
       return vk_error(dev, VK_ERROR_OUT_OF_HOST_MEMORY);
 
    result =
-      vk_command_buffer_init(&pool->vk, &cmd->vk, &kk_cmd_buffer_ops, level);
+      vk_command_buffer_init_with_params(
+         &cmd->vk,
+         &(struct vk_command_buffer_init_params) {
+            .pool = &pool->vk,
+            .ops = &kk_cmd_buffer_ops,
+            .level = level,
+            .needs_cmd_queue = true,
+         });
    if (result != VK_SUCCESS) {
       vk_free(&pool->vk.alloc, cmd);
       return result;

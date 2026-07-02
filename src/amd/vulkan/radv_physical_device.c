@@ -3191,13 +3191,15 @@ radv_GetPhysicalDeviceFragmentShadingRatesKHR(VkPhysicalDevice physicalDevice, u
          if (x == 1 && y == 1) {
             samples = ~0;
          } else {
-            samples = VK_SAMPLE_COUNT_1_BIT | VK_SAMPLE_COUNT_2_BIT | VK_SAMPLE_COUNT_4_BIT;
+            samples = VK_SAMPLE_COUNT_1_BIT | VK_SAMPLE_COUNT_2_BIT | VK_SAMPLE_COUNT_4_BIT | VK_SAMPLE_COUNT_8_BIT;
 
-            /* VRS coarse shading with 8x MSAA isn't supported on GFX12 and the
-             * hw automatically clamps to 1x1.
+            /* VRS coarse shading with 8x MSAA isn't supported:
+             * - on GFX12 because the hw automatically clamps to 1x1
+             * - on GFX11-11.7 due to random GPU hangs with VRS 2x2 (verified on NAVI33) and it's
+             *   easier to disable it completely for all rates
              */
-            if (pdev->info.gfx_level < GFX12)
-               samples |= VK_SAMPLE_COUNT_8_BIT;
+            if (pdev->info.gfx_level >= GFX11)
+               samples &= ~VK_SAMPLE_COUNT_8_BIT;
          }
 
          append_rate(x, y, samples);

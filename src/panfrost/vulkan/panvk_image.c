@@ -1,6 +1,7 @@
 /*
  * Copyright © 2025 Arm Ltd.
  * Copyright © 2021 Collabora Ltd.
+ * Copyright © 2026 Google LLC
  *
  * Derived from tu_image.c which is:
  * Copyright © 2016 Red Hat.
@@ -800,7 +801,7 @@ get_image_subresource_layout(const struct panvk_image *image,
    if (drm_is_afbc(image->vk.drm_format_mod)) {
       /* row/depth pitch expressed in (AFBC superblocks * payload size). */
       layout->rowPitch = pan_image_get_wsi_row_pitch(
-         &image->planes[plane].image, plane, subres->mipLevel);
+         &image->planes[plane].image, 0, subres->mipLevel);
       layout->depthPitch = slice_layout->afbc.surface_stride_B;
    } else {
       layout->rowPitch = slice_layout->tiled_or_linear.row_stride_B;

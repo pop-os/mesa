@@ -498,6 +498,7 @@ CreateDrawable(Display *dpy, struct glx_config *config,
       else
          glxCode = X_GLXDestroyWindow;
       protocolDestroyDrawable(dpy, xid, glxCode);
+      DestroyGLXDrawable(dpy, xid);
       xid = None;
    }
 
@@ -1012,6 +1013,7 @@ glXCreateGLXPixmap(Display * dpy, XVisualInfo * vis, Pixmap pixmap)
       if (!CreateDRIDrawable(dpy, config, pixmap, xid, GLX_PIXMAP_BIT,
                              NULL, 0)) {
          protocolDestroyDrawable(dpy, xid, X_GLXDestroyGLXPixmap);
+         DestroyGLXDrawable(dpy, xid);
          xid = None;
       }
    } while (0);
