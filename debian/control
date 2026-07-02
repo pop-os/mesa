@@ -18,7 +18,7 @@ Build-Depends:
  libclc-21 [amd64 arm64 armhf i386 loong64 powerpc ppc64 ppc64el riscv64 s390x sparc64 x32],
  libclc-21-dev [amd64 arm64 armhf i386 loong64 powerpc ppc64 ppc64el riscv64 s390x sparc64 x32],
  libdisplay-info-dev [amd64 arm64 armhf i386 loong64 powerpc ppc64 ppc64el riscv64 s390x sparc64 x32],
- libdrm-dev (>= 2.4.125-1),
+ libdrm-dev (>= 2.4.134-3~),
  libelf-dev [amd64 arm64 armhf i386 loong64 powerpc ppc64 ppc64el riscv64 s390x sparc64 x32],
  libexpat1-dev,
  libflatbuffers-dev [linux-arm64],

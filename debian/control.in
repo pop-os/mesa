@@ -18,7 +18,7 @@ Build-Depends:
  libclc-@LLVM_VERSION@ [@LLVM_ARCHS@],
  libclc-@LLVM_VERSION@-dev [@LLVM_ARCHS@],
  libdisplay-info-dev [@LLVM_ARCHS@],
- libdrm-dev (>= 2.4.125-1),
+ libdrm-dev (>= 2.4.134-3~),
  libelf-dev [@LLVM_ARCHS@],
  libexpat1-dev,
  libflatbuffers-dev [linux-arm64],
