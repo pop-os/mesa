@@ -229,6 +229,22 @@ Description: shared infrastructure for Mesa drivers
  multiple Mesa drivers. This library is an implementation detail of Mesa
  and should not be used directly by user code.
 
+Package: mesa-va-drivers
+Section: libs
+Architecture: linux-any
+Depends: mesa-libgallium
+Multi-Arch: same
+Description: Transitional package (safe to remove)
+ This package has been replaced by mesa-libgallium.
+
+Package: mesa-vdpau-drivers
+Section: libs
+Architecture: linux-any
+Depends: mesa-libgallium
+Multi-Arch: same
+Description: Transitional package (safe to remove)
+ This package has been replaced by mesa-libgallium.
+
 Package: mesa-teflon-delegate
 Section: libs
 Architecture: arm64
