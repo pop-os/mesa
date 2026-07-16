@@ -1,4 +1,4 @@
-mesa (26.1.4-2) UNRELEASED; urgency=medium
+mesa (26.1.5-1) UNRELEASED; urgency=medium
 
   [ Dylan Aïssi ]
   * Bump directx-headers-dev to the minimum 1.619.1
@@ -6,6 +6,9 @@ mesa (26.1.4-2) UNRELEASED; urgency=medium
   [ Simon McVittie ]
   * d/control.in: Reinstate mesa-va-drivers, mesa-vdpau-drivers as transitional
     (Closes: #1127367, #1125977, #1125779)
+
+  [ Timo Aaltonen ]
+  * New upstream release.
 
  -- Timo Aaltonen <tjaalton@debian.org>  Thu, 16 Jul 2026 11:11:17 +0300
 
