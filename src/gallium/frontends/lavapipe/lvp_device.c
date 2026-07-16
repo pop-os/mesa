@@ -1858,6 +1858,7 @@ static void
 lvp_queue_finish(struct lvp_queue *queue)
 {
    vk_queue_finish(&queue->vk);
+   cso_unbind_context(queue->cso);
 
    destroy_pipelines(queue);
    simple_mtx_destroy(&queue->lock);

@@ -36,7 +36,8 @@ nv50_flush(struct pipe_context *pipe,
    struct nouveau_context *context = nouveau_context(pipe);
 
    if (fence)
-      nouveau_fence_ref(context->fence, (struct nouveau_fence **)fence);
+      nouveau_fence_ref(context->fence, (struct nouveau_fence **)fence,
+                        context->screen);
 
    PUSH_KICK(context->pushbuf);
 

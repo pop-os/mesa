@@ -188,6 +188,7 @@ struct radv_shader_info {
       bool can_discard : 1;
       bool early_fragment_test : 1;
       bool post_depth_coverage : 1;
+      bool uses_fbfetch_output : 1;
       uint8_t reads_frag_coord_mask;
       uint8_t reads_sample_pos_mask;
       uint8_t depth_layout;

@@ -3093,11 +3093,11 @@ _wsi_display_queue_next(struct wsi_swapchain *drv_chain)
          /* Ensure we have some kind of timebase to work from. */
          if (connector->has_vblank && !connector->last_frame) {
             int ret = drmCrtcGetSequence(wsi->fd, connector->crtc_id, &connector->last_frame, &connector->last_nsec);
-            if (ret == -EOPNOTSUPP) {
+            if (ret) {
                connector->has_vblank = false;
                connector->last_frame = 0;
                connector->last_nsec = 0;
-               wsi_display_debug("Driver without vblank + event dispatch. Fallback to non-vblank timing.\n");
+               wsi_display_debug("Driver without vblank + event dispatch: %s. Fallback to non-vblank timing.\n", strerror(errno));
             }
          }
 
@@ -3175,7 +3175,10 @@ _wsi_display_queue_next(struct wsi_swapchain *drv_chain)
             /* On a VRR display, applications can request frame times which are fractional,
              * and there is no good way to target absolute time with atomic commits it seems ... */
             int64_t target_ns = target_relative_ns + (int64_t)base_time_ns;
-            image->minimum_ns = target_ns;
+
+            /* For VRR, reported present time must be at least target_ns, to stabilize vrr timing. */
+            if (is_vrr)
+               image->minimum_ns = target_ns;
 
             /* Account for some minimum delay in submitting a page flip until it's processed and sleep jitter.
              * We will compensate for the difference if there is any, so that we don't report completion
@@ -4539,15 +4542,12 @@ wsi_GetSwapchainCounterEXT(VkDevice _device,
       return VK_SUCCESS;
    }
 
-   uint64_t nsec;
+   /* Note: Resist the urge to use query results to update connector->last_nsec/last_frame,
+    * it will lead to races with page_flip_handler2 and potentially wrong present timestamps! */
    int ret = drmCrtcGetSequence(wsi->fd, connector->crtc_id,
-                                pCounterValue, &nsec);
-   if (ret) {
+                                pCounterValue, NULL);
+   if (ret)
       *pCounterValue = 0;
-   } else {
-      connector->last_frame = *pCounterValue;
-      connector->last_nsec = nsec;
-   }
 
    return VK_SUCCESS;
 }

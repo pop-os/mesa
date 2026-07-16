@@ -126,6 +126,9 @@ struct spirv_to_nir_options {
        * game bugs.
        */
       bool lower_terminate_to_discard;
+
+      /* Whether OpFMin/OpFMax/OpFClamp should behave like the NMax versions. */
+      bool force_nan_preserve_min_max;
    } workarounds;
 
    /* In Debug Builds, instead of emitting an OS break on failure, just return NULL from

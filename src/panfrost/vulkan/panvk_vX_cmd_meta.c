@@ -44,6 +44,8 @@ meta_compute_start(struct panvk_cmd_buffer *cmdbuf,
    if (push_set0 && push_set0 == set0) {
       save_ctx->push_set0.desc_count = push_set0->desc_count;
       save_ctx->push_set0.descs_dev_addr = push_set0->descs.dev;
+      save_ctx->push_set0.dirty =
+         BITSET_TEST(cmdbuf->state.compute.desc_state.dirty_push_sets, 0);
       memcpy(save_ctx->push_set0.desc_storage, push_set0->descs.host,
              push_set0->desc_count * PANVK_DESCRIPTOR_SIZE);
    }
@@ -84,6 +86,11 @@ meta_compute_end(struct panvk_cmd_buffer *cmdbuf,
              save_ctx->push_set0.desc_count * PANVK_DESCRIPTOR_SIZE);
       push_set0->descs.dev = save_ctx->push_set0.descs_dev_addr;
       push_set0->desc_count = save_ctx->push_set0.desc_count;
+
+      if (save_ctx->push_set0.dirty)
+         BITSET_SET(cmdbuf->state.compute.desc_state.dirty_push_sets, 0);
+      else
+         BITSET_CLEAR(cmdbuf->state.compute.desc_state.dirty_push_sets, 0);
    }
 
    cmdbuf->state.push_constants = save_ctx->push_constants;
@@ -112,6 +119,8 @@ meta_gfx_start(struct panvk_cmd_buffer *cmdbuf,
    if (push_set0 && push_set0 == set0) {
       save_ctx->push_set0.desc_count = push_set0->desc_count;
       save_ctx->push_set0.descs_dev_addr = push_set0->descs.dev;
+      save_ctx->push_set0.dirty =
+         BITSET_TEST(cmdbuf->state.gfx.desc_state.dirty_push_sets, 0);
       memcpy(save_ctx->push_set0.desc_storage, push_set0->descs.host,
              push_set0->desc_count * PANVK_DESCRIPTOR_SIZE);
    }
@@ -172,6 +181,11 @@ meta_gfx_end(struct panvk_cmd_buffer *cmdbuf,
              save_ctx->push_set0.desc_count * PANVK_DESCRIPTOR_SIZE);
       push_set0->descs.dev = save_ctx->push_set0.descs_dev_addr;
       push_set0->desc_count = save_ctx->push_set0.desc_count;
+
+      if (save_ctx->push_set0.dirty)
+         BITSET_SET(cmdbuf->state.gfx.desc_state.dirty_push_sets, 0);
+      else
+         BITSET_CLEAR(cmdbuf->state.gfx.desc_state.dirty_push_sets, 0);
    }
 
    cmdbuf->state.push_constants = save_ctx->push_constants;

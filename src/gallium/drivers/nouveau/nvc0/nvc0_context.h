@@ -312,9 +312,9 @@ static inline void
 nvc0_resource_fence(struct nvc0_context *nvc0, struct nv04_resource *res, uint32_t flags)
 {
    if (res->mm) {
-      nouveau_fence_ref(nvc0->base.fence, &res->fence);
+      nouveau_fence_ref(nvc0->base.fence, &res->fence, nvc0->base.screen);
       if (flags & NOUVEAU_BO_WR)
-         nouveau_fence_ref(nvc0->base.fence, &res->fence_wr);
+         nouveau_fence_ref(nvc0->base.fence, &res->fence_wr, nvc0->base.screen);
    }
 }
 

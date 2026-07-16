@@ -12,6 +12,7 @@
 #include "util/macros.h"
 #include "util/simple_mtx.h"
 #include "util/stack_array.h"
+#include "util/timespec.h"
 
 #include "drm-uapi/panfrost_drm.h"
 
@@ -178,6 +179,11 @@ panfrost_dev_query_props(struct panfrost_kmod_dev *panfrost_dev)
       props->gpu_can_query_timestamp = true;
       props->timestamp_frequency = panfrost_query_raw(
          fd, DRM_PANFROST_PARAM_SYSTEM_TIMESTAMP_FREQUENCY, true, 0);
+
+      if (props->timestamp_frequency) {
+         props->timestamp_cycles_to_ns_factor =
+            (double)NSEC_PER_SEC / props->timestamp_frequency;
+      }
    }
 
    /* Device coherent timestamps are always enabled on panfrost */

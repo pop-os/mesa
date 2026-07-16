@@ -173,6 +173,13 @@ etna_create_sampler_view_desc(struct pipe_context *pctx, struct pipe_resource *p
    if (!sv)
       return NULL;
 
+   /* Determine whether target supported */
+   uint32_t target_hw = translate_texture_target(so->target);
+   if (target_hw == ETNA_NO_MATCH) {
+      BUG("Unhandled texture target");
+      goto error;
+   }
+
    struct etna_resource *res = etna_texture_handle_incompatible(pctx, prsc);
    if (!res)
       goto error;
@@ -183,13 +190,6 @@ etna_create_sampler_view_desc(struct pipe_context *pctx, struct pipe_resource *p
    pipe_resource_reference(&sv->base.texture, prsc);
    sv->base.context = pctx;
    sv->SAMP_CTRL0_MASK = 0xffffffff;
-
-   /* Determine whether target supported */
-   uint32_t target_hw = translate_texture_target(sv->base.target);
-   if (target_hw == ETNA_NO_MATCH) {
-      BUG("Unhandled texture target");
-      goto error;
-   }
 
    /* Texture descriptor sampler bits */
    if (util_format_is_srgb(so->format))
@@ -327,6 +327,7 @@ etna_create_sampler_view_desc(struct pipe_context *pctx, struct pipe_resource *p
    return &sv->base;
 
 error:
+   pipe_resource_reference(&sv->base.texture, NULL);
    free(sv);
    return NULL;
 }

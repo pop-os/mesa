@@ -114,6 +114,7 @@ struct ac_compiler_info {
    uint32_t min_wave64_vgpr_alloc;
    uint32_t max_vgpr_alloc;
    uint32_t wave64_vgpr_alloc_granularity;
+   uint32_t wave64_vgpr_encode_granularity;
 
    uint32_t hs_offchip_workgroup_dw_size;
 
@@ -293,6 +294,7 @@ struct radeon_info {
                              * the LLVM version doesn't work with multiparts shaders.
                              */
    bool has_smem_partial_oob_access_bug;
+   bool has_out_of_order_uncached_l2;
 
    /* Support GS_FAST_LAUNCH(2) for mesh shaders. */
    bool mesh_fast_launch_2;

@@ -1178,7 +1178,6 @@ vn_physical_device_get_native_extensions(
    }
 
    if (physical_dev->instance->renderer->info.has_external_sync &&
-       physical_dev->renderer_sync_fd.semaphore_importable &&
        physical_dev->renderer_sync_fd.semaphore_exportable) {
       if (physical_dev->external_binary_semaphore_handles ==
           VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_SYNC_FD_BIT) {

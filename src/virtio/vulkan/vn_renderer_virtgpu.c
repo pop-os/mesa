@@ -141,9 +141,18 @@ struct sim_syncobj {
    bool pending_cpu;
 };
 
+static void
+sim_syncobj_init_once(void)
+{
+   mtx_init(&sim.mutex, mtx_plain);
+}
+
 static uint32_t
 sim_syncobj_create(struct virtgpu *gpu, bool signaled)
 {
+   static once_flag once = ONCE_FLAG_INIT;
+   call_once(&once, sim_syncobj_init_once);
+
    struct sim_syncobj *syncobj = calloc(1, sizeof(*syncobj));
    if (!syncobj)
       return 0;

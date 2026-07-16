@@ -2121,21 +2121,6 @@ vtn_type_is_ray_query(struct vtn_type *type)
    return vtn_type_without_array(type)->base_type == vtn_base_type_ray_query;
 }
 
-static bool
-vtn_type_all_members_have_access(const struct vtn_type *type,
-                                 enum gl_access_qualifier access)
-{
-   if (type->base_type != vtn_base_type_struct || type->length == 0)
-      return false;
-
-   for (unsigned i = 0; i < type->length; i++) {
-      if (!(type->members[i]->access & access))
-         return false;
-   }
-
-   return true;
-}
-
 static void
 vtn_create_variable(struct vtn_builder *b, struct vtn_value *val,
                     struct vtn_type *ptr_type, struct vtn_type *data_type,
@@ -2486,8 +2471,7 @@ vtn_create_variable(struct vtn_builder *b, struct vtn_value *val,
          var->var->data.resource_type = nir_resource_type_uniform_buffer;
          break;
       case vtn_variable_mode_ssbo:
-          if (var->access & ACCESS_NON_WRITEABLE ||
-              vtn_type_all_members_have_access(without_array, ACCESS_NON_WRITEABLE))
+         if (var->access & ACCESS_NON_WRITEABLE)
             var->var->data.resource_type = nir_resource_type_read_only_storage_buffer;
          else
             var->var->data.resource_type = nir_resource_type_read_write_storage_buffer;

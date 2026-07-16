@@ -137,14 +137,31 @@ impl ProgramBuild {
                     continue;
                 }
 
-                let build_result =
-                    convert_spirv_to_nir(build, kernel_name, &args, &self.spec_constants, dev);
+                let build_result = match convert_spirv_to_nir(
+                    build,
+                    kernel_name,
+                    &args,
+                    &self.spec_constants,
+                    dev,
+                ) {
+                    Ok(build_result) => build_result,
+                    Err(err) => {
+                        build.status = CL_BUILD_ERROR;
+                        build.log = format!("Internal compilation error: {err}");
+                        return;
+                    }
+                };
                 kernel_info_set.insert(build_result.kernel_info);
 
                 self.builds_by_device.get_mut(dev).unwrap().kernels.insert(
                     kernel_name.clone(),
                     Arc::new(build_result.nir_kernel_builds),
                 );
+            }
+
+            // If all devices failed to rebuilt their kernels we simply return here.
+            if kernel_info_set.is_empty() {
+                return;
             }
 
             // we want the same (internal) args for every compiled kernel, for now
@@ -226,7 +243,7 @@ impl DeviceProgramBuild {
         kernel: &str,
         device: &Device,
         spec_constants: &HashMap<u32, nir_const_value>,
-    ) -> NirShader {
+    ) -> Result<NirShader, &'static str> {
         assert_eq!(self.status, CL_BUILD_SUCCESS as cl_build_status);
 
         let mut spec_constants: Vec<_> = spec_constants
@@ -239,17 +256,22 @@ impl DeviceProgramBuild {
             .collect();
 
         let mut log = Platform::dbg().program.then(Vec::new);
-        let nir = self.spirv.as_ref().unwrap().to_nir(
-            kernel,
-            device
-                .screen
-                .nir_shader_compiler_options(mesa_shader_stage::MESA_SHADER_COMPUTE),
-            &device.spirv_caps,
-            &device.lib_clc,
-            &mut spec_constants,
-            device.address_bits(),
-            log.as_mut(),
-        );
+        let nir = self
+            .spirv
+            .as_ref()
+            .unwrap()
+            .to_nir(
+                kernel,
+                device
+                    .screen
+                    .nir_shader_compiler_options(mesa_shader_stage::MESA_SHADER_COMPUTE),
+                &device.spirv_caps,
+                &device.lib_clc,
+                &mut spec_constants,
+                device.address_bits(),
+                log.as_mut(),
+            )
+            .ok_or("spirv_to_nir failed");
 
         if let Some(log) = log {
             for line in log {
@@ -257,7 +279,7 @@ impl DeviceProgramBuild {
             }
         };
 
-        nir.unwrap()
+        nir
     }
 
     fn is_success(&self) -> bool {

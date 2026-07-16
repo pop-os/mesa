@@ -117,6 +117,7 @@ void
 loader_destroy_screen_resources(struct loader_screen_resources *res)
 {
    mtx_destroy(&res->mtx);
+   free(res->crtcs);
 }
 
 static unsigned

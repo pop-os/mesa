@@ -712,6 +712,8 @@ physical_device_finish(struct v3dv_physical_device *device)
    close(device->render_fd);
    if (device->display_fd >= 0)
       close(device->display_fd);
+   if (device->primary_fd >= 0)
+      close(device->primary_fd);
 
    free(device->name);
 
@@ -1030,7 +1032,8 @@ get_device_properties(const struct v3dv_physical_device *device,
       .mipmapPrecisionBits                      = 8,
       .maxDrawIndexedIndexValue                 = device->devinfo.ver >= 71 ?
                                                   0xffffffff : 0x00ffffff,
-      .maxDrawIndirectCount                     = 0x7fffffff,
+      .maxDrawIndirectCount                     = device->vk.supported_features.multiDrawIndirect ?
+                                                  0x7fffffff : 1,
       .maxSamplerLodBias                        = 14.0f,
       .maxSamplerAnisotropy                     = 16.0f,
       .maxViewports                             = MAX_VIEWPORTS,
@@ -1163,7 +1166,7 @@ get_device_properties(const struct v3dv_physical_device *device,
       .maxDescriptorSetUpdateAfterBindUniformBuffersDynamic = MAX_DYNAMIC_UNIFORM_BUFFERS,
       .maxDescriptorSetUpdateAfterBindStorageBuffers =
           V3DV_SUPPORTED_SHADER_STAGES * MAX_STORAGE_BUFFERS,
-      .maxDescriptorSetUpdateAfterBindStorageBuffersDynamic = MAX_DYNAMIC_UNIFORM_BUFFERS,
+      .maxDescriptorSetUpdateAfterBindStorageBuffersDynamic = MAX_DYNAMIC_STORAGE_BUFFERS,
       .maxDescriptorSetUpdateAfterBindSampledImages =
           V3DV_SUPPORTED_SHADER_STAGES * MAX_SAMPLED_IMAGES,
       .maxDescriptorSetUpdateAfterBindStorageImages =
@@ -1654,6 +1657,8 @@ enumerate_devices(struct vk_instance *vk_instance)
    if (render_fd < 0 || primary_fd < 0) {
       if (display_fd != -1)
          close(display_fd);
+      if (primary_fd != -1)
+         close(primary_fd);
       result = VK_ERROR_INCOMPATIBLE_DRIVER;
    } else
       result = create_physical_device(instance, primary_fd, render_fd, display_fd);

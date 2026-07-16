@@ -2216,6 +2216,9 @@ retry:
       }
 
       if (screen->info.have_EXT_image_drm_format_modifier && mod_props.drmFormatModifierCount) {
+         /* The A8_UNORM workaround below can retry this query for the same pformat. */
+         ralloc_free(screen->modifier_props[pformat].pDrmFormatModifierProperties);
+
          screen->modifier_props[pformat].drmFormatModifierCount = mod_props.drmFormatModifierCount;
          screen->modifier_props[pformat].pDrmFormatModifierProperties = ralloc_array(screen, VkDrmFormatModifierPropertiesEXT, mod_props.drmFormatModifierCount);
          if (mod_props.pDrmFormatModifierProperties) {

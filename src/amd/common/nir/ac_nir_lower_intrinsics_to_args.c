@@ -315,7 +315,7 @@ lower_intrinsic_to_arg(nir_builder *b, nir_intrinsic_instr *intrin, void *state)
       replacement = ac_nir_load_arg(b, s->args, s->args->draw_id);
       break;
    case nir_intrinsic_load_view_index:
-      replacement = ac_nir_load_arg_upper_bound(b, s->args, s->args->view_index, 1);
+      replacement = ac_nir_load_arg_upper_bound(b, s->args, s->args->view_index, AC_MULTIVIEW_MAX_VIEWS - 1);
       break;
    case nir_intrinsic_load_invocation_id:
       if (b->shader->info.stage == MESA_SHADER_TESS_CTRL) {

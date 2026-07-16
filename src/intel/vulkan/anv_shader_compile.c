@@ -2115,6 +2115,7 @@ anv_shader_compile(struct vk_device *vk_device,
       struct vk_shader_compile_info *info = shader_data->info;
 
       shader_data->source_hash = ((uint32_t*)info->nir->info.source_blake3)[0];
+      shader_data->key_size = brw_prog_key_size(info->stage);
 
       for (uint32_t i = 0; i < info->set_layout_count; i++) {
          shader_data->dynamic_descriptors[i] =

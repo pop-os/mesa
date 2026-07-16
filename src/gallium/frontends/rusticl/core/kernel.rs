@@ -697,7 +697,7 @@ fn compile_nir_to_args(
     mut nir: NirShader,
     args: &[spirv::SPIRVKernelArg],
     lib_clc: &NirShader,
-) -> (Vec<KernelArg>, NirShader) {
+) -> Result<(Vec<KernelArg>, NirShader), &'static str> {
     // this is a hack until we support fp16 properly and check for denorms inside vstore/vload_half
     nir.preserve_fp16_denorms();
 
@@ -729,7 +729,9 @@ fn compile_nir_to_args(
         progress
     } {}
     nir.inline(lib_clc);
-    nir.cleanup_functions();
+    nir = nir
+        .cleanup_functions()
+        .ok_or("nir_shader not fully linked")?;
     // that should free up tons of memory
     nir.sweep_mem();
 
@@ -743,7 +745,7 @@ fn compile_nir_to_args(
 
     opt_nir(&mut nir, dev, false);
 
-    (KernelArg::from_spirv_nir(args, &mut nir), nir)
+    Ok((KernelArg::from_spirv_nir(args, &mut nir), nir))
 }
 
 fn compile_nir_prepare_for_variants(
@@ -1227,24 +1229,26 @@ pub(super) fn convert_spirv_to_nir(
     args: &[spirv::SPIRVKernelArg],
     spec_constants: &HashMap<u32, nir_const_value>,
     dev: &'static Device,
-) -> SPIRVToNirResult {
+) -> Result<SPIRVToNirResult, &'static str> {
     let cache = dev.screen().shader_cache();
     let key = build.hash_key(cache.as_ref(), name, spec_constants);
     let spirv_info = build.kernel_info(name).unwrap();
 
-    cache
+    match cache
         .as_ref()
         .and_then(|cache| cache.get(&mut key?))
         .and_then(|entry| SPIRVToNirResult::deserialize(&entry, dev, spirv_info))
-        .unwrap_or_else(|| {
-            let nir = build.to_nir(name, dev, spec_constants);
+    {
+        Some(entry) => Ok(entry),
+        None => {
+            let nir = build.to_nir(name, dev, spec_constants)?;
 
             if Platform::dbg().nir {
                 eprintln!("=== Printing nir for '{name}' after spirv_to_nir");
                 nir.print();
             }
 
-            let (mut args, nir) = compile_nir_to_args(dev, nir, args, &dev.lib_clc);
+            let (mut args, nir) = compile_nir_to_args(dev, nir, args, &dev.lib_clc)?;
             let (default_build, optimized) = compile_nir_remaining(dev, nir, &args, name);
 
             for build in [Some(&default_build), optimized.as_ref()].into_iter() {
@@ -1270,8 +1274,15 @@ pub(super) fn convert_spirv_to_nir(
                 }
             }
 
-            SPIRVToNirResult::new(dev, spirv_info, args, default_build, optimized)
-        })
+            Ok(SPIRVToNirResult::new(
+                dev,
+                spirv_info,
+                args,
+                default_build,
+                optimized,
+            ))
+        }
+    }
 }
 
 fn extract<'a, const S: usize>(buf: &'a mut &[u8]) -> &'a [u8; S] {
@@ -1844,7 +1855,7 @@ impl Kernel {
 
             ctx.clear_global_binding(globals.len() as u32);
 
-            ctx.memory_barrier(PIPE_BARRIER_GLOBAL_BUFFER);
+            ctx.memory_barrier(PIPE_BARRIER_SHADER_BUFFER);
 
             if let Some(printf_buf) = &printf_buf {
                 let tx = ctx

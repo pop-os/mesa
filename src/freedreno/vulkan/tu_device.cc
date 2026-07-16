@@ -665,7 +665,7 @@ tu_get_features(struct tu_physical_device *pdevice,
    /* VK_EXT_extended_dynamic_state2 */
    features->extendedDynamicState2 = true;
    features->extendedDynamicState2LogicOp = true;
-   features->extendedDynamicState2PatchControlPoints = true;
+   features->extendedDynamicState2PatchControlPoints = !pdevice->info->props.is_a702;
 
    /* VK_EXT_extended_dynamic_state3 */
    features->extendedDynamicState3PolygonMode = true;
@@ -1399,7 +1399,7 @@ tu_get_properties(struct tu_physical_device *pdevice,
    props->bufferCaptureReplayDescriptorDataSize = sizeof(uint64_t);
    props->imageCaptureReplayDescriptorDataSize = sizeof(uint64_t);
    props->imageViewCaptureReplayDescriptorDataSize = 0;
-   props->samplerCaptureReplayDescriptorDataSize = 0;
+   props->samplerCaptureReplayDescriptorDataSize = sizeof(uint32_t);
    props->accelerationStructureCaptureReplayDescriptorDataSize = 0;
    /* Note: these sizes must match descriptor_size() */
    props->EDBsamplerDescriptorSize = FDL6_TEX_CONST_DWORDS * 4;

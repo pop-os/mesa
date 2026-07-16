@@ -187,7 +187,11 @@ brw_nir_lower_intersection_shader(nir_shader *intersection,
                struct brw_nir_rt_mem_hit_defs hit_in = {};
                brw_nir_rt_load_mem_hit(b, &hit_in, false, devinfo);
 
-               nir_def *max_t = ray_def.t_far;
+               /* hit_in.t is initialized to ray_def.t_far when the tracing
+                * starts, and will be kept up to date as closer hits are
+                * accepted.
+                */
+               nir_def *max_t = hit_in.t;
 
                /* bool commit_tmp = false; */
                nir_variable *commit_tmp =
@@ -243,14 +247,28 @@ brw_nir_lower_intersection_shader(nir_shader *intersection,
                          * gl_HitKindEXT that uses more than 24bits.
                          */
                         nir_def *hit_kind_24b = nir_iand_imm(b, hit_kind, 0xffffff);
-                        nir_store_global(b, nir_vec2(b, nir_fmin(b, hit_t, hit_in.t),
+                        nir_store_global(b, nir_vec2(b, hit_t,
                                                      nir_ior(b, hit_group_index_0, hit_kind_24b)),
                                          t_addr);
 
                      } else {
-                        nir_store_global(b, nir_vec2(b, nir_fmin(b, hit_t, hit_in.t), hit_kind),
+                        nir_store_global(b, nir_vec2(b, hit_t, hit_kind),
                                          t_addr);
                      }
+
+                     /* Now that the hit is accepted, copy the HitAttribute
+                      * data from the pending region to the committed one that
+                      * the closest-hit shader will see.
+                      */
+                     nir_def *potential_hit_attrib_addr =
+                        brw_nir_rt_hit_attrib_data_addr(b, false);
+                     nir_def *committed_hit_attrib_addr =
+                        brw_nir_rt_hit_attrib_data_addr(b, true);
+
+                     brw_nir_memcpy_global(b,
+                                           committed_hit_attrib_addr, 64,
+                                           potential_hit_attrib_addr, 64,
+                                           BRW_RT_SIZEOF_HIT_ATTRIB_DATA);
 
                      /* There may be multiple reportIntersection() calls in
                       * the shader, so if terminateOnFirstHit was requested,

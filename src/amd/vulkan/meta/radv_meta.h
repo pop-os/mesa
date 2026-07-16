@@ -109,6 +109,10 @@ void radv_meta_save(struct radv_cmd_buffer *cmd_buffer, uint32_t flags);
 
 void radv_meta_end(struct radv_cmd_buffer *cmd_buffer);
 
+/* Simlar to radv_meta_begin/radv_meta_end, but for meta ops which use an application renderpass instance. */
+void radv_meta_begin_rendering(struct radv_cmd_buffer *cmd_buffer);
+void radv_meta_end_rendering(struct radv_cmd_buffer *cmd_buffer);
+
 /* Helpers that save the correct state. */
 static inline void
 radv_meta_bind_graphics_pipeline(struct radv_cmd_buffer *cmd_buffer, VkPipeline pipeline)

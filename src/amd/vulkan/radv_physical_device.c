@@ -260,6 +260,16 @@ radv_are_dcc_mips_disabled(const struct radv_physical_device *pdev)
 
    return instance->drirc.debug.disable_dcc_mips && pdev->info.gfx_level < GFX12;
 }
+
+static bool
+radv_device_coherent_memory_enabled(const struct radv_physical_device *pdev)
+{
+   const struct radv_instance *instance = radv_physical_device_instance(pdev);
+
+   return pdev->info.has_l2_uncached && (!pdev->info.has_out_of_order_uncached_l2 ||
+                                         instance->drirc.features.device_coherent_memory);
+}
+
 static void
 parse_hex(char *out, const char *in, unsigned length)
 {
@@ -306,6 +316,7 @@ radv_physical_device_init_cache_key(struct radv_physical_device *pdev)
    key->use_ngg = pdev->use_ngg;
    key->use_ngg_culling = pdev->use_ngg_culling;
    key->no_implicit_varying_subgroup_size = instance->drirc.debug.no_implicit_varying_subgroup_size;
+   key->force_nan_preserve_min_max = instance->drirc.debug.force_nan_preserve_min_max;
    key->mitigate_smem_oob =
       pdev->info.compiler_info.has_smem_oob_access_bug && !(instance->debug_flags & RADV_DEBUG_NO_SMEM_MITIGATION);
    key->rt_cps = !!(instance->perftest_flags & RADV_PERFTEST_RT_CPS);
@@ -856,7 +867,7 @@ radv_physical_device_get_supported_extensions(const struct radv_physical_device 
       .EXT_ycbcr_image_arrays = true,
       .EXT_zero_initialize_device_memory = true,
       .AMD_buffer_marker = true,
-      .AMD_device_coherent_memory = pdev->info.has_l2_uncached,
+      .AMD_device_coherent_memory = radv_device_coherent_memory_enabled(pdev),
       .AMD_draw_indirect_count = true,
       .AMD_gcn_shader = true,
       .AMD_gpu_shader_half_float = pdev->info.compiler_info.has_packed_math_16bit,
@@ -1101,7 +1112,7 @@ radv_physical_device_get_features(const struct radv_physical_device *pdev, struc
       .texelBufferAlignment = true,
 
       /* VK_AMD_device_coherent_memory */
-      .deviceCoherentMemory = pdev->info.has_l2_uncached,
+      .deviceCoherentMemory = radv_device_coherent_memory_enabled(pdev),
 
       /* VK_KHR_line_rasterization */
       .rectangularLines = true,
@@ -1803,7 +1814,7 @@ radv_get_physical_device_properties(struct radv_physical_device *pdev)
                                      VK_SUBGROUP_FEATURE_ROTATE_BIT | VK_SUBGROUP_FEATURE_ROTATE_CLUSTERED_BIT,
       .subgroupQuadOperationsInAllStages = true,
       .pointClippingBehavior = VK_POINT_CLIPPING_BEHAVIOR_ALL_CLIP_PLANES,
-      .maxMultiviewViewCount = MAX_VIEWS,
+      .maxMultiviewViewCount = AC_MULTIVIEW_MAX_VIEWS,
       .maxMultiviewInstanceIndex = INT_MAX,
       .protectedNoFault = false,
       .maxPerSetDescriptors = RADV_MAX_PER_SET_DESCRIPTORS,
@@ -2109,7 +2120,7 @@ radv_get_physical_device_properties(struct radv_physical_device *pdev)
       .maxMeshOutputVertices = 256,
       .maxMeshOutputPrimitives = 256,
       .maxMeshOutputLayers = 8,
-      .maxMeshMultiviewViewCount = MAX_VIEWS,
+      .maxMeshMultiviewViewCount = AC_MULTIVIEW_MAX_VIEWS,
       .meshOutputPerVertexGranularity = 1,
       .meshOutputPerPrimitiveGranularity = 1,
 
@@ -3427,7 +3438,6 @@ radv_GetPhysicalDeviceDescriptorSizeEXT(VkPhysicalDevice physicalDevice, VkDescr
    case VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR:
       return pdev->vk.properties.bufferDescriptorSize;
    default:
-      UNREACHABLE("Invalid descriptor type in GetPhysicalDeviceDescriptorSizeEXT");
       return 0;
    }
 }

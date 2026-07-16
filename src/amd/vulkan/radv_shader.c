@@ -526,6 +526,7 @@ radv_shader_spirv_to_nir(struct radv_device *device, struct radv_shader_stage *s
                .force_tex_non_uniform = pdev->cache_key.tex_non_uniform,
                .force_ssbo_non_uniform = pdev->cache_key.ssbo_non_uniform,
                .lower_terminate_to_discard = pdev->cache_key.lower_terminate_to_discard,
+               .force_nan_preserve_min_max = pdev->cache_key.force_nan_preserve_min_max,
             },
          .emit_debug_break = !!device->trap_handler_shader,
          .debug_info = !!(instance->debug_flags & RADV_DEBUG_NIR_DEBUG_INFO),

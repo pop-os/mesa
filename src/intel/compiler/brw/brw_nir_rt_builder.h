@@ -222,10 +222,12 @@ brw_nir_rt_mem_hit_addr(nir_builder *b, bool committed)
 }
 
 static inline nir_def *
-brw_nir_rt_hit_attrib_data_addr(nir_builder *b)
+brw_nir_rt_hit_attrib_data_addr(nir_builder *b,
+                                bool committed)
 {
    return nir_iadd_imm(b, brw_nir_rt_stack_addr(b),
-                          BRW_RT_OFFSETOF_HIT_ATTRIB_DATA);
+                          BRW_RT_OFFSETOF_HIT_ATTRIB_DATA +
+                          (committed ? 0 : BRW_RT_SIZEOF_HIT_ATTRIB_DATA));
 }
 
 static inline nir_def *

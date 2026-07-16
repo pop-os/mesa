@@ -110,6 +110,9 @@ brw_compiler_create(void *mem_ctx, const struct intel_device_info *devinfo)
     * while letting almost all through to the backend for more detailed
     * throughput analysis.
     */
+   compiler->register_file_size = (devinfo->ver >= 30 ? XE3_MAX_GRF :
+                                   devinfo->ver >= 20 ? XE2_MAX_GRF :
+                                   BRW_MAX_GRF) * REG_SIZE;
    compiler->register_pressure_threshold = devinfo->ver >= 30 ? 268 : 134;
 
    nir_lower_int64_options int64_options =

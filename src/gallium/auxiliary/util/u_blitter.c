@@ -1908,6 +1908,7 @@ static void do_blits(struct blitter_context_priv *ctx,
          float depth_center_offset = 0.0;
          int src_depth = abs(srcbox->depth);
          float src_z_step = src_depth / (float)dstbox->depth;
+         psurf->last_layer = psurf->first_layer;
 
          /* Scale Z properly if the blit is scaled.
           *
@@ -1991,7 +1992,6 @@ static void do_blits(struct blitter_context_priv *ctx,
          /* Increment the layer */
          if (dst_z < dstbox->depth-1) {
             psurf->first_layer++;
-            psurf->last_layer++;
          }
       }
    }

@@ -83,7 +83,8 @@ nvc0_flush(struct pipe_context *pipe,
    struct nvc0_context *nvc0 = nvc0_context(pipe);
 
    if (fence)
-      nouveau_fence_ref(nvc0->base.fence, (struct nouveau_fence **)fence);
+      nouveau_fence_ref(nvc0->base.fence, (struct nouveau_fence **)fence,
+                        nvc0->base.screen);
 
    PUSH_KICK(nvc0->base.pushbuf); /* fencing handled in kick_notify */
 

@@ -50,7 +50,7 @@ struct rnndec {
 
    /* for pm4 packet decoding: */
    uint32_t sizedwords;
-   uint32_t *dwords;
+   const uint32_t *dwords;
 };
 
 static inline struct rnndec *
@@ -539,7 +539,7 @@ static const struct luaL_Reg l_meta_rnn_dom[] = {
 };
 
 static int
-l_rnn_dom(lua_State *L, uint32_t *dwords, uint32_t sizedwords,
+l_rnn_dom(lua_State *L, const uint32_t *dwords, uint32_t sizedwords,
           struct rnn *rnn, struct rnndomain *dom)
 {
    struct rnndec *rnndec = lua_newuserdata(L, sizeof(*rnndec));
@@ -976,7 +976,7 @@ script_draw(const char *primtype, uint32_t nindx)
  */
 
 static bool
-setup_call(lua_State *state, uint32_t *dwords, uint32_t sizedwords,
+setup_call(lua_State *state, const uint32_t *dwords, uint32_t sizedwords,
            const char *name, struct rnn *rnn, struct rnndomain *dom)
 {
    if (!state)
@@ -998,8 +998,8 @@ setup_call(lua_State *state, uint32_t *dwords, uint32_t sizedwords,
 /* called to general pm4 packet decoding, such as texture/sampler state
  */
 static bool
-handle_packet_setup(lua_State *state, uint32_t *dwords, uint32_t sizedwords,
-                    struct rnn *rnn, struct rnndomain *dom)
+handle_packet_setup(lua_State *state, const uint32_t *dwords,
+                    uint32_t sizedwords, struct rnn *rnn, struct rnndomain *dom)
 {
    if (!setup_call(state, dwords, sizedwords, dom->name, rnn, dom))
       return false;
@@ -1010,7 +1010,7 @@ handle_packet_setup(lua_State *state, uint32_t *dwords, uint32_t sizedwords,
 }
 
 void
-script_packet(uint32_t *dwords, uint32_t sizedwords, struct rnn *rnn,
+script_packet(const uint32_t *dwords, uint32_t sizedwords, struct rnn *rnn,
               struct rnndomain *dom)
 {
    bool ret;
@@ -1024,7 +1024,7 @@ script_packet(uint32_t *dwords, uint32_t sizedwords, struct rnn *rnn,
 }
 
 const char *
-internal_packet(uint32_t *dwords, uint32_t sizedwords, struct rnn *rnn,
+internal_packet(const uint32_t *dwords, uint32_t sizedwords, struct rnn *rnn,
                 struct rnndomain *dom)
 {
    bool ret;
@@ -1048,7 +1048,7 @@ internal_packet(uint32_t *dwords, uint32_t sizedwords, struct rnn *rnn,
 }
 
 bool
-script_show_descriptor(uint32_t *dwords,
+script_show_descriptor(const uint32_t *dwords,
                        uint32_t sizedwords,
                        int base, int idx,
                        const char *type,

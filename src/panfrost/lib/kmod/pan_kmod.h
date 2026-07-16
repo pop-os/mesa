@@ -231,6 +231,9 @@ struct pan_kmod_dev_props {
    /* GPU Timestamp frequency */
    uint64_t timestamp_frequency;
 
+   /* Extracted from timestamp_frequency. */
+   double timestamp_cycles_to_ns_factor;
+
    /* A mask of flags containing the allowed group priorities. */
    enum pan_kmod_group_allow_priority_flags allowed_group_priorities_mask;
 
@@ -781,6 +784,13 @@ static inline uint64_t
 pan_kmod_query_timestamp(const struct pan_kmod_dev *dev)
 {
    return dev->ops->query_timestamp(dev);
+}
+
+static inline uint64_t
+pan_kmod_timestamp_cycles_to_ns(const struct pan_kmod_dev *dev,
+                                uint64_t cycles)
+{
+   return (uint64_t)(dev->props.timestamp_cycles_to_ns_factor * cycles);
 }
 
 #if defined(__cplusplus)

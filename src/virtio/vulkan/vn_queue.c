@@ -2018,13 +2018,8 @@ vn_GetFenceFdKHR(VkDevice device,
       fd = payload->fd;
       payload->fd = -1;
 
-      /* reset host fence in case in signaled state before import */
-      result = vn_ResetFences(device, 1, &pGetFdInfo->fence);
-      if (result != VK_SUCCESS) {
-         /* transfer sync fd ownership back on error */
-         payload->fd = fd;
-         return result;
-      }
+      vn_sync_payload_release(dev, payload);
+      fence->payload = &fence->permanent;
    }
 
    *pFd = fd;
@@ -2519,7 +2514,6 @@ vn_GetSemaphoreFdKHR(VkDevice device,
 
    assert(sync_file);
    assert(dev->physical_device->renderer_sync_fd.semaphore_exportable);
-   assert(dev->physical_device->renderer_sync_fd.semaphore_importable);
 
    int fd = -1;
    if (payload->type == VN_SYNC_TYPE_DEVICE_ONLY) {
@@ -2536,26 +2530,11 @@ vn_GetSemaphoreFdKHR(VkDevice device,
       payload->fd = -1;
    }
 
-   /* When payload->type is VN_SYNC_TYPE_IMPORTED_SYNC_FD, the current
-    * payload is from a prior temporary sync_fd import. The permanent
-    * payload of the sempahore might be in signaled state. So we do an
-    * import here to ensure later wait operation is legit. With resourceId
-    * 0, renderer does a signaled sync_fd -1 payload import on the host
-    * semaphore.
-    */
-   if (payload->type == VN_SYNC_TYPE_IMPORTED_SYNC_FD) {
-      const VkImportSemaphoreResourceInfoMESA res_info = {
-         .sType = VK_STRUCTURE_TYPE_IMPORT_SEMAPHORE_RESOURCE_INFO_MESA,
-         .semaphore = pGetFdInfo->semaphore,
-         .resourceId = 0,
-      };
-      vn_async_vkImportSemaphoreResourceMESA(dev->primary_ring, device,
-                                             &res_info);
+   /* no need to wait for renderer side semaphore for imported sync */
+   if (payload->type != VN_SYNC_TYPE_IMPORTED_SYNC_FD) {
+      vn_async_vkWaitSemaphoreResourceMESA(dev->primary_ring, device,
+                                           pGetFdInfo->semaphore);
    }
-
-   /* perform wait operation on the host semaphore */
-   vn_async_vkWaitSemaphoreResourceMESA(dev->primary_ring, device,
-                                        pGetFdInfo->semaphore);
 
    vn_sync_payload_release(dev, &sem->temporary);
    sem->payload = &sem->permanent;

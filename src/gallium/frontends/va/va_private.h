@@ -665,7 +665,6 @@ PROC void vlVaHandleSliceParameterBufferAV1(vlVaContext *context, vlVaBuffer *bu
 #undef TAIL_S
 
 #if VIDEO_CODEC_H264ENC
-#define HAS_ENCODE
 #define PROC
 #define TAIL
 #else
@@ -686,7 +685,6 @@ PROC VAStatus vlVaHandleVAEncMiscParameterTypeHRDH264(vlVaContext *context, VAEn
 #undef TAIL
 
 #if VIDEO_CODEC_H265ENC
-#define HAS_ENCODE
 #define PROC
 #define TAIL
 #else
@@ -708,7 +706,6 @@ PROC VAStatus vlVaHandleVAEncMiscParameterTypeTemporalLayerHEVC(vlVaContext *con
 
 #if VA_CHECK_VERSION(1, 16, 0)
 #if VIDEO_CODEC_AV1ENC
-#define HAS_ENCODE
 #define PROC
 #define TAIL
 #else
@@ -728,7 +725,7 @@ PROC VAStatus vlVaHandleVAEncSliceParameterBufferTypeAV1(vlVaDriver *drv, vlVaCo
 #undef TAIL
 #endif
 
-#ifdef HAS_ENCODE
+#if VIDEO_CODEC_H264ENC || VIDEO_CODEC_H265ENC || VIDEO_CODEC_AV1ENC
 #define PROC
 #define TAIL
 #else

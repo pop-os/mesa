@@ -364,14 +364,20 @@ for src_t in [tint, tuint, tfloat, tbool]:
               # an uint.", but we define the NIR opcodes the SPIRV way.
               if dst_t == tuint:
                    min = "0.0"
-                   max = "u_uintN_max({})".format(dst_bit_size)
+                   # 2^dst_bit_size is a power of 2 and exactly representable
+                   # in float, avoiding the rounding issue with u_uintN_max().
+                   max = "{}.0".format(2 ** dst_bit_size)
               else:
                    min = "u_intN_min({})".format(dst_bit_size)
-                   max = "u_intN_max({})".format(dst_bit_size)
+                   # 2^(dst_bit_size-1) is exactly representable in float,
+                   # unlike i_intN_max() which rounds up when converted.
+                   max = "{}.0".format(2 ** (dst_bit_size - 1))
               conv_expr = f"""
-                dst = src0;
-                if (src0 < {min} || src0 > {max}) {{
+                if (isnan(src0) || src0 < {min} || src0 >= {max}) {{
                    poison = true;
+                   dst = 0;
+                }} else {{
+                   dst = src0;
                 }}
               """
               unop_numeric_convert("{0}2{1}{2}".format(src_t[0], dst_t[0],
@@ -507,10 +513,10 @@ dst.x = (src0.x & 0xffff) | (src0.y << 16);
 """)
 
 unop_horiz("pack_uvec4_to_uint", 1, tuint32, 4, tuint32, """
-dst.x = (src0.x <<  0) |
-        (src0.y <<  8) |
-        (src0.z << 16) |
-        (src0.w << 24);
+dst.x = ((src0.x & 0xff) <<  0) |
+        ((src0.y & 0xff) <<  8) |
+        ((src0.z & 0xff) << 16) |
+        ((src0.w & 0xff) << 24);
 """)
 
 unop_horiz("pack_32_4x8", 1, tuint32, 4, tuint8,

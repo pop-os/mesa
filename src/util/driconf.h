@@ -832,6 +832,10 @@
    DRI_CONF_OPT_B(radv_no_implicit_varying_subgroup_size, def, \
                   "Do not assume VK_PIPELINE_SHADER_STAGE_CREATE_ALLOW_VARYING_SUBGROUP_SIZE for SPIR-V 1.6.")
 
+#define DRI_CONF_RADV_FORCE_NAN_PRESERVE_MIN_MAX(def) \
+   DRI_CONF_OPT_B(radv_force_nan_preserve_min_max, def, \
+                  "Treat FMax/FMin/FClamp like NMax/NMin/NClamp.")
+
 #define DRI_CONF_RADV_PREFER_2D_SWIZZLE_FOR_3D_STORAGE(def) \
    DRI_CONF_OPT_B(radv_prefer_2d_swizzle_for_3d_storage, def, \
                   "Prefer 2D swizzle mode for 3D storage images.")
@@ -889,6 +893,10 @@
 #define DRI_CONF_RADV_FORCE_64_BYTE_SAMPLED_IMAGE(def) \
    DRI_CONF_OPT_B(radv_force_64_byte_sampled_image, def, \
                   "Force sampled images size to 64 bytes.")
+
+#define DRI_CONF_RADV_DEVICE_COHERENT_MEMORY(def) \
+   DRI_CONF_OPT_B(radv_device_coherent_memory, def, \
+                  "Expose VK_AMD_device_coherent_memory on GFX12 (RDNA4).")
 
 /**
  * \brief ANV specific configuration options

@@ -5048,6 +5048,11 @@ brw_from_nir_emit_intrinsic(nir_to_brw_state &ntb,
             break;
       }
 
+      if (s.stage == MESA_SHADER_COMPUTE) {
+         struct brw_cs_prog_data *cs_prog_data = brw_cs_prog_data(s.prog_data);
+         cs_prog_data->uses_fence = true;
+      }
+
       unsigned fence_regs_count = 0;
       brw_reg fence_regs[4] = {};
 

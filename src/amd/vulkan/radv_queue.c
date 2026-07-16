@@ -1293,6 +1293,33 @@ radv_update_preambles(struct radv_queue_state *queue, struct radv_device *device
 /**
  * Creates a postamble CS that executes cache flush commands
  * that we can use at the end of each submission.
+ *
+ * GFX6:
+ * The kernel uses an EVENT_WRITE_EOP packet for signalling the
+ * fence after each submission. Due to a firmware bug, this
+ * packet can't wait for L2 writeback to finish, even with
+ * the INV_L2 bit set, because it doesn't properly program
+ * the CP_COHER_SIZE register.
+ * As a workaround, the kernel uses a SURFACE_SYNC before the
+ * fence. That has the side effect of flushing the L2 cache
+ * while shaders are still in flight, which is suboptimal,
+ * and is also incorrect as the shader may still write L2.
+ *
+ * GFX7:
+ * The kernel uses an EVENT_WRITE_EOP packet for signalling the
+ * fence after each submission. Due to a firmware bug, this
+ * packet can't wait for L2 writeback to finish. As a workaround,
+ * the kernel emits the EVENT_WRITE_EOP packet twice, but that
+ * may just reduce the likelihood of the issue and may not fully
+ * mitigate it.
+ * We see random hangs on Hawaii which can be solved by
+ * an L2 cache flush at the end of each submission.
+ * Let's also wait for shaders to finish to avoid flushing
+ * the cache while shaders are still in flight.
+ *
+ * Until we find a better way to mitigate the problems in the kernel,
+ * let's wait for shaders to finish and then do a full flush
+ * of all caches to be sure.
  */
 static VkResult
 radv_create_flush_postamble(struct radv_queue *queue)
@@ -1300,6 +1327,7 @@ radv_create_flush_postamble(struct radv_queue *queue)
    const struct radv_device *device = radv_queue_device(queue);
    const struct radv_physical_device *pdev = radv_device_physical(device);
    const enum amd_ip_type ip = radv_queue_family_to_ring(pdev, queue->state.qf);
+   const bool is_mec = ip == AMD_IP_COMPUTE && pdev->info.gfx_level >= GFX7;
    struct radeon_winsys *ws = device->ws;
    struct radv_cmd_stream *cs;
    VkResult result;
@@ -1310,22 +1338,38 @@ radv_create_flush_postamble(struct radv_queue *queue)
 
    radeon_check_space(ws, cs->b, 256);
 
-   const enum amd_gfx_level gfx_level = pdev->info.gfx_level;
-   enum radv_cmd_flush_bits flush_bits = 0;
-
-   if (gfx_level == GFX6) {
-      /* GFX6: The kernel flushes L2 before shaders are finished. */
-      flush_bits = RADV_CMD_FLAG_CS_PARTIAL_FLUSH | RADV_CMD_FLAG_WB_L2;
-      if (ip == AMD_IP_GFX)
-         flush_bits |= RADV_CMD_FLAG_PS_PARTIAL_FLUSH;
-   } else {
-      /* Improves stability on Hawaii. */
-      flush_bits =
-         RADV_CMD_FLAG_INV_ICACHE | RADV_CMD_FLAG_INV_SCACHE | RADV_CMD_FLAG_INV_VCACHE | RADV_CMD_FLAG_INV_L2;
+   ac_cmdbuf_begin(cs->b);
+   if (ip == AMD_IP_GFX) {
+      ac_cmdbuf_event_write(V_028A90_VS_PARTIAL_FLUSH);
+      ac_cmdbuf_event_write(V_028A90_PS_PARTIAL_FLUSH);
+      ac_cmdbuf_event_write(V_028A90_FLUSH_AND_INV_CB_META);
+      ac_cmdbuf_event_write(V_028A90_FLUSH_AND_INV_DB_META);
    }
+   ac_cmdbuf_event_write(V_028A90_CS_PARTIAL_FLUSH);
+   ac_cmdbuf_end();
 
-   enum rgp_flush_bits sqtt_flush_bits = 0;
-   radv_cs_emit_cache_flush(ws, cs, gfx_level, NULL, 0, flush_bits, &sqtt_flush_bits, 0);
+   if (!is_mec)
+      ac_emit_cp_pfp_sync_me(cs->b, false);
+
+   uint32_t cp_coher_cntl =
+      S_0085F0_TC_ACTION_ENA(1) |
+      S_0085F0_TCL1_ACTION_ENA(1);
+
+   if (ip == AMD_IP_GFX)
+      cp_coher_cntl |=
+         S_0085F0_CB_ACTION_ENA(1) |
+         S_0085F0_CB0_DEST_BASE_ENA(1) |
+         S_0085F0_CB1_DEST_BASE_ENA(1) |
+         S_0085F0_CB2_DEST_BASE_ENA(1) |
+         S_0085F0_CB3_DEST_BASE_ENA(1) |
+         S_0085F0_CB4_DEST_BASE_ENA(1) |
+         S_0085F0_CB5_DEST_BASE_ENA(1) |
+         S_0085F0_CB6_DEST_BASE_ENA(1) |
+         S_0085F0_CB7_DEST_BASE_ENA(1) |
+         S_0085F0_DB_ACTION_ENA(1) |
+         S_0085F0_DB_DEST_BASE_ENA(1);
+
+   ac_emit_cp_acquire_mem(cs->b, pdev->info.gfx_level, cs->hw_ip, V_581A_PREFETCH_PARSER, cp_coher_cntl);
 
    result = radv_finalize_cmd_stream(device, cs);
    if (result != VK_SUCCESS) {

@@ -376,6 +376,7 @@ compute_update_async_threads_limit(struct anv_cmd_buffer *cmd_buffer,
 
    intel_compute_engine_async_threads_limit(devinfo, dispatch->threads,
                                             slm_or_barrier_enabled,
+                                            prog_data->uses_fence,
                                             &pixel_async_compute_thread_limit,
                                             &z_pass_async_compute_thread_limit,
                                             &np_z_async_throttle_settings);

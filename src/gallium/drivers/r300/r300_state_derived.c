@@ -62,7 +62,7 @@ static void r300_draw_emit_all_attribs(struct r300_context* r300)
 
     /* Point size. */
     if (vs_outputs->psize != ATTR_UNUSED) {
-        r300_draw_emit_attrib(r300, EMIT_1F_PSIZE, vs_outputs->psize);
+        r300_draw_emit_attrib(r300, EMIT_1F, vs_outputs->psize);
     }
 
     /* Colors. */
@@ -326,7 +326,8 @@ static void r300_update_rs_block(struct r300_context *r300)
     /* Set up the point size in VAP. */
     if (vs_outputs->psize != ATTR_UNUSED) {
         rs.vap_out_vtx_fmt[0] |= R300_VAP_OUTPUT_VTX_FMT_0__PT_SIZE_PRESENT;
-        stream_loc_notcl[loc++] = 1;
+        /* Point size is at semantic location 15 in TCL bypass mode. */
+        stream_loc_notcl[loc++] = 15;
     }
 
     /* Set up and rasterize colors. */

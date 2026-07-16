@@ -5117,22 +5117,31 @@ nvk_CmdDrawIndirect(VkCommandBuffer commandBuffer,
       P_INLINE_DATA(p, stride);
    } else {
       const uint32_t max_draws_per_push =
-         ((NV_PUSH_MAX_COUNT - 3) * 4) / stride;
+         MAX2(((NV_PUSH_MAX_COUNT - 3) * 4) / stride, 1);
 
       uint64_t draw_addr = vk_buffer_address(&buffer->vk, offset);
       while (drawCount) {
          const uint32_t count = MIN2(drawCount, max_draws_per_push);
 
+         uint64_t range;
+         uint32_t ignored;
+         if (count > 1) {
+            range = count * (uint64_t)stride;
+            ignored = (stride - sizeof(VkDrawIndirectCommand)) / 4;
+         } else {
+            range = sizeof(VkDrawIndirectCommand);
+            ignored = 0;
+         }
+
          struct nv_push *p = nvk_cmd_buffer_push(cmd, 3);
          P_1INC(p, NV9097, CALL_MME_MACRO(NVK_MME_DRAW_INDIRECT));
          P_INLINE_DATA(p, count);
-         P_INLINE_DATA(p, (stride - sizeof(VkDrawIndirectCommand)) / 4);
+         P_INLINE_DATA(p, ignored);
 
-         uint64_t range = count * (uint64_t)stride;
          nv_push_update_count(p, range / 4);
          nvk_cmd_buffer_push_indirect(cmd, draw_addr, range);
 
-         draw_addr += range;
+         draw_addr += count * (uint64_t)stride;
          drawCount -= count;
       }
    }
@@ -5217,22 +5226,31 @@ nvk_CmdDrawIndexedIndirect(VkCommandBuffer commandBuffer,
       P_INLINE_DATA(p, stride);
    } else {
       const uint32_t max_draws_per_push =
-         ((NV_PUSH_MAX_COUNT - 3) * 4) / stride;
+         MAX2(((NV_PUSH_MAX_COUNT - 3) * 4) / stride, 1);
 
       uint64_t draw_addr = vk_buffer_address(&buffer->vk, offset);
       while (drawCount) {
          const uint32_t count = MIN2(drawCount, max_draws_per_push);
 
+         uint64_t range;
+         uint32_t ignored;
+         if (count > 1) {
+            range = count * (uint64_t)stride;
+            ignored = (stride - sizeof(VkDrawIndexedIndirectCommand)) / 4;
+         } else {
+            range = sizeof(VkDrawIndexedIndirectCommand);
+            ignored = 0;
+         }
+
          struct nv_push *p = nvk_cmd_buffer_push(cmd, 3);
          P_1INC(p, NV9097, CALL_MME_MACRO(NVK_MME_DRAW_INDEXED_INDIRECT));
          P_INLINE_DATA(p, count);
-         P_INLINE_DATA(p, (stride - sizeof(VkDrawIndexedIndirectCommand)) / 4);
+         P_INLINE_DATA(p, ignored);
 
-         uint64_t range = count * (uint64_t)stride;
          nv_push_update_count(p, range / 4);
          nvk_cmd_buffer_push_indirect(cmd, draw_addr, range);
 
-         draw_addr += range;
+         draw_addr += count * (uint64_t)stride;
          drawCount -= count;
       }
    }

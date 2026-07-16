@@ -419,6 +419,9 @@ brw_nir_frag_convert_attrs_prim_to_vert_indirect(struct nir_shader *nir,
                                                  struct brw_compile_fs_params *params);
 
 unsigned
+brw_nir_vs_compute_payload_size(nir_shader *nir,
+                                const struct intel_device_info *devinfo);
+unsigned
 brw_nir_pack_vs_input(nir_shader *nir, struct brw_vs_prog_data *prog_data);
 
 bool brw_nir_opt_divergent_atomics(nir_shader *shader, enum brw_divergent_atomics_flags flags);

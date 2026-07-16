@@ -268,9 +268,11 @@ nv50_resource_validate(struct nv50_context *context, struct nv04_resource *res, 
          res->status |= NOUVEAU_BUFFER_STATUS_GPU_READING;
 
       if (res->mm) {
-         nouveau_fence_ref(context->base.fence, &res->fence);
+         nouveau_fence_ref(context->base.fence, &res->fence,
+                           context->base.screen);
          if (flags & NOUVEAU_BO_WR)
-            nouveau_fence_ref(context->base.fence, &res->fence_wr);
+            nouveau_fence_ref(context->base.fence, &res->fence_wr,
+                              context->base.screen);
       }
    }
 }

@@ -1,40 +1,7 @@
-dEQP-GLES2.functional.clipping.point.point_clip_viewport_center,Fail
-dEQP-GLES2.functional.clipping.point.point_clip_viewport_corner,Fail
-dEQP-GLES2.functional.clipping.point.point_z_clip,Fail
-dEQP-GLES2.functional.clipping.point.point_z_clip_viewport_center,Fail
-dEQP-GLES2.functional.clipping.point.point_z_clip_viewport_corner,Fail
-dEQP-GLES2.functional.clipping.point.wide_point_clip,Fail
-dEQP-GLES2.functional.clipping.point.wide_point_clip_viewport_center,Fail
-dEQP-GLES2.functional.clipping.point.wide_point_clip_viewport_corner,Fail
-dEQP-GLES2.functional.clipping.point.wide_point_z_clip,Fail
-dEQP-GLES2.functional.clipping.point.wide_point_z_clip_viewport_center,Fail
-dEQP-GLES2.functional.clipping.point.wide_point_z_clip_viewport_corner,Fail
-
-dEQP-GLES2.functional.draw.draw_arrays.points.default_attribute,Fail
-dEQP-GLES2.functional.draw.draw_arrays.points.multiple_attributes,Fail
-dEQP-GLES2.functional.draw.draw_arrays.points.single_attribute,Fail
-dEQP-GLES2.functional.draw.draw_elements.points.default_attribute,Fail
-dEQP-GLES2.functional.draw.draw_elements.points.multiple_attributes,Fail
-dEQP-GLES2.functional.draw.draw_elements.points.single_attribute,Fail
-dEQP-GLES2.functional.draw.random.12,Fail
-dEQP-GLES2.functional.draw.random.25,Fail
-dEQP-GLES2.functional.draw.random.31,Fail
-dEQP-GLES2.functional.draw.random.32,Fail
-dEQP-GLES2.functional.draw.random.36,Fail
-dEQP-GLES2.functional.draw.random.46,Fail
-dEQP-GLES2.functional.draw.random.50,Fail
-dEQP-GLES2.functional.draw.random.51,Fail
-dEQP-GLES2.functional.draw.random.65,Fail
-dEQP-GLES2.functional.draw.random.69,Fail
-dEQP-GLES2.functional.draw.random.70,Fail
-dEQP-GLES2.functional.draw.random.71,Fail
-dEQP-GLES2.functional.draw.random.8,Fail
-
 dEQP-GLES2.functional.fbo.completeness.renderable.texture.color0.rgb_half_float_oes,Fail
 
 # This bunch is not reproducible outside of CI
 dEQP-GLES2.functional.fragment_ops.interaction.basic_shader.8,Fail
-dEQP-GLES2.functional.fragment_ops.interaction.basic_shader.86,Fail
 dEQP-GLES2.functional.fragment_ops.random.19,Fail
 dEQP-GLES2.functional.fragment_ops.random.34,Fail
 dEQP-GLES2.functional.fragment_ops.random.63,Fail
@@ -43,9 +10,7 @@ dEQP-GLES2.functional.fragment_ops.random.81,Fail
 
 dEQP-GLES2.functional.rasterization.primitives.line_loop_wide,Fail
 dEQP-GLES2.functional.rasterization.primitives.line_strip_wide,Fail
-dEQP-GLES2.functional.rasterization.primitives.points,Fail
 dEQP-GLES2.functional.shaders.builtin_variable.frontfacing,Fail
-dEQP-GLES2.functional.shaders.builtin_variable.pointcoord,Fail
 dEQP-GLES2.functional.shaders.conversions.vector_combine.vec2_bool_to_ivec3_fragment,Fail
 dEQP-GLES2.functional.shaders.conversions.vector_combine.vec2_bvec2_to_ivec4_fragment,Fail
 dEQP-GLES2.functional.shaders.conversions.vector_combine.vec2_ivec2_to_ivec4_fragment,Fail
@@ -501,7 +466,6 @@ shaders@glsl-max-varyings,Fail
 shaders@glsl-uniform-interstage-limits@subdivide 5,Fail
 shaders@glsl-uniform-interstage-limits@subdivide 5- statechanges,Fail
 shaders@glsl-uniform-interstage-limits@520 vs- 1 fs,Fail
-shaders@glsl-vs-point-size,Fail
 shaders@ssa@fs-if-def-else-break,Fail
 shaders@ssa@fs-lost-copy-problem,Fail
 shaders@ssa@fs-swap-problem,Fail
@@ -570,8 +534,6 @@ spec@!opengl 2.1@pbo,Fail
 spec@!opengl 2.1@pbo@test_polygon_stip,Fail
 spec@!opengl 2.1@polygon-stipple-fs,Fail
 
-spec@!opengl es 2.0@glsl-fs-pointcoord,Fail
-
 spec@arb_clear_texture@arb_clear_texture-float,Fail
 
 spec@arb_color_buffer_float@gl_rgba16f-render-sanity,Fail
@@ -594,10 +556,6 @@ spec@arb_framebuffer_object@fbo-generatemipmap-3d,Fail
 
 spec@arb_pixel_buffer_object@cubemap npot pbo,Fail
 spec@arb_pixel_buffer_object@fbo-pbo-readpixels-small,Fail
-
-spec@arb_point_parameters@arb_point_parameters-point-attenuation,Fail
-spec@arb_point_parameters@arb_point_parameters-point-attenuation@Aliased combinations,Fail
-spec@arb_point_parameters@arb_point_parameters-point-attenuation@Antialiased combinations,Fail
 
 spec@arb_texture_compression_bptc@texwrap formats bordercolor,Fail
 spec@arb_texture_compression_bptc@texwrap formats bordercolor-swizzled,Fail

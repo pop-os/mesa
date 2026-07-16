@@ -268,6 +268,7 @@ zink_batch_state_destroy(struct zink_screen *screen, struct zink_batch_state *bs
    util_dynarray_fini(&bs->fd_wait_semaphore_stages);
    util_dynarray_fini(&bs->tracked_semaphores);
    util_dynarray_fini(&bs->acquire_flags);
+   util_dynarray_fini(&bs->fences);
    unsigned num_mfences = util_dynarray_num_elements(&bs->fence.mfences, void *);
    struct zink_tc_fence **mfence = bs->fence.mfences.data;
    for (unsigned i = 0; i < num_mfences; i++) {

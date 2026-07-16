@@ -92,8 +92,7 @@ static void r600_memory_barrier(struct pipe_context *ctx, unsigned flags)
 		     PIPE_BARRIER_SHADER_BUFFER |
 		     PIPE_BARRIER_TEXTURE |
 		     PIPE_BARRIER_IMAGE |
-		     PIPE_BARRIER_STREAMOUT_BUFFER |
-		     PIPE_BARRIER_GLOBAL_BUFFER)) {
+		     PIPE_BARRIER_STREAMOUT_BUFFER)) {
 		rctx->b.flags |= R600_CONTEXT_INV_VERTEX_CACHE|
 			R600_CONTEXT_INV_TEX_CACHE;
 	}

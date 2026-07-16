@@ -337,8 +337,7 @@ vk_get_bvh_build_pipeline_spv(struct vk_device *device, struct vk_meta_device *m
       },
       {
          .constantID = ROOT_FLAGS_OFFSET_ID,
-         .offset = sizeof(args->subgroup_size) +
-                   sizeof(args->bvh_bounds_offset),
+         .offset = sizeof(args->subgroup_size) + sizeof(args->bvh_bounds_offset) + sizeof(flags),
          .size = sizeof(args->root_flags_offset),
       }
    };

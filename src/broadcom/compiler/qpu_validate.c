@@ -340,7 +340,7 @@ qpu_validate_inst(struct v3d_qpu_validate_state *state, struct qinst *qinst)
         }
 
         if (state->thrend_found &&
-            state->last_thrsw_ip - state->ip <= 2 &&
+            state->ip - state->last_thrsw_ip <= 2 &&
             inst->type == V3D_QPU_INSTR_TYPE_ALU) {
                 if ((inst->alu.add.op != V3D_QPU_A_NOP &&
                      !inst->alu.add.magic_write)) {
@@ -389,7 +389,8 @@ qpu_validate_inst(struct v3d_qpu_validate_state *state, struct qinst *qinst)
                 }
 
                 /* GFXH-1625: No TMUWT in the last instruction */
-                if (state->last_thrsw_ip - state->ip == 2 &&
+                if (devinfo->ver == 42 &&
+                    state->ip - state->last_thrsw_ip == 2 &&
                     inst->alu.add.op == V3D_QPU_A_TMUWT)
                         fail_instr(state, "TMUWT in last instruction");
         }

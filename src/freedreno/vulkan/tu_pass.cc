@@ -812,6 +812,7 @@ tu_render_pass_gmem_config(struct tu_render_pass *pass,
                               : phys_dev->config_gmem.color_ccu_offset;
       uint32_t gmem_blocks = gmem_size / gmem_align;
       uint32_t offset = 0, pixels = ~0u, i;
+      bool layout_impossible = false;
       for (i = 0; i < num_gmem_alloc; i++) {
          struct tu_gmem_alloc *alloc = &gmem_alloc[i];
 
@@ -820,8 +821,8 @@ tu_render_pass_gmem_config(struct tu_render_pass *pass,
 
          if (nblocks > gmem_blocks) {
             /* gmem layout impossible */
-            pass->gmem_pixels[layout] = 0;
-            continue;
+            layout_impossible = true;
+            break;
          }
 
          gmem_blocks -= nblocks;
@@ -829,6 +830,12 @@ tu_render_pass_gmem_config(struct tu_render_pass *pass,
          alloc->gmem_offset = offset;
          offset += nblocks * gmem_align;
          pixels = MIN2(pixels, nblocks * gmem_align / alloc->cpp);
+      }
+
+      /* Impossible layouts have no valid GMEM offsets. */
+      if (layout_impossible) {
+         pass->gmem_pixels[layout] = 0;
+         continue;
       }
 
       pass->gmem_pixels[layout] = pixels;

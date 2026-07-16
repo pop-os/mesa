@@ -17,6 +17,8 @@
 extern "C" {
 #endif
 
+#define AC_MULTIVIEW_MAX_VIEWS 8
+
 enum
 {
    /* SPI_PS_INPUT_CNTL_i.OFFSET[0:4] */

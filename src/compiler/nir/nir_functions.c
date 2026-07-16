@@ -569,3 +569,24 @@ nir_cleanup_functions(nir_shader *nir)
    }
    _mesa_set_destroy(used_funcs, NULL);
 }
+
+bool
+nir_shader_fully_linked(const nir_shader *nir)
+{
+   bool res = true;
+   struct set *used_funcs = _mesa_set_create(NULL, _mesa_hash_pointer,
+                                             _mesa_key_pointer_equal);
+   nir_foreach_entrypoint(func, nir) {
+      _mesa_set_add(used_funcs, func);
+      nir_mark_used_functions(func, used_funcs);
+   }
+   set_foreach(used_funcs, entry) {
+      nir_function *func = (nir_function *)entry->key;
+      if (!func->impl) {
+         res = false;
+         break;
+      }
+   }
+   _mesa_set_destroy(used_funcs, NULL);
+   return res;
+}

@@ -95,7 +95,7 @@ panvk_utrace_read_ts(struct u_trace_context *utctx, void *timestamps,
    const uint64_t *ts_ptr = buf->host + offset_B;
    uint64_t ts = *ts_ptr;
    if (ts != U_TRACE_NO_TIMESTAMP)
-      ts = (ts * NSEC_PER_SEC) / props->timestamp_frequency;
+      ts = pan_kmod_timestamp_cycles_to_ns(pdev->kmod.dev, ts);
 
    return ts;
 }

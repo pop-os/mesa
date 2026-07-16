@@ -1096,8 +1096,13 @@ static nir_def *lower_image(nir_builder *b, nir_instr *instr, void *cb_data)
 
    if (intr->intrinsic == nir_intrinsic_image_deref_atomic ||
        intr->intrinsic == nir_intrinsic_image_deref_atomic_swap) {
+      nir_atomic_op atomic_op = nir_intrinsic_atomic_op(intr);
+
       assert(util_format_is_plain(format));
-      assert(util_format_is_pure_integer(format));
+
+      /* xchg doesn't care about format/type. */
+      assert(util_format_is_pure_integer(format) ||
+             atomic_op == nir_atomic_op_xchg);
 
       assert(util_format_get_nr_components(format) == 1);
       assert(util_format_get_blockwidth(format) == 1);
@@ -1206,8 +1211,7 @@ static nir_def *lower_image(nir_builder *b, nir_instr *instr, void *cb_data)
 
          return nir_global_atomic_swap_pco(b,
                                            addr_data,
-                                           .atomic_op =
-                                              nir_intrinsic_atomic_op(intr));
+                                           .atomic_op = atomic_op);
       }
 
       nir_def *dma_data = intr->src[3].ssa;
@@ -1218,7 +1222,7 @@ static nir_def *lower_image(nir_builder *b, nir_instr *instr, void *cb_data)
 
       return nir_global_atomic_pco(b,
                                    addr_data,
-                                   .atomic_op = nir_intrinsic_atomic_op(intr));
+                                   .atomic_op = atomic_op);
    }
 
    unsigned smp_desc = ia ? PCO_IA_SAMPLER : PCO_POINT_SAMPLER;

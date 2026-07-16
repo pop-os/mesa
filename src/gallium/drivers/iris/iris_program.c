@@ -145,6 +145,7 @@ iris_apply_brw_cs_prog_data(struct iris_compiled_shader *shader,
    iris->generate_local_id = brw->generate_local_id;
    iris->walk_order        = brw->walk_order;
    iris->uses_barrier      = brw->uses_barrier;
+   iris->uses_fence        = brw->uses_fence;
    iris->uses_sampler      = brw->uses_sampler;
    iris->prog_mask         = brw->prog_mask;
 

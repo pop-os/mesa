@@ -3195,6 +3195,7 @@ link_assign_subroutine_types(struct gl_shader_program *prog)
          assert(fn->subroutine_index != -1);
          if (p->sh.NumSubroutineFunctions + 1 > MAX_SUBROUTINES) {
             linker_error(prog, "Too many subroutine functions declared.\n");
+            _mesa_set_destroy(fn_decl_set, NULL);
             return;
          }
          p->sh.SubroutineFunctions = reralloc(p, p->sh.SubroutineFunctions,
@@ -3219,6 +3220,7 @@ link_assign_subroutine_types(struct gl_shader_program *prog)
                 p->sh.SubroutineFunctions[j].index == fn->subroutine_index) {
                linker_error(prog, "each subroutine index qualifier in the "
                             "shader must be unique\n");
+               _mesa_set_destroy(fn_decl_set, NULL);
                return;
             }
          }

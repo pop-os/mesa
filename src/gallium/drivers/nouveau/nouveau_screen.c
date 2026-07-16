@@ -83,7 +83,8 @@ nouveau_screen_fence_ref(struct pipe_screen *pscreen,
                          struct pipe_fence_handle *pfence)
 {
    nouveau_fence_ref((pfence ? nouveau_fence(pfence) : NULL),
-                     (ptr ? (struct nouveau_fence **)ptr : NULL));
+                     (ptr ? (struct nouveau_fence **)ptr : NULL),
+                     nouveau_screen(pscreen));
 }
 
 static bool

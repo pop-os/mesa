@@ -1062,6 +1062,10 @@ zink_end_query(struct pipe_context *pctx,
    struct zink_context *ctx = zink_context(pctx);
    struct zink_query *query = (struct zink_query *)q;
 
+   if (query->suspended) {
+      list_delinit(&query->active_list);
+      query->suspended = false;
+   }
    if (query->type == PIPE_QUERY_TIMESTAMP_DISJOINT || query->type >= PIPE_QUERY_DRIVER_SPECIFIC)
       return true;
 
@@ -1084,10 +1088,6 @@ zink_end_query(struct pipe_context *pctx,
 
    if (list_is_linked(&query->stats_list))
       list_delinit(&query->stats_list);
-   if (query->suspended) {
-      list_delinit(&query->active_list);
-      query->suspended = false;
-   }
    if (is_time_query(query)) {
       update_query_id(ctx, query);
       if (query->needs_reset)

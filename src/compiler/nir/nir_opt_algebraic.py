@@ -2718,10 +2718,10 @@ optimizations.extend([
      '!nir_is_rounding_mode_rtz(info->float_controls_execution_mode, 32)'),
     (('f2u32', ('fmul', ('fmul', ('u2f32', ('extract_u8', 'a@32', b)), 0x3b808081), 255.0)),
      ('extract_u8', a, b)),
-    (('f2u32', ('fmul', ('fmin', 1.0, ('fmax', -1.0, ('fmul', ('u2f32', ('extract_i16', 'a@32', b)), 0x38000100))), 32767.0)),
+    (('f2u32', ('fmul', ('fmin', 1.0, ('fmax', -1.0, ('fmul', ('i2f32', ('extract_i16', 'a@32', b)), 0x38000100))), 32767.0)),
      ('imax', ('extract_i16', a, b), -32767),
      '!nir_is_rounding_mode_rtz(info->float_controls_execution_mode, 32)'),
-    (('f2u32', ('fmul', ('fmin', 1.0, ('fmax', -1.0, ('fmul', ('u2f32', ('extract_i8', 'a@32', b)), 0x3c010204))), 127.0)),
+    (('f2u32', ('fmul', ('fmin', 1.0, ('fmax', -1.0, ('fmul', ('i2f32', ('extract_i8', 'a@32', b)), 0x3c010204))), 127.0)),
      ('imax', ('extract_i8', a, b), -127),
      '!nir_is_rounding_mode_rtz(info->float_controls_execution_mode, 32)'),
 

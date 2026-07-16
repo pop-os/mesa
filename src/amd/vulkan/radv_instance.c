@@ -222,8 +222,10 @@ static const driOptionDescription radv_dri_options[] = {
       DRI_CONF_RADV_ALLOW_DGC_MULTIVIEW(false)
       DRI_CONF_RADV_WAIT_FOR_VM_MAP_UPDATES(false)
       DRI_CONF_RADV_NO_IMPLICIT_VARYING_SUBGROUP_SIZE(false)
+      DRI_CONF_RADV_FORCE_NAN_PRESERVE_MIN_MAX(false)
       DRI_CONF_RADV_HIDE_REBAR_ON_DGPU(false)
       DRI_CONF_RADV_FORCE_64_BYTE_SAMPLED_IMAGE(false)
+      DRI_CONF_RADV_DEVICE_COHERENT_MEMORY(false)
    DRI_CONF_SECTION_END
 };
 // clang-format on
@@ -263,6 +265,7 @@ radv_init_dri_debug_options(struct radv_instance *instance)
    drirc->debug.zero_vram = driQueryOptionb(&drirc->options, "radv_zero_vram");
    drirc->debug.no_implicit_varying_subgroup_size =
       driQueryOptionb(&drirc->options, "radv_no_implicit_varying_subgroup_size");
+   drirc->debug.force_nan_preserve_min_max = driQueryOptionb(&drirc->options, "radv_force_nan_preserve_min_max");
    drirc->debug.app_layer = driQueryOptionstr(&drirc->options, "radv_app_layer");
 
    drirc->debug.override_uniform_offset_alignment =
