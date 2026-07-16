@@ -1,0 +1,4 @@
+usr/include/d3dadapter/d3dadapter9.h
+usr/include/d3dadapter/drm.h
+usr/include/d3dadapter/present.h
+usr/lib/*/pkgconfig/d3d.pc

@@ -1,0 +1,5 @@
+# libteflon.so is a TensorFlow Lite delegate plugin loaded via dlopen()
+# using an absolute path configured by the application. There is no
+# discovery mechanism and the C delegate ABI is intentionally unversioned.
+# It is kept in a stable non-multiarch location (/usr/lib/teflon/).
+mesa-teflon-delegate: arch-dependent-file-not-in-arch-specific-directory [usr/lib/teflon/libteflon.so]

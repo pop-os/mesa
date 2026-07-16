@@ -1,0 +1,2 @@
+link-to-shared-library-in-wrong-package usr/lib/*/libRusticlOpenCL.so.1.0.0 [usr/lib/*/libRusticlOpenCL.so]
+package-name-doesnt-match-sonames libRusticlOpenCL1

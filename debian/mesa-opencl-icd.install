@@ -1,0 +1,2 @@
+etc/OpenCL/vendors/rusticl.icd
+usr/lib/*/libRusticlOpenCL*
