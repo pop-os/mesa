@@ -43,7 +43,9 @@ buildflags = $(shell \
 	dpkg-buildflags --export=configure)
 
 EGL_PLATFORMS = x11
+GALLIUM_DEFAULTS = softpipe
 GALLIUM_DRIVERS = softpipe
+VULKAN_DEFAULTS =
 VULKAN_DRIVERS =
 VULKAN_LAYERS =
 
@@ -64,6 +66,7 @@ else
   # hurd also lacks *_CLOEXEC
   EGL_PLATFORMS += wayland
 
+  GALLIUM_DEFAULTS += r300 r600 virtio_gpu
   GALLIUM_DRIVERS += nouveau r300 r600 virgl
   confflags_DIRECT_RENDERING = -Dglx-direct=true
   confflags_GBM = -Dgbm=enabled
@@ -81,7 +84,9 @@ else
 
   # etnaviv, tegra, vc4 and v3d kernel support are only available on armhf and arm64
   ifneq (,$(filter $(DEB_HOST_ARCH), armhf arm64))
+	GALLIUM_DEFAULTS += panfrost v3d
 	GALLIUM_DRIVERS += etnaviv panfrost svga tegra vc4 v3d
+	VULKAN_DEFAULTS += broadcom panvk
 	VULKAN_DRIVERS += broadcom panfrost
   endif
 
@@ -95,12 +100,16 @@ else
 
   # Build intel drivers on archs where libdrm-intel is installed
   ifneq (,$(filter $(DEB_HOST_ARCH), amd64 i386 x32))
+	GALLIUM_DEFAULTS += crocus vmwgfx
 	GALLIUM_DRIVERS += crocus i915 svga
+	VULKAN_DEFAULTS += hasvk
 	VULKAN_DRIVERS += intel_hasvk
   endif
 
   ifneq (,$(filter $(DEB_HOST_ARCH), amd64 arm64 i386 loong64 x32 ppc64el riscv64))
+	GALLIUM_DEFAULTS += iris
 	GALLIUM_DRIVERS += iris
+	VULKAN_DEFAULTS += anv
 	VULKAN_DRIVERS += intel
   endif
 
@@ -110,25 +119,32 @@ else
 
   # WSL supports only amd64 and arm64
   ifneq (,$(filter $(DEB_HOST_ARCH), amd64 arm64))
+	GALLIUM_DEFAULTS += d3d12
 	GALLIUM_DRIVERS += d3d12
   endif
 
   # asahi supports only arm64, amd64 and i386
   ifneq (,$(filter $(DEB_HOST_ARCH), arm64 amd64 i386))
+	GALLIUM_DEFAULTS += asahi
 	GALLIUM_DRIVERS += asahi
+	VULKAN_DEFAULTS += hk
 	VULKAN_DRIVERS += asahi
   endif
 
   # Enable freedreno on x86 (for FEX) and arm
   ifneq (,$(filter $(DEB_HOST_ARCH), amd64 armhf arm64 i386))
+	GALLIUM_DEFAULTS += msm
 	GALLIUM_DRIVERS += freedreno
+	VULKAN_DEFAULTS += turnip
 	VULKAN_DRIVERS += freedreno
   endif
 
   # LLVM is required for building r300g, radeonsi and llvmpipe drivers.
   # It's also required for building OpenCL support.
   ifneq (,$(filter $(DEB_HOST_ARCH), $(LLVM_ARCHS)))
+	GALLIUM_DEFAULTS += radeonsi zink
 	GALLIUM_DRIVERS += radeonsi zink llvmpipe
+	VULKAN_DEFAULTS += radv lavapipe venus
 	VULKAN_DRIVERS += amd swrast virtio
 
 	VULKAN_LAYERS += anti-lag device-select intel-nullhw overlay screenshot
@@ -141,6 +157,7 @@ else
 
 	ifneq (,$(filter $(DEB_HOST_ARCH), $(NVK_ARCHS)))
 		export MESON_PACKAGE_CACHE_DIR=/usr/share/cargo/registry/
+		VULKAN_DEFAULTS += nvk
 		VULKAN_DRIVERS += nouveau
 	endif
 
@@ -252,6 +269,21 @@ override_dh_install:
 	mv debian/tmp/usr/lib/${DEB_HOST_MULTIARCH}/dri/*_drv_video.so \
 	   debian/mesa-libgallium/usr/lib/${DEB_HOST_MULTIARCH}/dri/
   endif
+
+	# Handle dri/vulkan defaults before dh_install
+	install -m755 -d debian/mesa-libgallium/usr/share/drirc.d/
+	for file in $(GALLIUM_DEFAULTS); \
+	do \
+		mv debian/tmp/usr/share/drirc.d/00-$${file}-defaults.conf \
+		  debian/mesa-libgallium/usr/share/drirc.d/; \
+	done
+
+	install -m755 -d debian/mesa-vulkan-drivers/usr/share/drirc.d/
+	for file in $(VULKAN_DEFAULTS); \
+	do \
+		mv debian/tmp/usr/share/drirc.d/00-$${file}-defaults.conf \
+		  debian/mesa-vulkan-drivers/usr/share/drirc.d/; \
+	done
 
 	dh_install -a
 
