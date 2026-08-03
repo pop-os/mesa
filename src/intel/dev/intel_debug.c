@@ -180,7 +180,8 @@ intel_debug_flag_for_shader_stage(mesa_shader_stage stage)
    return flags[stage];
 }
 
-#define DEBUG_FS_SIMD  BITFIELD_MASK(DEBUG_CS_SIMD8)
+#define DEBUG_FS_SIMD  (DEBUG_FS_SIMD8   | DEBUG_FS_SIMD16  | DEBUG_FS_SIMD32 | \
+                        DEBUG_FS_SIMD2X8 | DEBUG_FS_SIMD4X8 | DEBUG_FS_SIMD2X16)
 #define DEBUG_CS_SIMD  (DEBUG_CS_SIMD8  | DEBUG_CS_SIMD16  | DEBUG_CS_SIMD32)
 #define DEBUG_TS_SIMD  (DEBUG_TS_SIMD8  | DEBUG_TS_SIMD16  | DEBUG_TS_SIMD32)
 #define DEBUG_MS_SIMD  (DEBUG_MS_SIMD8  | DEBUG_MS_SIMD16  | DEBUG_MS_SIMD32)
@@ -259,16 +260,16 @@ process_intel_debug_variable_once(void)
     * are allowed, except FS currently disables multipolygon modes by default.
     */
    intel_simd_overridden =
-      (intel_simd & DEBUG_FS_SIMD) ? (1 << MESA_SHADER_FRAGMENT) : 0 |
-      (intel_simd & DEBUG_CS_SIMD) ? (1 << MESA_SHADER_COMPUTE)  : 0 |
-      (intel_simd & DEBUG_TS_SIMD) ? (1 << MESA_SHADER_TASK)     : 0 |
-      (intel_simd & DEBUG_MS_SIMD) ? (1 << MESA_SHADER_MESH)     : 0 |
-      (intel_simd & DEBUG_RT_SIMD) ? (1 << MESA_SHADER_RAYGEN |
-                                      1 << MESA_SHADER_ANY_HIT |
-                                      1 << MESA_SHADER_CLOSEST_HIT |
-                                      1 << MESA_SHADER_MISS |
-                                      1 << MESA_SHADER_INTERSECTION |
-                                      1 << MESA_SHADER_CALLABLE) : 0;
+      ((intel_simd & DEBUG_FS_SIMD) ? (1 << MESA_SHADER_FRAGMENT) : 0) |
+      ((intel_simd & DEBUG_CS_SIMD) ? (1 << MESA_SHADER_COMPUTE)  : 0) |
+      ((intel_simd & DEBUG_TS_SIMD) ? (1 << MESA_SHADER_TASK)     : 0) |
+      ((intel_simd & DEBUG_MS_SIMD) ? (1 << MESA_SHADER_MESH)     : 0) |
+      ((intel_simd & DEBUG_RT_SIMD) ? (1 << MESA_SHADER_RAYGEN |
+                                       1 << MESA_SHADER_ANY_HIT |
+                                       1 << MESA_SHADER_CLOSEST_HIT |
+                                       1 << MESA_SHADER_MISS |
+                                       1 << MESA_SHADER_INTERSECTION |
+                                       1 << MESA_SHADER_CALLABLE) : 0);
 
    if (!(intel_simd & DEBUG_FS_SIMD))
       intel_simd |=   DEBUG_FS_SIMD8 | DEBUG_FS_SIMD16 | DEBUG_FS_SIMD32;
@@ -324,5 +325,11 @@ process_intel_debug_variable(void)
    call_once(&process_intel_debug_variable_flag,
              process_intel_debug_variable_once);
 
-   use_jay = debug_get_option_use_jay();
+   /* Jay is under heavy development and is not considered released. It is
+    * available in upstream Mesa for developers to hack on but is not part of
+    * the 26.1 release. This comment acts like a chicken bit to fuse off the
+    * compiler while minimizing conflicts with backports (which is why we don't
+    * remove Jay wholesale from the release).
+    */
+   // use_jay = debug_get_option_use_jay();
 }

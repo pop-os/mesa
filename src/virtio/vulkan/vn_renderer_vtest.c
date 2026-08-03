@@ -568,12 +568,10 @@ vtest_sync_read(struct vn_renderer *renderer,
 }
 
 static VkResult
-vtest_sync_reset(struct vn_renderer *renderer,
-                 struct vn_renderer_sync *sync,
-                 uint64_t initial_val)
+vtest_sync_reset(struct vn_renderer *renderer, struct vn_renderer_sync *sync)
 {
    /* same as write */
-   return vtest_sync_write(renderer, sync, initial_val);
+   return vtest_sync_write(renderer, sync, 0);
 }
 
 static void
@@ -593,7 +591,6 @@ vtest_sync_destroy(struct vn_renderer *renderer,
 static VkResult
 vtest_sync_create(struct vn_renderer *renderer,
                   uint64_t initial_val,
-                  uint32_t flags,
                   struct vn_renderer_sync **out_sync)
 {
    struct vtest *vtest = (struct vtest *)renderer;
@@ -835,22 +832,12 @@ sync_wait_poll(int fd, int poll_timeout)
    return ret ? VK_SUCCESS : VK_TIMEOUT;
 }
 
-static int
-timeout_to_poll_timeout(uint64_t timeout)
-{
-   const uint64_t ns_per_ms = 1000000;
-   const uint64_t ms = (timeout + ns_per_ms - 1) / ns_per_ms;
-   if (!ms && timeout)
-      return -1;
-   return ms <= INT_MAX ? ms : -1;
-}
-
 static VkResult
 vtest_wait(struct vn_renderer *renderer, const struct vn_renderer_wait *wait)
 {
    struct vtest *vtest = (struct vtest *)renderer;
    const uint32_t flags = wait->wait_any ? VCMD_SYNC_WAIT_FLAG_ANY : 0;
-   const int poll_timeout = timeout_to_poll_timeout(wait->timeout);
+   const int poll_timeout = vn_timeout_to_poll_timeout(wait->timeout);
 
    /*
     * vtest_vcmd_sync_wait (and some other sync commands) is executed after
@@ -899,6 +886,7 @@ vtest_init_renderer_info(struct vtest *vtest)
 
    info->has_dma_buf_import = false;
    info->has_external_sync = false;
+   info->has_timeline_sync = !VN_PERF(NO_TIMELINE_SYNC);
    info->has_implicit_fencing = false;
 
    const struct virgl_renderer_capset_venus *capset = &vtest->capset.data;

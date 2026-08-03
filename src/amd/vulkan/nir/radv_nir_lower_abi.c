@@ -437,7 +437,6 @@ lower_abi_instr(nir_builder *b, nir_intrinsic_instr *intrin, void *state)
       replacement = ac_nir_load_arg(b, &s->args->ac, s->args->ac.load_provoking_vtx);
       break;
    case nir_intrinsic_load_rasterization_primitive_amd:
-      assert(s->gfx_state->unknown_rast_prim);
       /* Load the primitive topology from an user SGPR when it's unknown at compile time (GPL). */
       replacement = GET_SGPR_FIELD_NIR(s->args->ps_state, PS_STATE_RAST_PRIM);
       break;

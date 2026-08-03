@@ -539,6 +539,9 @@ instr_try_combine_phi(struct set *instr_set, nir_phi_instr *phi1, nir_phi_instr 
    nir_def_rewrite_uses_with_alu_src(&b, &phi1->def, replace_phi1);
    nir_def_rewrite_uses_with_alu_src(&b, &phi2->def, replace_phi2);
 
+   nir_instr_remove(&phi1->instr);
+   nir_instr_remove(&phi2->instr);
+
    return &new_phi->instr;
 }
 

@@ -4337,7 +4337,8 @@ bi_dump_shader(bi_context *ctx, struct util_dynarray *binary,
               ctx->nir->info.name ?: "<unnamed>", path);
    }
 
-   fclose(dump_stream);
+   if (dump_stream)
+      fclose(dump_stream);
 }
 
 static bi_context *

@@ -75,7 +75,7 @@ panvk_per_arch(get_physical_device_extensions)(
       .KHR_image_format_list = true,
       .KHR_imageless_framebuffer = true,
       .KHR_index_type_uint8 = true,
-      .KHR_internally_synchronized_queues = true,
+      .KHR_internally_synchronized_queues = has_vk1_1,
       .KHR_line_rasterization = true,
       .KHR_load_store_op_none = true,
       .KHR_maintenance1 = true,

@@ -639,7 +639,7 @@ radv_physical_device_init_mem_types(struct radv_physical_device *pdev)
       pdev->memory_properties.memoryTypeCount = type_count;
    }
 
-   if (pdev->info.has_l2_uncached) {
+   if (radv_device_coherent_memory_enabled(pdev)) {
       for (int i = 0; i < pdev->memory_properties.memoryTypeCount; i++) {
          VkMemoryType mem_type = pdev->memory_properties.memoryTypes[i];
 

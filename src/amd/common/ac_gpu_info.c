@@ -489,8 +489,6 @@ ac_fill_hw_ip_info(struct radeon_info *info, const struct drm_amdgpu_info_device
          return false;
 
       info->ip[ip_type].num_queues = util_bitcount(ip_info->available_rings);
-   } else {
-      return false;
    }
 
    /* Gfx6-8 don't set ip_discovery_version. */
@@ -865,6 +863,9 @@ ac_identify_chip(struct radeon_info *info, const struct drm_amdgpu_info_device *
          break;
       case VCN_IP_VERSION(5, 0, 1):
          info->vcn_ip_version = VCN_5_0_1;
+         break;
+      case VCN_IP_VERSION(5, 0, 2):
+         info->vcn_ip_version = VCN_5_0_2;
          break;
       case VCN_IP_VERSION(5, 3, 0):
          info->vcn_ip_version = VCN_5_3_0;

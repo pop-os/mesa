@@ -1574,9 +1574,17 @@ void genX(CmdWriteTimestamp2)(
 
    assert(pool->vk.query_type == VK_QUERY_TYPE_TIMESTAMP);
 
-   if (append_query_clear_flush(cmd_buffer, pool,
-                                "CmdWriteTimestamp flush query clears"))
-      genX(cmd_buffer_apply_pipe_flushes)(cmd_buffer);
+   /* Anything bottom-of-pipe, request a post-sync */
+   if (stage != VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT)
+      cmd_buffer->state.pending_pipe_bits |= ANV_PIPE_POST_SYNC_BIT;
+
+   append_query_clear_flush(cmd_buffer, pool,
+                            "CmdWriteTimestamp flush query clears");
+
+   /* Always flush, even for top-of-pipe there might be a barrier that needs
+    * executing before we take the timestamp.
+    */
+   genX(cmd_buffer_apply_pipe_flushes)(cmd_buffer);
 
    struct mi_builder b;
    mi_builder_init(&b, cmd_buffer->device->info, &cmd_buffer->batch);
@@ -1586,10 +1594,6 @@ void genX(CmdWriteTimestamp2)(
                    mi_reg64(TIMESTAMP));
       emit_query_mi_availability(&b, query_addr, true);
    } else {
-      /* Everything else is bottom-of-pipe */
-      cmd_buffer->state.pending_pipe_bits |= ANV_PIPE_POST_SYNC_BIT;
-      genX(cmd_buffer_apply_pipe_flushes)(cmd_buffer);
-
       bool cs_stall_needed =
          (GFX_VER == 9 && cmd_buffer->device->info->gt == 4);
 

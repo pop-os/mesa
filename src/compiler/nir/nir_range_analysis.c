@@ -1839,6 +1839,7 @@ get_alu_uub(struct analysis_state *state, struct scalar_query q, uint32_t *resul
    case nir_op_bfi:
    case nir_op_bfm:
    case nir_op_bitfield_select:
+   case nir_op_msad_4x8:
    case nir_op_extract_u8:
    case nir_op_extract_i8:
    case nir_op_extract_u16:

@@ -2999,6 +2999,7 @@ midgard_compile_shader_nir(nir_shader *nir,
       nir_log_shaderi(nir);
 
    info->tls_size = nir->scratch_size;
+   info->fau.max = PAN_MAX_PUSH;
 
    nir_foreach_function_with_impl(func, impl, nir) {
       list_inithead(&ctx->blocks);

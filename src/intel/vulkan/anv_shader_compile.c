@@ -218,6 +218,10 @@ anv_shader_init_uuid(struct anv_physical_device *device)
    blake3_hasher ctx;
    _mesa_blake3_init(&ctx);
 
+   _mesa_blake3_update(&ctx, device->driver_build_sha1,
+                       sizeof(device->driver_build_sha1));
+   brw_device_blake3_update(&ctx, &device->info);
+
    const bool always_bindless = !!ANV_DEBUG(BINDLESS);
    _mesa_blake3_update(&ctx, &always_bindless, sizeof(always_bindless));
 

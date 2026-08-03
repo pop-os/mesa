@@ -1053,7 +1053,7 @@ ir3_nir_post_finalize(struct ir3_shader *shader)
       nir_lower_subgroups_options options = {
             .subgroup_size = subgroup_size,
             .ballot_bit_size = 32,
-            .ballot_components = max_subgroup_size / 32,
+            .ballot_components = MAX2(1, max_subgroup_size / 32),
             .lower_to_scalar = true,
             .lower_vote_feq = true,
             .lower_vote_ieq = true,

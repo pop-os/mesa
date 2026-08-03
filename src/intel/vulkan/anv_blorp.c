@@ -1105,6 +1105,8 @@ blit_image(struct anv_cmd_buffer *cmd_buffer,
       float depth_center_offset = 0;
       if (src_image->vk.image_type == VK_IMAGE_TYPE_3D)
          depth_center_offset = 0.5 / num_layers * (src_end - src_start);
+      else if (dst_image->vk.image_type == VK_IMAGE_TYPE_3D)
+         depth_center_offset = 0.5 / num_layers * (dst_end - dst_start);
 
       if (flip_z) {
          src_start = src_end;
