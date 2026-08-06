@@ -1244,7 +1244,7 @@ vn_QueueSubmit2(VkQueue _queue,
    vn_tls_set_async_pipeline_create();
    vn_wsi_flush(queue);
 
-   if (dev->has_sync2) {
+   if (dev->base.vk.enabled_features.synchronization2) {
       struct vn_queue_submission submit = {
          .batch_type = VK_STRUCTURE_TYPE_SUBMIT_INFO_2,
          .queue_handle = _queue,

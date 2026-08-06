@@ -23,6 +23,12 @@
 
 #include "vk_build_interface.h"
 
+#define SpvCapabilitySignedZeroInfNanPreserve 4466
+#define SpvExecutionModeSignedZeroInfNanPreserve 4461
+spirv_execution_mode(extensions = ["SPV_KHR_float_controls"],
+                     capabilities = [SpvCapabilitySignedZeroInfNanPreserve],
+                     SpvExecutionModeSignedZeroInfNanPreserve, 32);
+
 layout(local_size_x_id = SUBGROUP_SIZE_ID, local_size_y = 1, local_size_z = 1) in;
 
 layout(push_constant) uniform CONSTS {
@@ -249,10 +255,12 @@ main(void)
    if (subgroupElect())
       atomicAdd(DEREF(args.header).active_leaf_count, subgroupBallotBitCount(ballot));
 
-   atomicMin(DEREF(args.header).min_bounds[0], to_emulated_float(bounds.min.x));
-   atomicMin(DEREF(args.header).min_bounds[1], to_emulated_float(bounds.min.y));
-   atomicMin(DEREF(args.header).min_bounds[2], to_emulated_float(bounds.min.z));
-   atomicMax(DEREF(args.header).max_bounds[0], to_emulated_float(bounds.max.x));
-   atomicMax(DEREF(args.header).max_bounds[1], to_emulated_float(bounds.max.y));
-   atomicMax(DEREF(args.header).max_bounds[2], to_emulated_float(bounds.max.z));
+   if (is_active) {
+      atomicMin(DEREF(args.header).min_bounds[0], to_emulated_float(bounds.min.x));
+      atomicMin(DEREF(args.header).min_bounds[1], to_emulated_float(bounds.min.y));
+      atomicMin(DEREF(args.header).min_bounds[2], to_emulated_float(bounds.min.z));
+      atomicMax(DEREF(args.header).max_bounds[0], to_emulated_float(bounds.max.x));
+      atomicMax(DEREF(args.header).max_bounds[1], to_emulated_float(bounds.max.y));
+      atomicMax(DEREF(args.header).max_bounds[2], to_emulated_float(bounds.max.z));
+   }
 }

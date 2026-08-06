@@ -554,7 +554,8 @@ ir3_collect_info(struct ir3_shader_variant *v)
    info->double_threadsize = ir3_should_double_threadsize(v, regs_count);
 
    /* TODO this is different for earlier gens, but earlier gens don't use this */
-   info->subgroup_size = v->info.double_threadsize ? 128 : 64;
+   info->subgroup_size = compiler->info->threadsize_base *
+                         (info->double_threadsize ? 2 : 1);
 
    unsigned reg_independent_max_waves =
       ir3_get_reg_independent_max_waves(v, info->double_threadsize);

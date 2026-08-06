@@ -3068,7 +3068,7 @@ emit_pipe_control(struct anv_batch *batch,
        current_pipeline == GPGPU &&
        post_sync_op != NoWrite) {
       genX(batch_emit_pipe_control)(batch, devinfo, current_pipeline,
-                                    bits,
+                                    bits | ANV_PIPE_CS_STALL_BIT,
                                     "Wa_18040903259");
       bits = ANV_PIPE_CS_STALL_BIT;
    }

@@ -1806,7 +1806,8 @@ pipeline_lower_nir(struct v3dv_pipeline *pipeline,
     * shader doesn't need any other samplers, get rid of them so we can
     * recognize that this program doesn't use any samplers at all.
     */
-   if (!needs_default_sampler_state && maps->sampler_map.num_desc == 2)
+   if (!needs_default_sampler_state &&
+       maps->sampler_map.num_desc == V3DV_NUM_NO_SAMPLER_IDX)
       maps->sampler_map.num_desc = 0;
 
    p_stage->feedback.duration += os_time_get_nano() - stage_start;
@@ -2386,7 +2387,7 @@ pipeline_add_multiview_gs(struct v3dv_pipeline *pipeline,
 
    pipeline->has_gs = true;
    pipeline->stages[BROADCOM_SHADER_GEOMETRY] = p_stage;
-   pipeline->active_stages |= MESA_SHADER_GEOMETRY;
+   pipeline->active_stages |= VK_SHADER_STAGE_GEOMETRY_BIT;
 
    pipeline->stages[BROADCOM_SHADER_GEOMETRY_BIN] =
       pipeline_stage_create_binning(p_stage, pAllocator);
@@ -2523,7 +2524,7 @@ pipeline_compile_graphics(struct v3dv_pipeline *pipeline,
          p_atomic_inc_return(&physical_device->next_program_id);
 
       pipeline->stages[BROADCOM_SHADER_FRAGMENT] = p_stage;
-      pipeline->active_stages |= MESA_SHADER_FRAGMENT;
+      pipeline->active_stages |= VK_SHADER_STAGE_FRAGMENT_BIT;
    }
 
    /* If multiview is enabled, we inject a custom passthrough geometry shader
@@ -2682,7 +2683,7 @@ compute_vpm_config(struct v3dv_pipeline *pipeline)
    struct v3dv_shader_variant *vs_variant =
       pipeline->shared_data->variants[BROADCOM_SHADER_VERTEX];
    struct v3dv_shader_variant *vs_bin_variant =
-      pipeline->shared_data->variants[BROADCOM_SHADER_VERTEX];
+      pipeline->shared_data->variants[BROADCOM_SHADER_VERTEX_BIN];
    struct v3d_vs_prog_data *vs = vs_variant->prog_data.vs;
    struct v3d_vs_prog_data *vs_bin =vs_bin_variant->prog_data.vs;
 

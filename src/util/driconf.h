@@ -338,6 +338,10 @@
    DRI_CONF_OPT_B(vk_lower_terminate_to_discard, def, \
                   "Lower terminate to discard (which is implicitly demote)")
 
+#define DRI_CONF_ZERO_INVALIDATED_BUFFERS(def) \
+   DRI_CONF_OPT_B(zero_invalidated_buffers, def, \
+                  "Zero memory returned by glMapBufferRange with GL_MAP_INVALIDATE_*_BIT, workaround for games that rely on the undefined contents being zero")
+
 #define DRI_CONF_LIMIT_TRIG_INPUT_RANGE(def) \
    DRI_CONF_OPT_B(limit_trig_input_range, def, \
                   "Limit trig input range to [-2p : 2p] to improve sin/cos calculation precision on Intel")
@@ -1011,6 +1015,10 @@
 #define DRI_CONF_ANV_BRW_DISABLE_SUBGROUP_SIZE_CONTROL(def) \
    DRI_CONF_OPT_B(anv_brw_disable_subgroup_size_control, def, \
                   "Disable EXT_subgroup_size_control support when using brw compiler.")
+
+#define DRI_CONF_ANV_XE2_R11G11B10_ATOMIC_SWAP_WA(def) \
+   DRI_CONF_OPT_B(anv_xe2_r11g11b10_atomic_swap_wa, def, \
+                  "Enable workaround for apps using atomic swaps on R11G11B10 images")
 
 /**
  * \brief HASVK specific configuration options

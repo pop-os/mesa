@@ -212,12 +212,14 @@ impl DeviceProgramBuild {
         cache: Option<&DiskCacheBorrowed>,
         name: &str,
         spec_constants: &HashMap<u32, nir_const_value>,
+        libclc: &NirShader,
     ) -> Option<cache_key> {
         if let Some(cache) = cache {
             assert_eq!(self.status, CL_BUILD_SUCCESS as cl_build_status);
 
             let spirv = self.spirv.as_ref().unwrap();
             let mut bin = spirv.to_bin().to_vec();
+            bin.extend_from_slice(libclc.source_hash());
             bin.extend_from_slice(name.as_bytes());
 
             for (k, v) in spec_constants {

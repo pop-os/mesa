@@ -1840,7 +1840,7 @@ tu6_emit_xs_constants(
 
    /* emit statically-known FS driver param */
    if (stage == MESA_SHADER_FRAGMENT && const_state->driver_params_ubo.size > 0) {
-      uint32_t data[4] = {xs->info.double_threadsize ? 128 : 64, 0, 0, 0};
+      uint32_t data[4] = {xs->info.subgroup_size, 0, 0, 0};
       uint32_t size = ARRAY_SIZE(data);
 
       /* A7XX TODO: Emit data via sub_cs instead of NOP */
@@ -1873,7 +1873,7 @@ tu6_emit_xs_constants(
          tu_cs_emit(cs, CP_LOAD_STATE6_1_EXT_SRC_ADDR(0));
          tu_cs_emit(cs, CP_LOAD_STATE6_2_EXT_SRC_ADDR_HI(0));
 
-         tu_cs_emit(cs, xs->info.double_threadsize ? 128 : 64);
+         tu_cs_emit(cs, xs->info.subgroup_size);
          tu_cs_emit(cs, 0);
          tu_cs_emit(cs, 0);
          tu_cs_emit(cs, 0);

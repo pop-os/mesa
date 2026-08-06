@@ -1460,9 +1460,11 @@ brw_compile_fs(const struct brw_compiler *compiler,
    brw_nir_apply_key(pt, &key->base, max_subgroup_size);
 
    if (brw_nir_fragment_shader_needs_wa_18019110168(devinfo, key->mesh_input, nir)) {
-      if (params->mue_map && params->mue_map->wa_18019110168_active) {
-         brw_nir_frag_convert_attrs_prim_to_vert(
-            nir, params->mue_map->per_primitive_offsets);
+      if (params->mue_map) {
+         if (params->mue_map->wa_18019110168_active) {
+            brw_nir_frag_convert_attrs_prim_to_vert(
+               nir, params->mue_map->per_primitive_offsets);
+         }
       } else {
          BRW_NIR_PASS(brw_nir_frag_convert_attrs_prim_to_vert_indirect,
                       devinfo, params);

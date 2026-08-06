@@ -547,9 +547,6 @@ vn_device_init(struct vn_device *dev,
     */
    vn_device_update_shader_cache_id(dev);
 
-   dev->has_sync2 = physical_dev->renderer_version >= VK_API_VERSION_1_3 ||
-                    dev->base.vk.enabled_extensions.KHR_synchronization2;
-
    simple_mtx_init(&dev->mutex, mtx_plain);
    list_inithead(&dev->chains);
 

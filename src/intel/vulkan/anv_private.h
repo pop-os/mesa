@@ -1868,6 +1868,8 @@ struct anv_instance {
 
     bool                                        slm_robust_vectorization;
 
+    bool                                        r11g11b10_atomic_swap_wa;
+
     /**
      * Ray tracing configuration.
      */

@@ -3,6 +3,7 @@
  * Copyright (C) 2023 Amazon.com, Inc. or its affiliates.
  * Copyright (C) 2018 Alyssa Rosenzweig
  * Copyright (C) 2020 Collabora Ltd.
+ * Copyright (C) 2026 NXP
  * Copyright © 2017 Intel Corporation
  * SPDX-License-Identifier: MIT
  */
@@ -4504,6 +4505,8 @@ screen_destroy(struct pipe_screen *pscreen)
    struct panfrost_device *dev = pan_device(pscreen);
    GENX(pan_fb_preload_cache_cleanup)(&dev->fb_preload_cache);
    pan_blend_shader_cache_cleanup(&dev->blend_shaders);
+   if (dev->precomp_cache)
+      GENX(panfrost_precomp_cache_cleanup)(dev->precomp_cache);
 }
 
 static void

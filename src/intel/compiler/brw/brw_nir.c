@@ -3605,7 +3605,9 @@ brw_nir_move_interpolation_to_top(nir_shader *nir)
 
    nir_foreach_function_impl(impl, nir) {
       nir_block *top = fragment_top_block_or_after_wa_18019110168(impl);
-      nir_cursor cursor = nir_before_instr(nir_block_first_instr(top));
+      nir_instr *first = nir_block_first_instr(top);
+      nir_cursor cursor = (first == NULL) ? nir_after_block(top) :
+                                            nir_before_instr(first);
       bool impl_progress = false;
 
       for (nir_block *block = nir_block_cf_tree_next(top);

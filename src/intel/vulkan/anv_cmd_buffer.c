@@ -77,6 +77,7 @@ anv_cmd_state_finish(struct anv_cmd_buffer *cmd_buffer)
 
    anv_cmd_pipeline_state_finish(cmd_buffer, &state->gfx.base);
    anv_cmd_pipeline_state_finish(cmd_buffer, &state->compute.base);
+   anv_cmd_pipeline_state_finish(cmd_buffer, &state->rt.base);
 }
 
 static void

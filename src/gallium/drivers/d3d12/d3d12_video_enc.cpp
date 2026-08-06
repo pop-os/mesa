@@ -5212,21 +5212,14 @@ d3d12_video_encoder_update_picparams_region_of_interest_qpmap(struct d3d12_video
 }
 
 int
-d3d12_video_encoder_fence_wait(struct pipe_video_codec *codec,
+d3d12_video_encoder_fence_wait([[maybe_unused]] struct pipe_video_codec *codec,
                                struct pipe_fence_handle *_fence,
                                uint64_t timeout)
 {
-   struct d3d12_video_encoder *pD3D12Enc = (struct d3d12_video_encoder *) codec;
-   assert(pD3D12Enc);
    struct d3d12_fence *fence = (struct d3d12_fence *) _fence;
    assert(fence);
 
    bool wait_res = d3d12_fence_finish(fence, timeout);
-   if (wait_res) {
-      // Opportunistically reset batches
-      for (uint32_t i = 0; i < pD3D12Enc->m_MaxQueueAsyncDepth; ++i)
-         d3d12_video_encoder_sync_completion(codec, i, 0);
-   }
 
    // Return semantics based on p_video_codec interface
    // ret == 0 -> Encode in progress

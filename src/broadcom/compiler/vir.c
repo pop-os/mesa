@@ -1004,8 +1004,10 @@ v3d_return_qpu_insts(struct v3d_compile *c, uint32_t *final_assembly_size)
         *final_assembly_size = c->qpu_inst_count * sizeof(uint64_t);
 
         uint64_t *qpu_insts = malloc(*final_assembly_size);
-        if (!qpu_insts)
+        if (!qpu_insts) {
+                vir_compile_destroy(c);
                 return NULL;
+        }
 
         memcpy(qpu_insts, c->qpu_insts, *final_assembly_size);
 

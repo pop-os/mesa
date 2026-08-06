@@ -223,7 +223,7 @@ int32_t
 to_emulated_float(float f)
 {
    int32_t bits = floatBitsToInt(f);
-   return f < 0 ? -2147483648 - bits : bits;
+   return bits < 0 ? -2147483648 - bits : bits;
 }
 
 float

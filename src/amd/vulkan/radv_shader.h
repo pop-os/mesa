@@ -135,7 +135,6 @@ struct radv_graphics_state_key {
    uint32_t dynamic_provoking_vtx_mode : 1;
    uint32_t dynamic_line_rast_mode : 1;
    uint32_t enable_remove_point_size : 1;
-   uint32_t unknown_rast_prim : 1;
    uint32_t dcc_decompress_gfx11 : 1;
    uint32_t reserved : 12;
 
@@ -161,6 +160,8 @@ struct radv_graphics_state_key {
    struct {
       uint32_t provoking_vtx_last : 1;
       uint32_t cull_mode : 2;
+      bool polygon_mode_unknown : 1;
+      uint8_t polygon_mode : 2; /* VK_POLYGON_MODE_FILL/LINE_POINT */
    } rs;
 
    struct {

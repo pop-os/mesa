@@ -421,7 +421,7 @@ radv_ps_needs_state_sgpr(const struct radv_shader_info *info, const struct radv_
       return true;
 
    /* For computing barycentrics when the primitive topology is unknown at compile time (GPL). */
-   if (info->ps.load_rasterization_prim && gfx_state->unknown_rast_prim)
+   if (info->ps.load_rasterization_prim)
       return true;
 
    return false;

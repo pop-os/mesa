@@ -1833,9 +1833,18 @@ radv_generate_graphics_state_key(const struct radv_device *device, const struct 
       key.ia.topology = radv_translate_prim(state->ia->primitive_topology);
    }
 
-   if (!state->vi || !(state->shader_stages & (VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT |
-                                               VK_SHADER_STAGE_GEOMETRY_BIT | VK_SHADER_STAGE_MESH_BIT_EXT))) {
-      key.unknown_rast_prim = true;
+   key.rs.polygon_mode_unknown = !state->rs || BITSET_TEST(state->dynamic, MESA_VK_DYNAMIC_RS_POLYGON_MODE);
+
+   if (!key.rs.polygon_mode_unknown) {
+      switch (state->rs->polygon_mode) {
+      case VK_POLYGON_MODE_FILL:
+      case VK_POLYGON_MODE_LINE:
+      case VK_POLYGON_MODE_POINT:
+         key.rs.polygon_mode = state->rs->polygon_mode;
+         break;
+      default:
+         UNREACHABLE("unexpected polygon mode");
+      }
    }
 
    if (state->rs) {
@@ -2427,13 +2436,18 @@ radv_pipeline_load_retained_shaders(const struct radv_device *device, const VkGr
 }
 
 static unsigned
-radv_get_vgt_outprim_type(const struct radv_shader_stage *stages, const struct radv_graphics_state_key *gfx_state)
+radv_get_num_raster_vertices_per_prim(const struct radv_shader_stage *stages,
+                                      const struct radv_graphics_state_key *gfx_state)
 {
    unsigned vgt_outprim_type;
 
-   if (gfx_state->unknown_rast_prim)
-      return -1;
+   /* If VS or MS is present, it means we have all pre-rasterization shaders. We can't determine
+    * the raster primitive type without them.
+    */
+   if (!stages[MESA_SHADER_VERTEX].nir && !stages[MESA_SHADER_MESH].nir)
+      return 0; /* unknown */
 
+   /* The pre-raster primitive type is determined from enabled shaders and the input topology. */
    if (stages[MESA_SHADER_GEOMETRY].nir) {
       vgt_outprim_type = radv_conv_gl_prim_to_gs_out(stages[MESA_SHADER_GEOMETRY].nir->info.gs.output_primitive);
    } else if (stages[MESA_SHADER_TESS_EVAL].nir) {
@@ -2445,10 +2459,38 @@ radv_get_vgt_outprim_type(const struct radv_shader_stage *stages, const struct r
    } else if (stages[MESA_SHADER_MESH].nir) {
       vgt_outprim_type = radv_conv_gl_prim_to_gs_out(stages[MESA_SHADER_MESH].nir->info.mesh.primitive_type);
    } else {
+      if (gfx_state->ia.topology == V_008958_DI_PT_NONE)
+         return 0; /* unknown */
+
       vgt_outprim_type = radv_conv_prim_to_gs_out(gfx_state->ia.topology, false);
    }
 
-   return vgt_outprim_type;
+   /* The rasterized primitive type is determined from the pre-raster primitive type and the polygon mode. */
+   switch (vgt_outprim_type) {
+   case V_028A6C_POINTLIST:
+      return 1;
+
+   case V_028A6C_LINESTRIP:
+      return 2;
+
+   case V_028A6C_TRISTRIP:
+      if (!gfx_state->rs.polygon_mode_unknown) {
+         switch (gfx_state->rs.polygon_mode) {
+         case VK_POLYGON_MODE_POINT:
+            return 1;
+         case VK_POLYGON_MODE_LINE:
+            return 2;
+         default:
+            return 3;
+         }
+      }
+      break;
+
+   default:
+      UNREACHABLE("invalid vgt_outprim_type");
+   }
+
+   return 0;
 }
 
 static bool
@@ -2628,9 +2670,10 @@ radv_graphics_shaders_compile(struct radv_device *device, struct vk_pipeline_cac
    radv_graphics_shaders_link(device, gfx_state, stages);
 
    if (stages[MESA_SHADER_FRAGMENT].nir) {
-      unsigned vgt_outprim_type = radv_get_vgt_outprim_type(stages, gfx_state);
+      unsigned num_raster_vertices_per_prim = radv_get_num_raster_vertices_per_prim(stages, gfx_state);
 
-      NIR_PASS(_, stages[MESA_SHADER_FRAGMENT].nir, radv_nir_lower_fs_barycentric, gfx_state, vgt_outprim_type);
+      NIR_PASS(_, stages[MESA_SHADER_FRAGMENT].nir, radv_nir_lower_fs_barycentric, gfx_state,
+               num_raster_vertices_per_prim);
 
       NIR_PASS(_, stages[MESA_SHADER_FRAGMENT].nir, nir_lower_fragcoord_wtrans);
 
@@ -2643,7 +2686,7 @@ radv_graphics_shaders_compile(struct radv_device *device, struct vk_pipeline_cac
           !gfx_state->dynamic_rasterization_samples && gfx_state->ms.rasterization_samples == 0)
          NIR_PASS(_, stages[MESA_SHADER_FRAGMENT].nir, nir_opt_fragdepth);
 
-      NIR_PASS(_, stages[MESA_SHADER_FRAGMENT].nir, radv_nir_opt_fs_builtins, gfx_state, vgt_outprim_type);
+      NIR_PASS(_, stages[MESA_SHADER_FRAGMENT].nir, radv_nir_opt_fs_builtins, gfx_state, num_raster_vertices_per_prim);
    }
 
    if (stages[MESA_SHADER_VERTEX].nir && !gfx_state->vs.has_prolog)

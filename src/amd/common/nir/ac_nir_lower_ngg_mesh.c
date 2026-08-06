@@ -1103,23 +1103,24 @@ handle_smaller_ms_api_workgroup(nir_builder *b,
                continue;
 
             nir_intrinsic_instr *intrin = nir_instr_as_intrinsic(instr);
-            bool is_workgroup_barrier =
-               intrin->intrinsic == nir_intrinsic_barrier &&
-               nir_intrinsic_execution_scope(intrin) == SCOPE_WORKGROUP;
-
-            if (!is_workgroup_barrier)
+            if (intrin->intrinsic != nir_intrinsic_barrier)
                continue;
 
-            if (can_shrink_barriers) {
-               /* Every API invocation runs in the first wave.
-                * In this case, we can change the barriers to subgroup scope
-                * and avoid adding additional barriers.
-                */
-               nir_intrinsic_set_memory_scope(intrin, SCOPE_SUBGROUP);
+            /* Every API invocation runs in the first wave.
+             * In this case, we can change the barriers to subgroup scope
+             * and avoid adding additional barriers.
+             */
+            if (can_shrink_barriers &&
+                nir_intrinsic_execution_scope(intrin) == SCOPE_WORKGROUP) {
                nir_intrinsic_set_execution_scope(intrin, SCOPE_SUBGROUP);
-            } else {
-               has_any_workgroup_barriers = true;
             }
+            if (can_shrink_barriers &&
+                nir_intrinsic_memory_scope(intrin) == SCOPE_WORKGROUP) {
+               nir_intrinsic_set_memory_scope(intrin, SCOPE_SUBGROUP);
+            }
+
+            if (nir_intrinsic_execution_scope(intrin) == SCOPE_WORKGROUP)
+               has_any_workgroup_barriers = true;
          }
       }
 
