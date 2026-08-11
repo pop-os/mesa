@@ -1,9 +1,9 @@
-mesa (26.2.0-1) UNRELEASED; urgency=medium
+mesa (26.2.0-1) experimental; urgency=medium
 
   * rules: Fix some dri/vulkan defaults.
   * New upstream release.
 
- -- Timo Aaltonen <tjaalton@debian.org>  Tue, 04 Aug 2026 09:08:45 +0300
+ -- Timo Aaltonen <tjaalton@debian.org>  Tue, 11 Aug 2026 16:44:56 +0300
 
 mesa (26.2.0~rc3-1) experimental; urgency=medium
 
