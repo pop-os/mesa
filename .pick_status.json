@@ -1444,7 +1444,7 @@
         "description": "panvk/utrace: replace bogus assert with static_assert in perfetto begin event callback",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "576a87a5904765ef3cfd41f9d780d3cf026f15fc",
         "notes": null
