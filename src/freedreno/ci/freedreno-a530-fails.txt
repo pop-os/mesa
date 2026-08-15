@@ -30,9 +30,6 @@ dEQP-GLES3.functional.texture.specification.texstorage3d.size.3d_2x2x2_2_levels,
 # drm:a5xx_irq] *ERROR* gpu fault ring 2 fence 15595 status F700B1C1 rb 004a/004a ib1 000000000BFEA000/0000 ib2 0000000002F46000/0000
 dEQP-GLES31.functional.ubo.random.all_per_block_buffers.20,Fail
 
-KHR-GLES31.core.draw_indirect.advanced-twoPass-transformFeedback-arrays,Fail
-KHR-GLES31.core.draw_indirect.advanced-twoPass-transformFeedback-elements,Fail
-
 # msm 900000.mdss: [drm:a5xx_irq] *ERROR* gpu fault ring 0 fence 2c54ef status E40801C1 rb 0162/0162 ib1 000000000104B000/0000 ib2 000000000104C000/0000
 KHR-GLES31.core.texture_buffer.texture_buffer_atomic_functions,Fail
 
@@ -130,55 +127,9 @@ spec@ext_render_snorm@render@format 0x8f97 read fail,Fail
 spec@ext_transform_feedback2@draw-auto,Fail
 
 spec@ext_transform_feedback@generatemipmap prims_generated,Fail
-spec@ext_transform_feedback@immediate-reuse,Fail
-spec@ext_transform_feedback@immediate-reuse-index-buffer,Fail
 spec@ext_transform_feedback@immediate-reuse-uniform-buffer,Fail
-spec@ext_transform_feedback@tessellation line_loop flat_first,Fail
-spec@ext_transform_feedback@tessellation line_loop flat_last,Fail
-spec@ext_transform_feedback@tessellation line_loop monochrome,Fail
-spec@ext_transform_feedback@tessellation line_loop smooth,Fail
-spec@ext_transform_feedback@tessellation line_strip flat_first,Fail
-spec@ext_transform_feedback@tessellation line_strip flat_last,Fail
-spec@ext_transform_feedback@tessellation line_strip monochrome,Fail
-spec@ext_transform_feedback@tessellation line_strip smooth,Fail
-spec@ext_transform_feedback@tessellation lines flat_first,Fail
-spec@ext_transform_feedback@tessellation lines flat_last,Fail
-spec@ext_transform_feedback@tessellation lines monochrome,Fail
-spec@ext_transform_feedback@tessellation lines smooth,Fail
-spec@ext_transform_feedback@tessellation points flat_first,Fail
-spec@ext_transform_feedback@tessellation points flat_last,Fail
-spec@ext_transform_feedback@tessellation points monochrome,Fail
-spec@ext_transform_feedback@tessellation points smooth,Fail
-spec@ext_transform_feedback@tessellation polygon flat_first,Fail
-spec@ext_transform_feedback@tessellation polygon flat_last,Fail
-spec@ext_transform_feedback@tessellation polygon monochrome,Fail
-spec@ext_transform_feedback@tessellation polygon smooth,Fail
-spec@ext_transform_feedback@tessellation polygon wireframe,Fail
-spec@ext_transform_feedback@tessellation quad_strip flat_first,Fail
-spec@ext_transform_feedback@tessellation quad_strip flat_last,Fail
-spec@ext_transform_feedback@tessellation quad_strip monochrome,Fail
-spec@ext_transform_feedback@tessellation quad_strip smooth,Fail
-spec@ext_transform_feedback@tessellation quad_strip wireframe,Fail
-spec@ext_transform_feedback@tessellation quads flat_first,Fail
-spec@ext_transform_feedback@tessellation quads flat_last,Fail
-spec@ext_transform_feedback@tessellation quads monochrome,Fail
-spec@ext_transform_feedback@tessellation quads smooth,Fail
-spec@ext_transform_feedback@tessellation quads wireframe,Fail
 spec@ext_transform_feedback@tessellation triangle_fan flat_first,Fail
-spec@ext_transform_feedback@tessellation triangle_fan flat_last,Fail
-spec@ext_transform_feedback@tessellation triangle_fan monochrome,Fail
-spec@ext_transform_feedback@tessellation triangle_fan smooth,Fail
-spec@ext_transform_feedback@tessellation triangle_fan wireframe,Fail
 spec@ext_transform_feedback@tessellation triangle_strip flat_first,Fail
-spec@ext_transform_feedback@tessellation triangle_strip flat_last,Fail
-spec@ext_transform_feedback@tessellation triangle_strip monochrome,Fail
-spec@ext_transform_feedback@tessellation triangle_strip smooth,Fail
-spec@ext_transform_feedback@tessellation triangle_strip wireframe,Fail
-spec@ext_transform_feedback@tessellation triangles flat_first,Fail
-spec@ext_transform_feedback@tessellation triangles flat_last,Fail
-spec@ext_transform_feedback@tessellation triangles monochrome,Fail
-spec@ext_transform_feedback@tessellation triangles smooth,Fail
-spec@ext_transform_feedback@tessellation triangles wireframe,Fail
 
 spec@glsl-1.30@execution@texelfetch fs sampler3d 1x129x9-98x129x9,Fail
 spec@glsl-1.30@execution@texelfetch fs sampler3d 98x129x1-98x129x9,Fail
@@ -290,11 +241,6 @@ KHR-GLES3.packed_pixels.varied_rectangle.rgba32ui,Fail
 dEQP-GLES2.functional.clipping.line.wide_line_clip_viewport_center,Fail
 KHR-GLES3.packed_pixels.varied_rectangle.rgba16f,Fail
 KHR-GLES3.packed_pixels.varied_rectangle.rgba16ui,Fail
-
-spec@ext_transform_feedback@max-varyings,Fail
-spec@ext_transform_feedback@max-varyings@max-varying-arrays-of-arrays,Fail
-spec@ext_transform_feedback@max-varyings@max-varying-single-dimension-array,Fail
-spec@ext_transform_feedback@structs_gles3 basic-struct run,Fail
 
 # Regressions while the device was offline
 KHR-GLES31.core.gpu_shader5.images_array_indexing,Fail
