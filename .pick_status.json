@@ -4684,7 +4684,7 @@
         "description": "ir3: keep byte SSBO offsets before a6xx",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "7752cc26c452e46786ee728d70309f3b5a917775",
         "notes": null
