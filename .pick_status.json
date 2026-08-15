@@ -4624,7 +4624,7 @@
         "description": "freedreno/a4xx+a5xx: clamp the texture buffer size",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "946cf4eb6846767306a221eec7d0f82d20dfb6b5",
         "notes": null
