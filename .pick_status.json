@@ -4674,7 +4674,7 @@
         "description": "freedreno/a5xx: only 2D-blit between compatible formats",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "e095b1347ec0765e45ee9dd4c22c510a3c746b22",
         "notes": null
