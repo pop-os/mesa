@@ -487,6 +487,24 @@ fd5_blitter_blit(struct fd_context *ctx,
       assert(info->src.resource->target != PIPE_BUFFER);
       assert(info->dst.resource->target != PIPE_BUFFER);
       emit_blit(batch->draw, info);
+
+      /* a separate stencil is a resource of its own, so it needs its own blit */
+      if ((info->mask & PIPE_MASK_S) && src->stencil && dst->stencil) {
+         struct pipe_blit_info sinfo = *info;
+
+         sinfo.src.resource = &src->stencil->b.b;
+         sinfo.dst.resource = &dst->stencil->b.b;
+         sinfo.src.format = src->stencil->b.b.format;
+         sinfo.dst.format = dst->stencil->b.b.format;
+         sinfo.mask = util_format_get_mask(sinfo.src.format);
+
+         fd_screen_lock(ctx->screen);
+         fd_batch_resource_read(batch, src->stencil);
+         fd_batch_resource_write(batch, dst->stencil);
+         fd_screen_unlock(ctx->screen);
+
+         emit_blit(batch->draw, &sinfo);
+      }
    }
 
    fd_batch_needs_flush(batch);
