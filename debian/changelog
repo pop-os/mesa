@@ -1,3 +1,10 @@
+mesa (26.2.1-2) UNRELEASED; urgency=medium
+
+  * rules: Big-endian archs fail to build rusticl, so drop them from
+    RUSTICL_ARCHS.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Thu, 20 Aug 2026 18:10:58 +0300
+
 mesa (26.2.1-1) experimental; urgency=medium
 
   * New upstream release.
