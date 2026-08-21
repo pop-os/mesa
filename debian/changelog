@@ -1,3 +1,9 @@
+mesa (26.1.6-1pop0) noble; urgency=medium
+
+  * Pop!_OS backport
+
+ -- Jeremy Soller <jeremy@system76.com>  Fri, 21 Aug 2026 09:17:59 -0600
+
 mesa (26.1.6-1) unstable; urgency=medium
 
   * New upstream release.
