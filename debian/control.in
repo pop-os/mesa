@@ -6,7 +6,7 @@ Uploaders: Andreas Boll <aboll@debian.org>
 Standards-Version: 4.1.4
 Build-Depends:
  debhelper-compat (= 13),
- bindgen (>= 0.71~) [@RUSTICL_ARCHS@],
+ bindgen-0.71 (>= 0.71~) [@RUSTICL_ARCHS@],
  bison,
  cbindgen (>= 0.25) [@RUSTICL_ARCHS@],
  flatbuffers-compiler [linux-arm64],
@@ -55,7 +55,7 @@ Build-Depends:
  python3-pycparser [arm64 armhf],
  python3-setuptools,
  python3-yaml,
- rustc (>= 1.78) [@RUSTICL_ARCHS@],
+ rustc-1.91 (>= 1.82) [@RUSTICL_ARCHS@],
  rustfmt [@RUSTICL_ARCHS@],
  spirv-tools [@LLVM_ARCHS@],
  valgrind [@VALGRIND_ARCHS@],

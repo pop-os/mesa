@@ -16,6 +16,14 @@ DEB_HOST_ARCH_CPU  ?= $(shell dpkg-architecture -qDEB_HOST_ARCH_CPU)
 LLVM_VERSION = 20
 export PATH:=/usr/lib/llvm-$(LLVM_VERSION)/bin/:$(PATH)
 
+# Add bindgen 0.71 to path
+BINDGEN_VERSION = 0.71
+export PATH:=/usr/lib/bindgen-$(BINDGEN_VERSION)/bin/:$(PATH)
+
+# Add rustc 1.91 to path
+RUST_VERSION = 1.91
+export PATH:=/usr/lib/rust-$(RUST_VERSION)/bin/:$(PATH)
+
 export DEB_BUILD_MAINT_OPTIONS=optimize=-lto
 
 DEB_CFLAGS_MAINT_APPEND := -Wall
