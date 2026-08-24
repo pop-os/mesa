@@ -414,7 +414,7 @@
         "description": "spirv: Preserve all fp_math_ctrl bits in vtn_handle_alu default case",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "a706769a0b39169fe82db4b5044000224c5f4e59",
         "notes": null
