@@ -1,5 +1,6 @@
 /*
  * Copyright © 2015 Intel Corporation
+ * Copyright © 2026 NXP
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -2685,6 +2686,13 @@ dispatch_present_id_queue(struct wsi_swapchain *wsi_chain, struct timespec *end_
    err = mtx_lock(&chain->present_ids.lock);
    if (err != thrd_success)
       return VK_ERROR_OUT_OF_DATE_KHR;
+
+   /* Nothing outstanding, skip it */
+   if (chain->present_ids.outstanding_count == 0 &&
+       !chain->present_ids.dispatch_in_progress) {
+      mtx_unlock(&chain->present_ids.lock);
+      return VK_SUCCESS;
+   }
 
    /* Someone else is dispatching events; wait for them to update the chain
     * status and wake us up. */

@@ -5194,7 +5194,7 @@
         "description": "wsi/wayland: skip feedback dispatch when nothing is outstanding",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "34273bc4eddd0c195220f305e2628d411394f028",
         "notes": null
