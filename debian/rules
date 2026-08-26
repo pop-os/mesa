@@ -143,10 +143,18 @@ else
   # LLVM is required for building r300g, radeonsi and llvmpipe drivers.
   # It's also required for building OpenCL support.
   ifneq (,$(filter $(DEB_HOST_ARCH), $(LLVM_ARCHS)))
-	GALLIUM_DEFAULTS += radeonsi zink
-	GALLIUM_DRIVERS += radeonsi zink llvmpipe
-	VULKAN_DEFAULTS += radv lavapipe venus
-	VULKAN_DRIVERS += amd swrast virtio
+	ifneq (,$(filter $(DEB_HOST_ARCH), armhf))
+		GALLIUM_DEFAULTS += zink
+		GALLIUM_DRIVERS += zink llvmpipe
+		VULKAN_DEFAULTS += lavapipe venus
+		VULKAN_DRIVERS += swrast virtio
+	else
+		GALLIUM_DEFAULTS += radeonsi zink
+		GALLIUM_DRIVERS += radeonsi zink llvmpipe
+		VULKAN_DEFAULTS += radv lavapipe venus
+		VULKAN_DRIVERS += amd swrast virtio
+
+	endif
 
 	VULKAN_LAYERS += anti-lag device-select intel-nullhw overlay screenshot
 	confflags_GALLIUM += -Dllvm=enabled
