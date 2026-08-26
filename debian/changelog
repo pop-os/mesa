@@ -1,3 +1,9 @@
+mesa (26.2.1-3) UNRELEASED; urgency=medium
+
+  * patches: Attempt to fix build on armhf.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Wed, 26 Aug 2026 10:15:19 +0300
+
 mesa (26.2.1-2) experimental; urgency=medium
 
   * rules: Big-endian archs fail to build rusticl, so drop them from

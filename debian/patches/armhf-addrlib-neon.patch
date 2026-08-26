@@ -1,0 +1,41 @@
+Subject: [PATCH] addrlib: fix ARMHF NEON zip intrinsics
+
+The ARM64 NEON vzip1q_* and vzip2q_* intrinsics used by addrlib are
+not provided by the ARM32 NEON intrinsics API. On ARM32, vzipq_*
+returns both results in a *_x2 structure.
+
+Provide compatibility definitions for ARM32 only. ARM64 continues to
+use the native vzip1q_* and vzip2q_* intrinsics unchanged.
+
+Forwarded: no
+
+created with the help of ChatGPT
+
+---
+ src/amd/addrlib/src/core/addrswizzlersimd.h | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/src/amd/addrlib/src/core/addrswizzlersimd.h b/src/amd/addrlib/src/core/addrswizzlersimd.h
+index fd53e4080a3..6a60e2bc7c1 100644
+--- a/src/amd/addrlib/src/core/addrswizzlersimd.h
++++ b/src/amd/addrlib/src/core/addrswizzlersimd.h
+@@ -1154,6 +1154,19 @@ public:
+ 
+         // Do a 32-bit zip/unpack operation to interleave within each 128b reg.
+         // Each reg becomes: [ X2 Y0 X1 X0 ]
++        /*
++         * ARM64 provides vzip1q_* / vzip2q_*, while ARM32 NEON
++         * provides vzipq_* returning both halves in a *_x2 value.
++         */
++#if defined(__arm__) && !defined(__aarch64__)
++#define vzip1q_u16(a, b) vzipq_u16((a), (b)).val[0]
++#define vzip2q_u16(a, b) vzipq_u16((a), (b)).val[1]
++#define vzip1q_u32(a, b) vzipq_u32((a), (b)).val[0]
++#define vzip2q_u32(a, b) vzipq_u32((a), (b)).val[1]
++#define vzip1q_u64(a, b) vzipq_u64((a), (b)).val[0]
++#define vzip2q_u64(a, b) vzipq_u64((a), (b)).val[1]
++#endif
++
+         uint32x4_t comb0a = vzip1q_u32(y0, y1);
+         uint32x4_t comb0b = vzip2q_u32(y0, y1);
+         uint32x4_t comb1a = vzip1q_u32(y2, y3);
