@@ -1934,6 +1934,8 @@ emit_end_xfb_query(struct tu_cmd_buffer *cmdbuf,
    tu_cs_emit_qw(cs, end_generated_iova);
    tu_cs_emit_qw(cs, begin_generated_iova);
 
+   tu_cs_emit_pkt7(cs, CP_WAIT_MEM_WRITES, 0);
+
    /* Set the availability to 1 */
    tu_cs_emit_pkt7(cs, CP_MEM_WRITE, 4);
    tu_cs_emit_qw(cs, available_iova);
