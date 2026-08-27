@@ -6564,7 +6564,7 @@
         "description": "etnaviv: Do not abort on unsupported stencil-only blits",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "ee7583a666a6699c2ef161f209bef38991073312",
         "notes": null
