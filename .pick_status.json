@@ -6544,7 +6544,7 @@
         "description": "etnaviv: Use RS depth formats only on halti5+",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "9891ddb8cb83a74c10e8b488bef8152b4306f213",
         "notes": null
