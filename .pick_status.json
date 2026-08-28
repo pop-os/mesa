@@ -6004,7 +6004,7 @@
         "description": "radv: don't set muladd_support_prefers_split when ffma is unsupported",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "6cf3cba68cbf91035dbea234023a6815b5f00346",
         "notes": null
