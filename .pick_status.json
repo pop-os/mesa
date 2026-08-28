@@ -8454,7 +8454,7 @@
         "description": "pvr: add missing GPU architecture to device info for some BVNCs",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "8df205d52085383b6e9dfb4bc796974e2cd65bd0",
         "notes": null

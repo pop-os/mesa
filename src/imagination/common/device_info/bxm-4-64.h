@@ -125,7 +125,8 @@ static const struct pvr_device_info pvr_device_info_36_52_104_182 = {
 };
 
 #define PVR_DEVICE_IDENT_36_V_104_183 \
-   .device_id = 0x36104183, .series_name = "B-Series", .public_name = "BXM-4-64"
+   .device_id = 0x36104183, .series_name = "B-Series", \
+   .public_name = "BXM-4-64", .arch = PVR_DEVICE_ARCH_ROGUE
 
 static const struct pvr_device_features pvr_device_features_36_V_104_183 = {
    .has_astc = true,
