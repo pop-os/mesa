@@ -8444,7 +8444,7 @@
         "description": "pvr: fixup ordering of (has_)usc_itr_parallel_instances in dev info",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "1e548195d2391273331d1254fcb6da9a247fe0b7",
         "notes": null
