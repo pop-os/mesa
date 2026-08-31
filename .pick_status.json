@@ -8664,7 +8664,7 @@
         "description": "nir: derive color_is_dual_source from declared vars",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "175e1f3cf5347c8a9a104dfcd64d32d7583642b2",
         "notes": null
