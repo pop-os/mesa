@@ -8174,7 +8174,7 @@
         "description": "tu: Fix destroy order of autotune vs perfcounters in failure path.",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "b6938c4c33ef6d8776140b2cfb66d823fcdaf502",
         "notes": null

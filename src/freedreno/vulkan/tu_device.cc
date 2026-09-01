@@ -3247,8 +3247,8 @@ tu_CreateDevice(VkPhysicalDevice physicalDevice,
 fail_timeline_cond:
 fail_a725_workaround:
 fail_autotune:
-   fd_perfcntr_state_free(device->perfcntrs);
    delete device->autotune;
+   fd_perfcntr_state_free(device->perfcntrs);
 fail_bin_preamble:
 fail_prepare_perfcntrs_pass_cs:
    free(device->perfcntrs_pass_cs_entries);
