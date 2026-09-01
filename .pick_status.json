@@ -8204,7 +8204,7 @@
         "description": "tu: Fix the sType of the returned VkFragmentShadingRateKHRs.",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "2ab8eff511d640e50682965eb5d4cd9e28f78487",
         "notes": null

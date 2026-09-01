@@ -2188,7 +2188,7 @@ tu_GetPhysicalDeviceFragmentShadingRatesKHR(
    {                                                                                \
       VkPhysicalDeviceFragmentShadingRateKHR rate = {                               \
          .sType =                                                                   \
-            VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_PROPERTIES_KHR, \
+            VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_KHR,            \
          .sampleCounts = s,                                                         \
          .fragmentSize = { .width = w, .height = h },                               \
       };                                                                            \
