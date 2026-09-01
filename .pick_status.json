@@ -464,7 +464,7 @@
         "description": "panfrost: Reallocate BO when linear layout grows",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "8dae6034310feea233e43b227703ef29fd8decde",
         "notes": null
