@@ -6354,7 +6354,7 @@
         "description": "anv/android: Don't disable AUX_BIT importing Xe2+ CCS mod images",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "ff3589b460f1a2f7641ba8d9220d4ac0a21a50ed",
         "notes": null
