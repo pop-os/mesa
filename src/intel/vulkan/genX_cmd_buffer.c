@@ -1814,7 +1814,8 @@ resource_barrier_signal_stage(enum intel_engine_class engine_class,
                     VK_PIPELINE_STAGE_2_BOTTOM_OF_PIPE_BIT_KHR |
                     VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT_KHR |
                     VK_PIPELINE_STAGE_2_COPY_BIT_KHR |
-                    VK_PIPELINE_STAGE_2_CLEAR_BIT_KHR)) {
+                    VK_PIPELINE_STAGE_2_CLEAR_BIT_KHR |
+                    VK_PIPELINE_STAGE_2_COPY_INDIRECT_BIT_KHR)) {
       if (engine_class == INTEL_ENGINE_CLASS_RENDER) {
          hw_stages |= RESOURCE_BARRIER_STAGE_COLOR |
                       RESOURCE_BARRIER_STAGE_GPGPU;
@@ -1885,7 +1886,8 @@ resource_barrier_wait_stage(enum intel_engine_class engine_class,
                     VK_PIPELINE_STAGE_2_ACCELERATION_STRUCTURE_BUILD_BIT_KHR |
                     VK_PIPELINE_STAGE_2_TASK_SHADER_BIT_EXT |
                     VK_PIPELINE_STAGE_2_MESH_SHADER_BIT_EXT |
-                    VK_PIPELINE_STAGE_2_MICROMAP_BUILD_BIT_EXT))
+                    VK_PIPELINE_STAGE_2_MICROMAP_BUILD_BIT_EXT |
+                    VK_PIPELINE_STAGE_2_COPY_INDIRECT_BIT_KHR))
       hw_stage = RESOURCE_BARRIER_STAGE_TOP;
    else if (vk_stages & (VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT_KHR |
                          VK_PIPELINE_STAGE_2_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR))
