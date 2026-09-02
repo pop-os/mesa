@@ -8524,7 +8524,7 @@
         "description": "r300: don't propagate negation through absolute values",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "c031a53a784d9f1d9349068fe9ad0b15c71e6ec3",
         "notes": null
