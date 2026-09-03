@@ -5774,7 +5774,7 @@
         "description": "ac/sqtt, radv, radeonsi: Fix SQTT buffer size alignment issues",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "2854c1b778eaa50e3711bd4fa6138520f4aa5442",
         "notes": null
