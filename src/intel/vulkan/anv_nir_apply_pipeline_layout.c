@@ -2217,7 +2217,8 @@ binding_should_use_surface_binding_table(const struct apply_pipeline_layout_stat
    if ((bind_layout->data & ANV_DESCRIPTOR_BTI_SURFACE_STATE) == 0)
       return false;
 
-   if (ANV_DEBUG(BINDLESS) && (bind_layout->data & ANV_DESCRIPTOR_SURFACE))
+   const bool always_bindless = state->pdevice->instance->drirc.features.always_bindless;
+   if (always_bindless && (bind_layout->data & ANV_DESCRIPTOR_SURFACE))
       return false;
 
    if (state->set[set].binding[binding].properties &
@@ -2234,7 +2235,8 @@ binding_should_use_sampler_binding_table(const struct apply_pipeline_layout_stat
    if ((binding->data & ANV_DESCRIPTOR_BTI_SAMPLER_STATE) == 0)
       return false;
 
-   if (ANV_DEBUG(BINDLESS) && (binding->data & ANV_DESCRIPTOR_SAMPLER))
+   const bool always_bindless = state->pdevice->instance->drirc.features.always_bindless;
+   if (always_bindless && (binding->data & ANV_DESCRIPTOR_SAMPLER))
       return false;
 
    return true;

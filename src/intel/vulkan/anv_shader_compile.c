@@ -222,7 +222,7 @@ anv_shader_init_uuid(struct anv_physical_device *device)
                        sizeof(device->driver_build_sha1));
    brw_device_blake3_update(&ctx, &device->info);
 
-   const bool always_bindless = !!ANV_DEBUG(BINDLESS);
+   const bool always_bindless = device->instance->drirc.features.always_bindless;
    _mesa_blake3_update(&ctx, &always_bindless, sizeof(always_bindless));
 
    const bool indirect_descriptors = device->indirect_descriptors;
