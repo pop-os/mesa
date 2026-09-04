@@ -6524,7 +6524,7 @@
         "description": "nir/opt_uub: fix imax optimization",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "3908a228bd9523146e1d6bf90f639722fb9776e4",
         "notes": null
