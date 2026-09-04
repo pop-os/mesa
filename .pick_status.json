@@ -5364,7 +5364,7 @@
         "description": "d3d12: Fix d3d12 video encoder batch leaks",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "42f636bee95409f8ac89a453ab0edcbe58530180",
         "notes": null
