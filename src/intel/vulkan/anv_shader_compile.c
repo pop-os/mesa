@@ -1440,19 +1440,6 @@ anv_shader_lower_nir(struct anv_device *device,
    if (nir->info.stage == MESA_SHADER_FRAGMENT)
       anv_shader_compute_fragment_rts(devinfo, state, shader_data);
 
-   uint32_t dynamic_descriptors_offset = 0;
-   uint32_t dynamic_descriptors_offsets[MAX_SETS] = {};
-   for (uint32_t i = 0; i < set_layout_count; i++) {
-      dynamic_descriptors_offsets[i] = dynamic_descriptors_offset;
-      if (set_layouts[i] != NULL) {
-         shader_data->bind_map.binding_mask |= ANV_PIPELINE_BIND_MASK_SET(i);
-         const uint32_t dyn_desc_count =
-            set_layouts[i]->vk.dynamic_descriptor_count;
-         shader_data->bind_map.dynamic_descriptors[i] = dyn_desc_count;
-         dynamic_descriptors_offset += dyn_desc_count;
-      }
-   }
-
    /* Apply the actual layout to UBOs, SSBOs, and textures */
    if (shader_data->info->flags & VK_SHADER_CREATE_DESCRIPTOR_HEAP_BIT_EXT) {
       NIR_PASS(_, nir, anv_nir_lower_descriptor_heap, device,
@@ -1463,9 +1450,6 @@ anv_shader_lower_nir(struct anv_device *device,
       NIR_PASS(_, nir, anv_nir_apply_pipeline_layout,
                pdevice, shader_data->key.base.robust_flags,
                set_layouts, set_layout_count,
-               (shader_data->info->flags &
-                VK_SHADER_CREATE_INDEPENDENT_SETS_BIT_KHR) ? NULL :
-               dynamic_descriptors_offsets,
                shader_data->info->flags & VK_SHADER_CREATE_INDIRECT_BINDABLE_BIT_EXT,
                &shader_data->bind_map, &shader_data->push_map, mem_ctx);
    }
