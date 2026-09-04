@@ -21,9 +21,12 @@
 static bool
 ok_dims(const struct pipe_resource *r, const struct pipe_box *b, int lvl)
 {
+   int last_layer =
+      r->target == PIPE_TEXTURE_3D ? u_minify(r->depth0, lvl) : r->array_size;
+
    return (b->x >= 0) && (b->x + b->width <= u_minify(r->width0, lvl)) &&
           (b->y >= 0) && (b->y + b->height <= u_minify(r->height0, lvl)) &&
-          (b->z >= 0) && (b->z + b->depth <= u_minify(r->depth0, lvl));
+          (b->z >= 0) && (b->z + b->depth <= last_layer);
 }
 
 /* Not sure if format restrictions differ for src and dst, or if
