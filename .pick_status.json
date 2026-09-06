@@ -6044,7 +6044,7 @@
         "description": "nir/serialize: set info.spec to NULL",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "d8b21cc8ea6cc34c6120e143d0c93d2baeca51db",
         "notes": null
