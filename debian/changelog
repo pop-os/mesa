@@ -2,6 +2,7 @@ mesa (26.2.2-1) UNRELEASED; urgency=medium
 
   * New upstream release.
   * rules: Re-enable radeonsi/radv on armhf.
+  * rules: Drop ppc64 from NVK_ARCHS (Closes: #1146470), and x32 too (FTBFS).
 
  -- Timo Aaltonen <tjaalton@debian.org>  Mon, 07 Sep 2026 17:43:51 +0300
 
