@@ -5604,7 +5604,7 @@
         "description": "anv: fix cmd_buffer_set_indirect_stride on ARL",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "b683b5a33e7a9fba20bb872c0772c886dcfc8ace",
         "notes": null
