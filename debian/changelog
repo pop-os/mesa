@@ -1,6 +1,7 @@
 mesa (26.2.2-1) UNRELEASED; urgency=medium
 
   * New upstream release.
+  * rules: Re-enable radeonsi/radv on armhf.
 
  -- Timo Aaltonen <tjaalton@debian.org>  Mon, 07 Sep 2026 17:43:51 +0300
 
