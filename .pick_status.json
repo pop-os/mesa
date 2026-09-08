@@ -3944,7 +3944,7 @@
         "description": "radv: fix L0_CACHE_HIT_RATIO perf counter on GFX11",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "8499d86b94f7b9cd6773148af33ab2d597ccf595",
         "notes": null
