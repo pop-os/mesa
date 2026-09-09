@@ -1274,7 +1274,7 @@
         "description": "radv: return VK_ERROR_DEVICE_LOST if any shader executed OpAbortKHR",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "887a390ec0349ae6efec74ea3c6de9dbdd2c7f0e",
         "notes": null

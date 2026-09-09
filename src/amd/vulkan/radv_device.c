@@ -893,6 +893,20 @@ capture_trace(VkQueue _queue)
    return result;
 }
 
+static VkResult
+radv_device_check_status(struct vk_device *_device)
+{
+   struct radv_device *device = container_of(_device, struct radv_device, vk);
+
+   /* VK_KHR_shader_abort requires the device to return VK_ERROR_DEVICE_LOST after any shader
+    * execute OpAbortKHR.
+    */
+   if (radv_shader_abort_occurred(device))
+      return vk_device_set_lost(&device->vk, "shader executed OpAbortKHR");
+
+   return VK_SUCCESS;
+}
+
 static void
 radv_device_init_cache_key(struct radv_device *device)
 {
@@ -1449,6 +1463,7 @@ radv_CreateDevice(VkPhysicalDevice physicalDevice, const VkDeviceCreateInfo *pCr
 
    device->vk.get_timestamp = get_timestamp;
    device->vk.capture_trace = capture_trace;
+   device->vk.check_status = radv_device_check_status;
 
    device->vk.command_buffer_ops = &radv_cmd_buffer_ops;
 
