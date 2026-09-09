@@ -4574,7 +4574,7 @@
         "description": "ir3: skip the phis of non-GPR registers in the minimum pressure bound",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "21cd9b9557dc03dd8ffef4da541a4e62f0f7e32c",
         "notes": null
