@@ -4494,7 +4494,7 @@
         "description": "tu: Fix PACKED + alignas(8) application to the same struct on older GCC",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "d10ec46ad5dfbb69e5f2c5f6aad0c7d8483760a5",
         "notes": null

@@ -40,11 +40,11 @@
  */
 #define STAT_COUNT ((__COUNTER_REG(A6XX, CSINVOCATIONS) - __COUNTER_REG(A6XX, IAVERTICES)) / 2 + 1)
 
-struct alignas(8) PACKED query_slot {
+struct alignas(8) query_slot {
    alignas(8) uint64_t available;
-};
+} PACKED;
 
-struct alignas(8) PACKED occlusion_query_slot {
+struct alignas(8) occlusion_query_slot {
    struct query_slot common;
    uint64_t _padding0;
 
@@ -52,26 +52,26 @@ struct alignas(8) PACKED occlusion_query_slot {
    uint64_t result;
    uint64_t end;
    uint64_t _padding1;
-};
+} PACKED;
 
-struct alignas(8) PACKED timestamp_query_slot {
+struct alignas(8) timestamp_query_slot {
    struct query_slot common;
    uint64_t result;
-};
+} PACKED;
 
-struct alignas(8) PACKED primitive_slot_value {
+struct alignas(8) primitive_slot_value {
    uint64_t values[2];
-};
+} PACKED;
 
-struct alignas(8) PACKED pipeline_stat_query_slot {
+struct alignas(8) pipeline_stat_query_slot {
    struct query_slot common;
    uint64_t results[STAT_COUNT];
 
    uint64_t begin[STAT_COUNT];
    uint64_t end[STAT_COUNT];
-};
+} PACKED;
 
-struct alignas(8) PACKED primitive_query_slot {
+struct alignas(8) primitive_query_slot {
    struct query_slot common;
    /* The result of transform feedback queries is two integer values:
     *   results[0] is the count of primitives written,
@@ -85,30 +85,30 @@ struct alignas(8) PACKED primitive_query_slot {
 
    struct primitive_slot_value begin[4];
    struct primitive_slot_value end[4];
-};
+} PACKED;
 
-struct alignas(8) PACKED perfcntr_query_slot {
+struct alignas(8) perfcntr_query_slot {
    uint64_t result;
    uint64_t begin;
    uint64_t end;
-};
+} PACKED;
 
-struct alignas(8) PACKED perf_query_raw_slot {
+struct alignas(8) perf_query_raw_slot {
    struct query_slot common;
    struct perfcntr_query_slot perfcntr;
-};
+} PACKED;
 
-struct alignas(8) PACKED primitives_generated_query_slot {
+struct alignas(8) primitives_generated_query_slot {
    struct query_slot common;
    uint64_t result;
    uint64_t begin;
    uint64_t end;
-};
+} PACKED;
 
-struct alignas(8) PACKED accel_struct_slot {
+struct alignas(8) accel_struct_slot {
    struct query_slot common;
    uint64_t result;
-};
+} PACKED;
 
 /* Returns the IOVA or mapped address of a given uint64_t field
  * in a given slot of a query pool. */
