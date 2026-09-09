@@ -127,6 +127,18 @@ gather_push_data(nir_shader *nir,
             case nir_intrinsic_load_push_constant: {
                unsigned base = nir_intrinsic_base(intrin);
                unsigned range = nir_intrinsic_range(intrin);
+               /* The non-zero const case should have been handled already
+                * by anv_nir_shrink_push_constant_ranges.
+                */
+               assert(!nir_src_is_const(intrin->src[0]) ||
+                      nir_src_as_uint(intrin->src[0]) == 0);
+
+               /* If the offset is dynamic, the range may not be accurate.
+                * Take the whole thing in that case.
+                */
+               if (!nir_src_is_const(intrin->src[0]))
+                  range = MAX_PUSH_CONSTANTS_SIZE - base;
+
                BITSET_SET_RANGE(data.push_dwords,
                                 base / 4, DIV_ROUND_UP(base + range, 4) - 1);
                break;
