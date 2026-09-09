@@ -4264,7 +4264,7 @@
         "description": "ntv: improve deref type matching when converting vri derefs",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "36d9f5a4bff9980bf5d65b47b52ae99b7b06a153",
         "notes": null
