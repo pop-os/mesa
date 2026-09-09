@@ -2034,7 +2034,7 @@
         "description": "clc: fix fd leak in open_clc_data() on map failure",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "49ac39efb29e755bbaf9bf8e3b45dfabace8f3e2",
         "notes": null
