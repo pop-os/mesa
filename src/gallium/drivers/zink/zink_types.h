@@ -1611,8 +1611,8 @@ struct zink_bufferview_key {
 };
 
 struct zink_buffer_view {
-   struct pipe_resource *pres;
    struct zink_bufferview_key key;
+   struct pipe_resource *pres;
    VkBufferView buffer_view;
 };
 

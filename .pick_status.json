@@ -4024,7 +4024,7 @@
         "description": "zink: put the buffer view cache key first",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "5cfaa6cd5fcb6deac320fc44f3871094205a4554",
         "notes": null
