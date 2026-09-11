@@ -2724,7 +2724,7 @@
         "description": "nvk: Fix memory leak in compute save/restore",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "ddc5839d2060aa6e1441ec53bf0da5113e83bd13",
         "notes": null
