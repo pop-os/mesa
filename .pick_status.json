@@ -2714,7 +2714,7 @@
         "description": "nvk: Fix leak of dev->heap and dev->replay_heap",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "d96bf198b4d88321f9d8c606ce767b4deae9afe5",
         "notes": null
