@@ -2434,7 +2434,7 @@
         "description": "util/drirc: change min_value to max_value typo",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "a9aeae71f55fc5e72135cf11992330c59874e73a",
         "notes": null
