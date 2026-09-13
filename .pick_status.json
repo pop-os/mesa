@@ -1464,7 +1464,7 @@
         "description": "glsl: initialize pixel_local_storage and yuv in ir_variable constructor",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "7f7c4ebbba6cee1bbd1579665ec9d3dc54c49f68",
         "notes": null
