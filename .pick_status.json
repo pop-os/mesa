@@ -1434,7 +1434,7 @@
         "description": "tu: Fix sparse bind column merging",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "918e25e158cda49b9e258e1c4a84d761711f1c20",
         "notes": null
