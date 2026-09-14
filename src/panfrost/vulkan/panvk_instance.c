@@ -1,5 +1,6 @@
 /*
  * Copyright © 2021 Collabora Ltd.
+ * Copyright © 2026 NXP
  *
  * Derived from tu_device.c which is:
  * Copyright © 2016 Red Hat.
@@ -17,6 +18,8 @@
 
 #include "vk_alloc.h"
 #include "vk_log.h"
+
+#include "pan_trace.h"
 
 #include "panvk_entrypoints.h"
 #include "panvk_instance.h"
@@ -212,6 +215,7 @@ panvk_CreateInstance(const VkInstanceCreateInfo *pCreateInfo,
    assert(pCreateInfo->sType == VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO);
 
    panvk_debug_init();
+   pan_trace_init();
 
    const struct build_id_note *note =
       build_id_find_nhdr_for_addr(panvk_CreateInstance);

@@ -1594,7 +1594,7 @@
         "description": "panvk: initialize CPU tracing categories",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "cc933d1d082078bf125b0ba0d54484fae05dbc5c",
         "notes": null
