@@ -1284,7 +1284,7 @@
         "description": "clc: Fix static link with llvm and clang 23",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "88a9576a3ef0e65a1b020961145bd1718bb0f71f",
         "notes": null
