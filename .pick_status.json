@@ -7374,7 +7374,7 @@
         "description": "Revert \"nir/opt_gcm: add option to keep texture ops in large loops\"",
         "nominated": true,
         "nomination_type": 3,
-        "resolution": 0,
+        "resolution": 2,
         "main_sha": null,
         "because_sha": "9e9d5f80309993a764731e55e995e35c2876dac7",
         "notes": null
