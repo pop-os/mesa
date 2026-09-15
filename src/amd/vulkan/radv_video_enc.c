@@ -3593,6 +3593,7 @@ radv_GetEncodedVideoSessionParametersKHR(VkDevice device,
    }
    case VK_VIDEO_CODEC_OPERATION_ENCODE_AV1_BIT_KHR: {
       vk_video_encode_av1_seq_hdr(templ, size_limit, &total_size, pData);
+      has_overrides = VK_TRUE;
       break;
    }
    default:
