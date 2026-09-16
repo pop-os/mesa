@@ -324,7 +324,7 @@
         "description": "mesa/st: use concrete formats for lowered YUV plane views",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "2ca46c7a7aca11d5c88edc18af6197b190d3d02a",
         "notes": null
