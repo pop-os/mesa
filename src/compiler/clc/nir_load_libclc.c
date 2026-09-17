@@ -215,6 +215,7 @@ open_clc_data(struct clc_data *clc, unsigned ptr_bit_size)
       clc->size = stat.st_size;
 
       if (!map_clc_data(clc)) {
+         close_clc_data(clc);
          return false;
       }
 

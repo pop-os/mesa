@@ -316,7 +316,6 @@ dEQP-VK.glsl.texture_functions.query.texturequerylod.sampler2d_fixed_trilinear_f
 dEQP-VK.glsl.texture_functions.query.texturequerylod.sampler2d_fixed_trilinearnon_zero_base_level_fragment,Fail
 dEQP-VK.glsl.texture_functions.query.texturequerylod.sampler2d_float_trilinear_fragment,Fail
 dEQP-VK.glsl.texture_functions.query.texturequerylod.sampler2d_float_trilinearnon_zero_base_level_fragment,Fail
-dEQP-VK.image.host_image_copy.properties.properties,Fail
 dEQP-VK.wsi.acquire_drm_display.acquire_drm_display_invalid_fd,Crash
 dEQP-VK.wsi.acquire_drm_display.acquire_drm_display_not_master,Crash
 dEQP-VK.wsi.acquire_drm_display.acquire_drm_display_unowned_connector_id,Crash

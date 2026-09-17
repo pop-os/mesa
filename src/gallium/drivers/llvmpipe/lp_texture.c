@@ -1364,7 +1364,7 @@ llvmpipe_allocate_memory(struct pipe_screen *_screen, uint64_t size)
 
    mtx_unlock(&screen->mem_mutex);
 #else
-   mem->cpu_addr = malloc(mem->size);
+   mem->cpu_addr = os_malloc_aligned(mem->size, alignment);
    mem->fd = -1;
    mem->type = LLVMPIPE_MEMORY_FD_TYPE_INVALID;
 #endif

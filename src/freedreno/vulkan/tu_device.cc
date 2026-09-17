@@ -2188,7 +2188,7 @@ tu_GetPhysicalDeviceFragmentShadingRatesKHR(
    {                                                                                \
       VkPhysicalDeviceFragmentShadingRateKHR rate = {                               \
          .sType =                                                                   \
-            VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_PROPERTIES_KHR, \
+            VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_KHR,            \
          .sampleCounts = s,                                                         \
          .fragmentSize = { .width = w, .height = h },                               \
       };                                                                            \
@@ -3247,8 +3247,8 @@ tu_CreateDevice(VkPhysicalDevice physicalDevice,
 fail_timeline_cond:
 fail_a725_workaround:
 fail_autotune:
-   fd_perfcntr_state_free(device->perfcntrs);
    delete device->autotune;
+   fd_perfcntr_state_free(device->perfcntrs);
 fail_bin_preamble:
 fail_prepare_perfcntrs_pass_cs:
    free(device->perfcntrs_pass_cs_entries);
@@ -4462,7 +4462,7 @@ uint64_t tu_GetDeviceMemoryOpaqueCaptureAddress(
     const VkDeviceMemoryOpaqueCaptureAddressInfo* pInfo)
 {
    VK_FROM_HANDLE(tu_device_memory, mem, pInfo->memory);
-   return mem->bo->iova;
+   return mem->iova;
 }
 
 struct tu_debug_bos_entry {

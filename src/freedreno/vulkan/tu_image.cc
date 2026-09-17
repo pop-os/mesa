@@ -1663,7 +1663,7 @@ tu_bind_sparse_image(struct tu_device *device, void *submit,
                   prev_bo_offset = bo ? column_bo_offset : 0;
                   bind_range = 4096;
                } else if (prev_image_offset + bind_range == image_offset &&
-                          (!bo || prev_bo_offset + bind_range == bo_offset)) {
+                          (!bo || prev_bo_offset + bind_range == column_bo_offset)) {
                   bind_range += 4096;
                } else {
                   tu_submit_add_bind(device, submit, &image->vma,

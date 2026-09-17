@@ -741,6 +741,7 @@ ac_identify_chip(struct radeon_info *info, const struct drm_amdgpu_info_device *
          break;
       case FAMILY_GFX1170:
          identify_chip(GFX1170);
+         identify_chip(GFX1171);
          break;
       case FAMILY_NV4:
          if (info->ip[AMD_IP_GFX].ver_minor == 0) {
