@@ -1,10 +1,4 @@
-project(
-  'paste',
-  'rust',
-  version : '1.0.14',
-  license : '(MIT or Apache-2.0)',
-  meson_version : '>= 1.7.0',
-)
+project('paste', 'rust', version : '1.0.15', license : '(MIT or Apache-2.0)', meson_version : '>= 1.7.0')
 
 rust = import('rust')
 

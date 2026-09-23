@@ -1,10 +1,4 @@
-project(
-  'quote',
-  'rust',
-  version : '1.0.35',
-  license : 'MIT OR Apache-2.0',
-  meson_version : '>= 1.7.0',
-)
+project('quote', 'rust', version : '1.0.40', license : 'MIT OR Apache-2.0', meson_version : '>= 1.7.0')
 
 rc = meson.get_compiler('rust')
 

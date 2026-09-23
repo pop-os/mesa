@@ -1,13 +1,7 @@
 # Copyright © 2024 Google
 # SPDX-License-Identifier: MIT
 
-project(
-  'libc',
-  'rust',
-  version : '0.2.185',
-  license : 'MIT OR Apache-2.0',
-  meson_version : '>= 1.7.0',
-)
+project('libc', 'rust', version : '0.2.178', license : 'MIT OR Apache-2.0', meson_version : '>= 1.7.0')
 
 libc_args = [
   '--cfg', 'feature="default"',

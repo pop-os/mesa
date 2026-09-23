@@ -1,10 +1,4 @@
-project(
-  'rustc_hash',
-  'rust',
-  version : '2.1.1',
-  license : 'MIT OR Apache-2.0',
-  meson_version : '>= 1.7.0',
-)
+project('rustc_hash', 'rust', version : '2.0.0', license : 'MIT OR Apache-2.0', meson_version : '>= 1.7.0')
 
 rust_args = [
   '--cfg', 'feature="std"'

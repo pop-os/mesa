@@ -1,13 +1,7 @@
 # Copyright © 2024 Google
 # SPDX-License-Identifier: MIT
 
-project(
-  'cfg-if',
-  'rust',
-  version : '1.0.0',
-  license : 'MIT OR Apache-2.0',
-  meson_version : '>= 1.7.0',
-)
+project('cfg-if', 'rust', version : '1.0.4', license : 'MIT OR Apache-2.0', meson_version : '>= 1.7.0')
 
 lib = static_library(
   'cfg_if',
