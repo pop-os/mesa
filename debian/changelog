@@ -1,3 +1,9 @@
+mesa (26.2.3-2pop1) resolute; urgency=medium
+
+  * Backport from debian
+
+ -- Michael Murphy <michael@mmurphy.dev>  Wed, 23 Sep 2026 16:38:07 +0200
+
 mesa (26.2.3-2) unstable; urgency=medium
 
   * Migrate to llvm-22.
